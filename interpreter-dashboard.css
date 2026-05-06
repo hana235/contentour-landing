@@ -3253,11 +3253,18 @@
             /* 일반 테이블 영역 — 가로 스크롤 폴백 */
             .stl-table-wrap, .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-            /* 채팅 — 300px 사이드 + 본문 → 1열 (사이드 위, 본문 아래) */
-            .chat-layout { grid-template-columns: 1fr; height: auto; min-height: 480px; }
+            /* 채팅 — 300px 사이드 + 본문 → 1열 (사이드 위, 본문 아래)
+               명확한 grid-template-rows로 chat-main에 늘어날 공간 부여 → 내부 .chat-messages flex:1 동작 보장 */
+            .chat-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: 200px 1fr;
+                height: calc(100vh - 140px);
+                min-height: 480px;
+            }
+            .chat-main { min-height: 0; }  /* flex 자식이 부모 높이를 넘지 않게 */
 
-            /* 좌측 연락처 리스트 — 모바일 한정 높이 */
-            .chat-contacts { border-right: none; border-bottom: 1.5px solid var(--gray-200); max-height: 240px; }
+            /* 좌측 연락처 리스트 — grid-template-rows로 높이 결정되니 max-height 해제 */
+            .chat-contacts { border-right: none; border-bottom: 1.5px solid var(--gray-200); max-height: none; min-height: 0; }
             .chat-contacts__head { padding: 14px 16px; }
             .chat-contacts__head h3 { font-size: 0.85rem; }
             .chat-contacts__search { padding: 8px 14px; }
@@ -3332,9 +3339,9 @@
 
         @media (max-width: 480px) {
             /* 매우 좁은 화면 — 메시지 버블 더 넓게 사용 */
+            .chat-layout { grid-template-rows: 180px 1fr; height: calc(100vh - 120px); }
             .chat-msg { max-width: 90%; }
             .chat-msg__bubble { padding: 8px 11px; font-size: 0.82rem; }
-            .chat-contacts { max-height: 200px; }
             .chat-img-preview { max-width: 170px; }
             .chat-main__head { padding: 10px 12px; }
             .chat-messages { padding: 12px 10px; }
@@ -4256,7 +4263,9 @@
         .chat-msg__read.read{color:var(--sky);}
         .chat-msg__read.unread{color:var(--gray-400);}
         .chat-msg__bubble mark{background:#fff3a8;color:var(--text);border-radius:2px;padding:0 1px;}
-        .chat-msg-wrap{position:relative;}
+        .chat-msg-wrap{position:relative;display:flex;flex-direction:column;}
+        .chat-msg-wrap:has(.chat-msg.me){align-items:flex-end;}
+        .chat-msg-wrap:has(.chat-msg.them){align-items:flex-start;}
         .chat-msg-wrap:hover .chat-msg-actions{opacity:1;pointer-events:all;}
         .chat-msg-actions{position:absolute;top:-4px;opacity:0;pointer-events:none;transition:opacity 0.15s;display:flex;gap:2px;z-index:5;}
         .chat-msg-wrap:has(.chat-msg.me) .chat-msg-actions{right:0;}
