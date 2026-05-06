@@ -10,8 +10,142 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="design-tokens.css">
-    <link rel="stylesheet" href="interpreter-dashboard.css?v=20260506-4">
-    <style>/* 인라인 스타일 → interpreter-dashboard.css로 분리됨 */</style>
+    <link rel="stylesheet" href="interpreter-dashboard.css?v=20260506-5">
+    <style>
+        /* ════════════════════════════════════════════════════════════════
+           채팅 모바일 — 인라인 스타일로 강제 적용 (CSS 파일 캐시 우회용)
+           HTML은 cache-control: no-cache라 매번 새로 받아지므로 외부 캐시 영향 X
+           ──────────────────────────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            /* === 카카오톡 슬라이드 패턴 === */
+            #view-chat .chat-layout {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                grid-template-rows: 1fr !important;
+                height: calc(100dvh - 130px) !important;
+                min-height: 0 !important;
+                position: relative !important;
+            }
+            #view-chat .chat-contacts {
+                border-right: none !important;
+                border-bottom: none !important;
+                max-height: none !important;
+                min-height: 0 !important;
+                height: 100% !important;
+            }
+            #view-chat .chat-main {
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                background: #f5f7fb !important;
+                transform: translateX(100%) !important;
+                transition: transform 0.3s ease !important;
+                z-index: 10 !important;
+                min-height: 0 !important;
+                overflow: hidden !important;
+                box-sizing: border-box !important;
+            }
+            #view-chat .chat-layout.chat-open .chat-main {
+                transform: translateX(0) !important;
+            }
+            #view-chat .chat-back-btn {
+                display: flex !important;
+                width: 36px !important; height: 36px !important;
+                border: none !important;
+                background: #f1f3f6 !important;
+                border-radius: 8px !important;
+                cursor: pointer !important;
+                font-size: 1.1rem !important;
+                align-items: center !important;
+                justify-content: center !important;
+                color: #6b7280 !important;
+                flex-shrink: 0 !important;
+                margin-right: 4px !important;
+            }
+
+            /* === 메시지 영역 === */
+            #view-chat .chat-messages {
+                padding: 14px 10px !important;
+                gap: 8px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                overflow-x: hidden !important;
+            }
+
+            /* === 메시지 정렬 (chat-msg-wrap--me/--them) === */
+            #view-chat .chat-msg-wrap {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            #view-chat .chat-msg-wrap--me { align-items: flex-end !important; }
+            #view-chat .chat-msg-wrap--them { align-items: flex-start !important; }
+
+            /* === 메시지 자체 === */
+            #view-chat .chat-msg,
+            #view-chat .chat-msg.me,
+            #view-chat .chat-msg.them {
+                max-width: 75% !important;
+                gap: 6px !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+                flex-wrap: nowrap !important;
+            }
+            #view-chat .chat-msg__avatar { flex-shrink: 0 !important; width: 26px !important; height: 26px !important; font-size: 0.62rem !important; }
+            #view-chat .chat-msg__time { flex-shrink: 0 !important; font-size: 0.58rem !important; }
+
+            /* === 메시지 버블 — 한국어/한자/긴 영문 강제 줄바꿈 === */
+            #view-chat .chat-msg__bubble,
+            #view-chat .chat-msg.me .chat-msg__bubble,
+            #view-chat .chat-msg.them .chat-msg__bubble {
+                min-width: 0 !important;
+                max-width: 100% !important;
+                width: auto !important;
+                padding: 9px 12px !important;
+                font-size: 0.86rem !important;
+                line-height: 1.5 !important;
+                word-break: break-all !important;
+                overflow-wrap: break-word !important;
+                white-space: pre-wrap !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+            }
+
+            /* === 채팅방 헤더 === */
+            #view-chat .chat-main__head { padding: 11px 14px !important; gap: 10px !important; }
+            #view-chat .chat-main__head-avatar { width: 34px !important; height: 34px !important; font-size: 0.78rem !important; }
+            #view-chat .chat-main__head-name { font-size: 0.85rem !important; }
+            #view-chat .chat-main__head-sub { font-size: 0.68rem !important; }
+            #view-chat .chat-main__head-btn { width: 36px !important; height: 36px !important; min-width: 36px !important; }
+
+            /* === 입력 영역 === */
+            #view-chat .chat-input { padding: 10px 14px !important; gap: 8px !important; }
+            #view-chat .chat-input__field { font-size: 16px !important; padding: 10px 14px !important; max-height: 80px !important; }
+
+            /* === 파일/이미지 첨부 === */
+            #view-chat .chat-file-bubble { max-width: 100% !important; }
+            #view-chat .chat-img-preview { max-width: 200px !important; }
+        }
+
+        @media (max-width: 480px) {
+            #view-chat .chat-layout { height: calc(100dvh - 110px) !important; }
+            #view-chat .chat-msg, #view-chat .chat-msg.me, #view-chat .chat-msg.them { max-width: 80% !important; }
+            #view-chat .chat-msg__bubble,
+            #view-chat .chat-msg.me .chat-msg__bubble,
+            #view-chat .chat-msg.them .chat-msg__bubble {
+                padding: 8px 11px !important;
+                font-size: 0.82rem !important;
+            }
+            #view-chat .chat-img-preview { max-width: 170px !important; }
+            #view-chat .chat-main__head { padding: 10px 12px !important; }
+            #view-chat .chat-messages { padding: 12px 8px !important; }
+            #view-chat .chat-input { padding: 8px 10px !important; }
+            #view-chat .chat-msg-actions { display: none !important; }
+        }
+    </style>
 </head>
 
 <body>
