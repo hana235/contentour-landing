@@ -3322,24 +3322,40 @@
             .chat-main__head-btn { width: 36px; height: 36px; min-width: 36px; }
             .chat-main__head-status { font-size: 0.62rem; padding: 2px 7px; }
 
-            /* 메시지 영역 — 패딩 축소 */
-            .chat-messages { padding: 14px 14px; gap: 8px; }
+            /* 메시지 영역 — 패딩 축소 + 가로 잘림 방지 */
+            .chat-messages {
+                padding: 14px !important;
+                gap: 8px;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                overflow-x: hidden;
+            }
             .chat-date-sep { font-size: 0.66rem; padding: 6px 0; }
             .chat-date-sep::before, .chat-date-sep::after { width: calc(50% - 50px); }
 
-            /* 메시지 버블 — 좁은 화면에서 적절한 너비 + 긴 단어/URL 줄바꿈 강화
-               .me / .them 양쪽에 명시적 max-width — flex row-reverse(me)에서 max-width 무시되는 케이스 차단 */
+            /* 메시지 버블 — flex item wrap 처방 (min-width:0 chain + word-break:break-all) */
             .chat-msg,
             .chat-msg.me,
-            .chat-msg.them { max-width: 78% !important; gap: 6px; min-width: 0; box-sizing: border-box; }
+            .chat-msg.them {
+                max-width: 78% !important;
+                gap: 6px;
+                min-width: 0 !important;
+                box-sizing: border-box;
+                flex-wrap: nowrap;
+            }
             .chat-msg__bubble {
-                min-width: 0;
-                max-width: 100%;
-                word-break: break-word;
-                overflow-wrap: anywhere;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                width: auto;
+                word-break: break-all !important;     /* 한국어/한자/긴 영문 단어 모두 강제 줄바꿈 */
+                overflow-wrap: break-word !important;
                 white-space: pre-wrap;
                 box-sizing: border-box;
+                overflow: hidden;
             }
+            .chat-msg__avatar { flex-shrink: 0; }
+            .chat-msg__time { flex-shrink: 0; }
             .chat-msg__avatar { width: 26px; height: 26px; font-size: 0.62rem; }
             .chat-msg__bubble { font-size: 0.86rem; padding: 9px 12px; line-height: 1.5; overflow-wrap: anywhere; word-break: break-word; }
             .chat-msg__time { font-size: 0.58rem; }
