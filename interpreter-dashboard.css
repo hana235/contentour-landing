@@ -1078,6 +1078,36 @@
             .lang-rate-row > .rate-row__input input { width: 100%; }
             /* 언어별 단가 부모 grid → 1열 강제 (inline style 위에 덮어쓰기) */
             .lang-rate-grid { grid-template-columns: 1fr !important; }
+
+            /* 단가 미리보기 — 가로 스크롤 + 폰트 축소 + 단가 범위 줄 세로 분리 */
+            #ratePreview {
+                padding: 12px !important;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            #ratePreview table {
+                font-size: 0.72rem !important;
+                min-width: 360px;
+            }
+            #ratePreview table th,
+            #ratePreview table td {
+                padding: 7px 5px !important;
+                white-space: nowrap !important;
+            }
+            #ratePreview table th {
+                font-size: 0.68rem !important;
+            }
+            /* 마지막 "단가 범위 ₩... ~ ₩... / 일" 줄 — flex 가로 양끝 정렬을 모바일에서 세로 분리 */
+            #ratePreview > div {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 4px !important;
+            }
+            #ratePreview > div > span:last-child {
+                font-size: 0.92rem !important;
+                align-self: flex-end !important;
+                white-space: nowrap;
+            }
         }
 
         /* ══════════════ 내 스케줄 뷰 ══════════════ */
