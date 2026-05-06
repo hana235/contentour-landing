@@ -3255,8 +3255,92 @@
 
             /* 채팅 — 300px 사이드 + 본문 → 1열 (사이드 위, 본문 아래) */
             .chat-layout { grid-template-columns: 1fr; height: auto; min-height: 480px; }
-            .chat-msg { max-width: 88%; }
-            .chat-msg__bubble { font-size: 0.88rem; padding: 10px 13px; }
+
+            /* 좌측 연락처 리스트 — 모바일 한정 높이 */
+            .chat-contacts { border-right: none; border-bottom: 1.5px solid var(--gray-200); max-height: 240px; }
+            .chat-contacts__head { padding: 14px 16px; }
+            .chat-contacts__head h3 { font-size: 0.85rem; }
+            .chat-contacts__search { padding: 8px 14px; }
+            .chat-contacts__search input { font-size: 16px; padding: 9px 12px; }
+            .chat-contact { padding: 12px 14px; gap: 10px; }
+            .chat-contact__avatar { width: 38px; height: 38px; font-size: 0.8rem; }
+            .chat-contact__name { font-size: 0.82rem; }
+            .chat-contact__expo { font-size: 0.6rem; max-width: 140px; }
+            .chat-contact__preview { font-size: 0.7rem; }
+
+            /* 채팅방 헤더 — 패딩·아바타·폰트 한 단계 축소 */
+            .chat-main__head { padding: 11px 14px; gap: 10px; }
+            .chat-main__head-avatar { width: 34px; height: 34px; font-size: 0.78rem; }
+            .chat-main__head-name { font-size: 0.85rem; }
+            .chat-main__head-sub { font-size: 0.68rem; }
+            .chat-main__head-btn { width: 36px; height: 36px; min-width: 36px; }
+            .chat-main__head-status { font-size: 0.62rem; padding: 2px 7px; }
+
+            /* 메시지 영역 — 패딩 축소 */
+            .chat-messages { padding: 14px 14px; gap: 8px; }
+            .chat-date-sep { font-size: 0.66rem; padding: 6px 0; }
+            .chat-date-sep::before, .chat-date-sep::after { width: calc(50% - 50px); }
+
+            /* 메시지 버블 — 좁은 화면에서 적절한 너비 + 긴 단어/URL 줄바꿈 강화 */
+            .chat-msg { max-width: 85%; gap: 6px; }
+            .chat-msg__avatar { width: 26px; height: 26px; font-size: 0.62rem; }
+            .chat-msg__bubble { font-size: 0.86rem; padding: 9px 12px; line-height: 1.5; overflow-wrap: anywhere; word-break: break-word; }
+            .chat-msg__time { font-size: 0.58rem; }
+            .chat-msg__read { font-size: 0.55rem; }
+
+            /* 메시지 호버 액션 — them 메시지의 left:40px(데스크톱 avatar 30px+gap)을 모바일(26+gap)에 맞춤 */
+            .chat-msg-wrap:has(.chat-msg.them) .chat-msg-actions { left: 32px; }
+            .chat-msg-action-btn { width: 28px; height: 28px; font-size: 0.78rem; }
+
+            /* 파일 첨부 버블 — 화면 폭에 맞춰 축소 */
+            .chat-file-bubble { max-width: 100%; padding: 10px 12px; gap: 8px; }
+            .chat-file-bubble__icon { width: 36px; height: 36px; font-size: 1rem; }
+            .chat-file-bubble__name { font-size: 0.78rem; }
+            .chat-file-bubble__meta { font-size: 0.64rem; }
+            .chat-file-bubble__dl { width: 30px; height: 30px; font-size: 0.85rem; }
+
+            /* 이미지 미리보기 */
+            .chat-img-preview { max-width: 200px; }
+
+            /* 입력 시 파일 미리보기 칩 */
+            .chat-file-preview { padding: 6px 14px 0; gap: 6px; }
+            .chat-file-chip { max-width: 100%; padding: 7px 10px; font-size: 0.74rem; }
+            .chat-file-chip__name { font-size: 0.74rem; }
+
+            /* 채팅 입력 영역 */
+            .chat-input { padding: 10px 14px; gap: 8px; }
+            .chat-input__attach, .chat-input__btn { width: 40px; height: 40px; font-size: 1.1rem; }
+            .chat-input__field { font-size: 16px; padding: 10px 14px; max-height: 80px; }
+
+            /* 검색 바 */
+            .chat-search-bar { padding: 6px 12px; gap: 6px; }
+            .chat-search-bar input { font-size: 16px; padding: 7px 10px; }
+            .chat-search-bar__count { font-size: 0.66rem; min-width: 50px; }
+
+            /* 타이핑 알림 / 오프라인 알림 / 빈 상태 */
+            .chat-typing { padding: 0 14px 4px; font-size: 0.68rem; }
+            .chat-offline-notice { padding: 7px 14px; font-size: 0.74rem; }
+            .chat-empty__icon { font-size: 2.4rem; }
+            .chat-empty__text { font-size: 0.85rem; }
+            .chat-empty__sub { font-size: 0.74rem; }
+
+            /* 드래그 오버레이 */
+            .chat-drag-overlay__icon { font-size: 2rem; }
+            .chat-drag-overlay__text { font-size: 0.85rem; }
+            .chat-drag-overlay__sub { font-size: 0.7rem; }
+        }
+
+        @media (max-width: 480px) {
+            /* 매우 좁은 화면 — 메시지 버블 더 넓게 사용 */
+            .chat-msg { max-width: 90%; }
+            .chat-msg__bubble { padding: 8px 11px; font-size: 0.82rem; }
+            .chat-contacts { max-height: 200px; }
+            .chat-img-preview { max-width: 170px; }
+            .chat-main__head { padding: 10px 12px; }
+            .chat-messages { padding: 12px 10px; }
+            .chat-input { padding: 8px 10px; }
+            /* 매우 좁은 폭에서 호버 액션을 메시지 위쪽에 표시 (모바일은 hover 없음 → 의미 적음) */
+            .chat-msg-actions { display: none; }
 
             /* 견적·배정·후기 카드 그리드 1열 */
             .diq-list, .assignment-grid, .review-grid { grid-template-columns: 1fr !important; }
