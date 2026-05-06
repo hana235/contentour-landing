@@ -1803,7 +1803,12 @@
                 // 채팅 뷰 진입 시 렌더링
                 if (view === 'chat') {
                     renderChatContacts();
-                    chatLoadFromDB();
+                    // ?chatdemo=1 URL 파라미터 있으면 DB 대신 데모 데이터 시드 (모바일 레이아웃 미리보기용)
+                    if (new URLSearchParams(window.location.search).get('chatdemo') === '1') {
+                        seedChatDemo();
+                    } else {
+                        chatLoadFromDB();
+                    }
                 }
                 // 계약 관리 뷰 진입 시 렌더링
                 if (view === 'contracts') {
@@ -5586,6 +5591,56 @@
         }
 
         chatLoadFromLocal();
+
+        // ══════════════ 데모 채팅 시드 (?chatdemo=1) ══════════════
+        // 운영 데이터·DB 무관, 화면에만 더미 데이터를 띄워 모바일 레이아웃을 점검하기 위한 임시 데이터
+        function seedChatDemo() {
+            const today = new Date().toISOString().split('T')[0];
+            const yest = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+            chatContacts = [
+                { id: 'demo_1', name: '김지영', partnerId: 'demo-p1', company: '(주)한국바이오', expo: 'MEDICA 2025', lang: '독일어', color: '#1565c0', online: true, unread: 2 },
+                { id: 'demo_2', name: '박민수', partnerId: 'demo-p2', company: '스마트테크코리아', expo: 'CES 2026', lang: '영어', color: '#00695c', online: false, unread: 0 },
+                { id: 'demo_3', name: '이수진', partnerId: 'demo-p3', company: '글로벌푸드솔루션', expo: 'SIAL Paris 2026', lang: '프랑스어', color: '#6a1b9a', online: true, unread: 1 }
+            ];
+
+            chatMessages = {
+                demo_1: [
+                    { from: 'them', text: '안녕하세요! 다음 주 MEDICA 전시회 통역 잘 부탁드립니다.', time: '09:15', date: yest },
+                    { from: 'me', text: '안녕하세요. 잘 부탁드립니다 😊', time: '09:18', date: yest },
+                    { from: 'them', text: '제품 카탈로그와 의료기기 전문 용어집 미리 공유드릴게요. 일정 시작 전에 한 번 검토 부탁드립니다.', time: '09:20', date: yest },
+                    { from: 'them', text: '', time: '09:21', date: yest, files: [{ name: 'KoreaBio_Catalog_2025_v3.pdf', size: 2548736, type: 'application/pdf' }] },
+                    { from: 'me', text: '네 받았습니다. 오늘 저녁까지 검토하고 모르는 용어 있으면 질문 드릴게요.', time: '11:42', date: yest },
+                    { from: 'them', text: '감사합니다! 추가로 작년 전시회 부스 사진도 참고로 보내드려요.', time: '14:05', date: yest },
+                    { from: 'them', text: '', time: '14:06', date: yest, files: [{ name: 'booth_2024.jpg', size: 487231, type: 'image/jpeg' }] },
+                    { from: 'me', text: '확인했습니다. 부스 위치가 좋네요!', time: '14:30', date: yest, readByPartner: true },
+                    { from: 'them', text: '내일 오전 9시 30분에 행사장 입구에서 만나면 어떨까요? 미팅 일정이 좀 빡빡해서 일찍 도착하셨으면 합니다.', time: '08:42', date: today, unread: true },
+                    { from: 'them', text: '아, 그리고 참고용 자료 링크도 공유드려요: https://www.medica-tradefair.com/en/visitors/program/exhibitor-list/2025-detailed-program', time: '08:45', date: today, unread: true }
+                ],
+                demo_2: [
+                    { from: 'me', text: '계약서 확인 완료했습니다.', time: '15:22', date: yest },
+                    { from: 'them', text: '네 감사합니다. CES 첫날 부스 운영 시간은 10시~18시입니다.', time: '15:30', date: yest, readByPartner: true },
+                    { from: 'me', text: '확인했습니다. 라스베이거스 컨벤션센터 위치도 미리 파악해두겠습니다.', time: '15:45', date: yest, readByPartner: true },
+                    { from: 'them', text: '추가로 출장 일정 PDF 공유드립니다.', time: '16:00', date: yest },
+                    { from: 'them', text: '', time: '16:01', date: yest, files: [{ name: 'CES2026_Schedule.pdf', size: 1248512, type: 'application/pdf' }] },
+                    { from: 'me', text: '네 감사합니다. 받았습니다.', time: '16:30', date: yest, readByPartner: true }
+                ],
+                demo_3: [
+                    { from: 'them', text: 'Bonjour! 파리 SIAL 전시회 통역 부탁드릴 예정입니다.', time: '10:00', date: today, unread: true },
+                    { from: 'me', text: '안녕하세요. 식품 분야 통역 경험 많이 있어 잘 부탁드립니다.', time: '10:05', date: today, readByPartner: true },
+                    { from: 'them', text: '저희 주력 제품은 K-푸드 발효 식품인데, 프랑스 바이어들에게 효과적으로 소개할 수 있는 방법을 같이 고민하면 좋겠어요.', time: '10:08', date: today }
+                ]
+            };
+
+            updateChatBadges();
+            renderChatContacts();
+            // 첫 채팅방 자동 선택 (데모 미리보기 즉시 확인)
+            if (typeof selectChat === 'function') {
+                selectChat('demo_1');
+            }
+            console.log('[데모] 채팅 시드 완료:', chatContacts.length + '개 채팅방, 총 ' +
+                Object.values(chatMessages).reduce((s, arr) => s + arr.length, 0) + '개 메시지');
+        }
 
         // === Cross-tab chat sync ===
         const CHAT_ROLE = 'interpreter';
