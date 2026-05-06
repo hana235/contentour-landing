@@ -5612,7 +5612,7 @@
                     { from: 'them', text: '', time: '09:21', date: yest, files: [{ name: 'KoreaBio_Catalog_2025_v3.pdf', size: 2548736, type: 'application/pdf' }] },
                     { from: 'me', text: '네 받았습니다. 오늘 저녁까지 검토하고 모르는 용어 있으면 질문 드릴게요.', time: '11:42', date: yest },
                     { from: 'them', text: '감사합니다! 추가로 작년 전시회 부스 사진도 참고로 보내드려요.', time: '14:05', date: yest },
-                    { from: 'them', text: '', time: '14:06', date: yest, files: [{ name: 'booth_2024.jpg', size: 487231, type: 'image/jpeg', dataUrl: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160"><rect width="240" height="160" fill="%23e3f0ff"/><text x="50%" y="50%" font-family="sans-serif" font-size="14" fill="%231565c0" text-anchor="middle" dy=".3em">📷 부스 사진 (데모)</text></svg>') }] },
+                    { from: 'them', text: '', time: '14:06', date: yest, files: [{ name: 'booth_2024.jpg', size: 487231, type: 'image/jpeg', dataUrl: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160"><rect width="240" height="160" fill="rgb(227,240,255)"/><text x="120" y="84" font-family="sans-serif" font-size="14" fill="rgb(21,101,192)" text-anchor="middle">📷 부스 사진 (데모)</text></svg>') }] },
                     { from: 'me', text: '확인했습니다. 부스 위치가 좋네요!', time: '14:30', date: yest, readByPartner: true },
                     { from: 'them', text: '내일 오전 9시 30분에 행사장 입구에서 만나면 어떨까요? 미팅 일정이 좀 빡빡해서 일찍 도착하셨으면 합니다.', time: '08:42', date: today, unread: true },
                     { from: 'them', text: '아, 그리고 참고용 자료 링크도 공유드려요: https://www.medica-tradefair.com/en/visitors/program/exhibitor-list/2025-detailed-program', time: '08:45', date: today, unread: true }
@@ -5904,7 +5904,7 @@
                     ? (m.readByPartner ? '<span class="chat-msg__read read">✓✓ 읽음</span>' : '<span class="chat-msg__read unread">✓ 전송됨</span>')
                     : '';
                 const deleteBtn = m.from === 'me' ? '<div class="chat-msg-actions"><button class="chat-msg-action-btn" onclick="deleteChatMsg(' + i + ')" title="삭제">🗑</button></div>' : '';
-                html += '<div class="chat-msg-wrap" id="chatMsg' + i + '"><div class="chat-msg ' + (m.from === 'me' ? 'me' : 'them') + '">' +
+                html += '<div class="chat-msg-wrap chat-msg-wrap--' + (m.from === 'me' ? 'me' : 'them') + '" id="chatMsg' + i + '"><div class="chat-msg ' + (m.from === 'me' ? 'me' : 'them') + '">' +
                     (m.from !== 'me' ? '<div class="chat-msg__avatar" style="background:' + contact.color + ';">' + escapeHtml(contact.name.charAt(0)) + '</div>' : '') +
                     '<div class="chat-msg__bubble' + (isFileOnly ? ' file-only' : '') + '">' + bubbleContent + '</div>' +
                     '<div class="chat-msg__time">' + m.time + readStatus + '</div></div>' +
