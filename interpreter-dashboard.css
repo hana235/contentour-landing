@@ -3091,6 +3091,91 @@
         @media (max-width: 768px) {
             .jnl-grid { grid-template-columns: 1fr; }
             .jnl-count-grid { grid-template-columns: repeat(2, 1fr); }
+
+            /* 헤더 — 제목/액션 세로 정렬 */
+            .jnl-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .jnl-header__title { font-size: 1.1rem; }
+
+            /* 사이드바 (일지 목록) — 모바일에서 본문 위에 노출되므로 높이 제한 */
+            .jnl-sidebar__body { max-height: 240px; }
+            .jnl-sidebar__head { padding: 12px 14px; }
+            .jnl-list-item { padding: 12px 14px; }
+
+            /* 양식 탭 — 4개 + 추가 버튼이 좁은 화면에서 깨지지 않게 가로 스크롤 */
+            .jnl-format-tabs { padding: 0 14px; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+            .jnl-format-tabs::-webkit-scrollbar { height: 0; }
+            .jnl-format-tab { padding: 11px 14px; font-size: 0.78rem; flex-shrink: 0; }
+            .icfb-add-tab { padding: 9px 12px; font-size: 0.74rem; flex-shrink: 0; }
+
+            /* 에디터 헤더 — 제목 + 우측 버튼이 한 화면에 못 들어감 → 세로 분리 */
+            .jnl-editor__head { flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; }
+            .jnl-editor__head h3 { font-size: 1rem; }
+            .jnl-editor__head p { font-size: 0.78rem; }
+            .jnl-editor__btns { width: 100%; flex-wrap: wrap; gap: 8px; }
+            .jnl-editor__btns .jnl-btn { flex: 1 1 calc(50% - 4px); min-width: 0; padding: 10px 12px; font-size: 0.82rem; }
+
+            /* 에디터 본문 패딩 축소 */
+            .jnl-editor__body { padding: 16px 14px; }
+            .icfb-builder { padding: 16px 14px; }
+
+            /* 섹션 헤더 폰트 */
+            .jnl-section { font-size: 0.92rem; margin: 18px 0 12px; }
+
+            /* 입력 필드 — 모바일 가독성 개선 */
+            .jnl-field input,
+            .jnl-field select,
+            .jnl-field textarea { font-size: 0.92rem; padding: 11px 12px; }
+            .jnl-field label { font-size: 0.78rem; }
+
+            /* 카운트 박스 (총 상담/계약 등) 폰트·패딩 */
+            .jnl-count-box { padding: 12px 8px; }
+            .jnl-count-box label { font-size: 0.72rem; }
+
+            /* 클릭 설문 (현장 분위기/어려움/전달) — 모바일 정리 */
+            .jnl-survey-block { padding: 14px; margin-bottom: 14px; }
+            .jnl-survey-block__title { font-size: 0.92rem; }
+            .jnl-survey-q { font-size: 0.82rem; }
+            .jnl-survey-q__hint { font-size: 0.7rem; }
+            .jnl-survey-chips { gap: 6px; }
+            .jnl-survey-memo { font-size: 0.85rem; padding: 10px 12px; }
+
+            /* 이슈 카드 — 유형/시간 가로 배치를 세로로 */
+            .jnl-issue-card { padding: 14px; }
+            .jnl-issue-card__top { flex-direction: column; gap: 8px; align-items: stretch; }
+            .jnl-issue-card__top select,
+            .jnl-issue-card__top input { width: 100%; }
+            .jnl-issue-card textarea { font-size: 0.88rem; }
+
+            /* 콘텐츄어 양식 푸터 (4개 버튼: 초기화·PDF·임시저장·제출) */
+            .jnl-editor__foot { flex-direction: column; gap: 12px; align-items: stretch; padding: 14px 16px; }
+            .jnl-editor__foot .flex-gap-10 { flex-wrap: wrap; gap: 8px; justify-content: stretch; }
+            .jnl-editor__foot .flex-gap-10 button { flex: 1 1 calc(50% - 4px); padding: 11px 10px; font-size: 0.8rem; min-width: 0; }
+
+            /* 부산/KITA 바이어 row — 동적 생성, 가로 input 7개 → 세로 카드형 */
+            #jnl-bp-buyer-list > div,
+            #jnl-kt-buyer-list > div { flex-direction: column !important; gap: 8px !important; }
+            #jnl-bp-buyer-list > div > *,
+            #jnl-kt-buyer-list > div > * { width: 100% !important; }
+
+            /* 나만의 양식 빌더 - field row */
+            .icfb-field-row { gap: 8px; padding: 10px; }
+            .icfb-field-row input,
+            .icfb-field-row select { font-size: 0.85rem; padding: 8px 10px; }
+            .icfb-field-name { min-width: 100px; }
+            .icfb-field-type { width: 110px; }
+            .icfb-section { padding: 14px; }
+            .icfb-header { flex-direction: column; gap: 10px; align-items: stretch; }
+        }
+
+        @media (max-width: 480px) {
+            .jnl-count-grid { grid-template-columns: 1fr; }
+            .jnl-format-tab { padding: 10px 11px; font-size: 0.74rem; }
+            .jnl-sidebar__body { max-height: 200px; }
+            .jnl-header__title { font-size: 1rem; }
+            .jnl-survey-block__title { font-size: 0.85rem; }
+            .jnl-section { font-size: 0.88rem; }
+            /* 푸터 버튼 — 매우 좁은 화면에서는 1열로 */
+            .jnl-editor__foot .flex-gap-10 button { flex: 1 1 100%; }
         }
 
         /* ══════════════ 뷰 전환 ══════════════ */
