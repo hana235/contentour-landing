@@ -38,11 +38,11 @@ const ChatData = {
             const user = await this.getUser();
             if (!user) return null;
 
-            // 내가 참여한 계약 조회 (계약서 동의 완료된 건만 채팅 활성화)
+            // 내가 참여한 계약 조회 (통역사 파견 확정 건부터 채팅 활성화)
             let query = window.sbClient
                 .from('42_통역계약')
-                .select('id, exhibition_name, client_company, language_pair, customer_id, interpreter_id, status, contract_signed')
-                .eq('contract_signed', true)
+                .select('id, exhibition_name, client_company, language_pair, customer_id, interpreter_id, status, contract_signed, interpreter_accepted')
+                .eq('interpreter_accepted', true)
                 .order('created_at', { ascending: false });
 
             if (user.role === 'customer') {
