@@ -5632,11 +5632,11 @@
                 ]
             };
 
-            updateChatBadges();
+            if (typeof updateChatBadges === 'function') updateChatBadges();
             renderChatContacts();
             // 첫 채팅방 자동 선택 (데모 미리보기 즉시 확인)
-            if (typeof selectChat === 'function') {
-                selectChat('demo_1');
+            if (typeof openChat === 'function') {
+                openChat('demo_1');
             }
             console.log('[데모] 채팅 시드 완료:', chatContacts.length + '개 채팅방, 총 ' +
                 Object.values(chatMessages).reduce((s, arr) => s + arr.length, 0) + '개 메시지');
