@@ -4425,3 +4425,124 @@
         .notif-panel__footer button:hover{background:var(--light-bg);}
         @keyframes notifPulse{0%,100%{box-shadow:0 0 0 0 rgba(229,57,53,0.4);}50%{box-shadow:0 0 0 6px rgba(229,57,53,0);}}
         .notif-dot.active{animation:notifPulse 1.5s ease infinite;}
+
+        /* ════════════════════════════════════════════════════════════════
+           채팅 모바일 — 데스크톱 정의 뒤로 모음 (source order 우위 확보)
+           ──────────────────────────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            /* === 레이아웃: 카카오톡 슬라이드 패턴 === */
+            .chat-layout {
+                display: grid;
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr;
+                height: calc(100dvh - 130px);
+                min-height: 0;
+                position: relative;
+            }
+            .chat-contacts {
+                border-right: none;
+                border-bottom: none;
+                max-height: none;
+                min-height: 0;
+                height: 100%;
+            }
+            .chat-main {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                max-width: 100%;
+                background: var(--gray-100);
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                z-index: 10;
+                min-height: 0;
+                overflow: hidden;
+                box-sizing: border-box;
+            }
+            .chat-layout.chat-open .chat-main { transform: translateX(0); }
+            .chat-back-btn {
+                display: flex;
+                width: 36px; height: 36px;
+                border: none; background: var(--gray-100); border-radius: 8px;
+                cursor: pointer; font-size: 1.1rem;
+                align-items: center; justify-content: center;
+                color: var(--gray-600); flex-shrink: 0; margin-right: 4px;
+            }
+            .chat-back-btn:hover { background: var(--gray-200); color: var(--text); }
+
+            /* === 메시지 영역 === */
+            .chat-messages {
+                padding: 14px 10px;
+                gap: 8px;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                overflow-x: hidden;
+            }
+
+            /* === 메시지 정렬 (chat-msg-wrap--me/--them로 cross axis 정렬) === */
+            .chat-msg-wrap { display: flex; flex-direction: column; width: 100%; max-width: 100%; }
+            .chat-msg-wrap--me { align-items: flex-end; }
+            .chat-msg-wrap--them { align-items: flex-start; }
+
+            /* === 메시지 자체 — max-width 강제 + flex wrap 처방 === */
+            .chat-msg,
+            .chat-msg.me,
+            .chat-msg.them {
+                max-width: 75%;
+                gap: 6px;
+                min-width: 0;
+                box-sizing: border-box;
+                flex-wrap: nowrap;
+            }
+            .chat-msg__avatar { flex-shrink: 0; width: 26px; height: 26px; font-size: 0.62rem; }
+            .chat-msg__time { flex-shrink: 0; font-size: 0.58rem; }
+
+            /* === 메시지 버블 — 한국어/한자/긴 영문 강제 줄바꿈 === */
+            .chat-msg__bubble,
+            .chat-msg.me .chat-msg__bubble,
+            .chat-msg.them .chat-msg__bubble {
+                min-width: 0;
+                max-width: 100%;
+                width: auto;
+                padding: 9px 12px;
+                font-size: 0.86rem;
+                line-height: 1.5;
+                word-break: break-all;
+                overflow-wrap: break-word;
+                white-space: pre-wrap;
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+
+            /* === 채팅방 헤더 === */
+            .chat-main__head { padding: 11px 14px; gap: 10px; }
+            .chat-main__head-avatar { width: 34px; height: 34px; font-size: 0.78rem; }
+            .chat-main__head-name { font-size: 0.85rem; }
+            .chat-main__head-sub { font-size: 0.68rem; }
+            .chat-main__head-btn { width: 36px; height: 36px; min-width: 36px; }
+
+            /* === 입력 영역 === */
+            .chat-input { padding: 10px 14px; gap: 8px; }
+            .chat-input__field { font-size: 16px; padding: 10px 14px; max-height: 80px; }
+
+            /* === 파일/이미지 첨부 === */
+            .chat-file-bubble { max-width: 100%; }
+            .chat-img-preview { max-width: 200px; }
+        }
+
+        @media (max-width: 480px) {
+            .chat-layout { height: calc(100dvh - 110px); }
+            .chat-msg, .chat-msg.me, .chat-msg.them { max-width: 80%; }
+            .chat-msg__bubble,
+            .chat-msg.me .chat-msg__bubble,
+            .chat-msg.them .chat-msg__bubble {
+                padding: 8px 11px;
+                font-size: 0.82rem;
+            }
+            .chat-img-preview { max-width: 170px; }
+            .chat-main__head { padding: 10px 12px; }
+            .chat-messages { padding: 12px 8px; }
+            .chat-input { padding: 8px 10px; }
+            .chat-msg-actions { display: none; }
+        }
