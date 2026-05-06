@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="design-tokens.css">
     <link rel="stylesheet" href="interpreter-dashboard.css?v=20260506-5">
     <style>
-        /* build:20260506-1700 ════════════════════════════════════════════
+        /* build:20260506-1655 ════════════════════════════════════════════
            채팅 모바일 — 인라인 스타일로 강제 적용 (CSS 파일 캐시 우회용)
            HTML은 cache-control: no-cache라 매번 새로 받아지므로 외부 캐시 영향 X
            ──────────────────────────────────────────────────────────────── */
@@ -84,16 +84,22 @@
             #view-chat .chat-msg-wrap--me { align-items: flex-end !important; }
             #view-chat .chat-msg-wrap--them { align-items: flex-start !important; }
 
-            /* === 메시지 자체 === */
+            /* === 메시지 자체 — viewport 기반 절대값 max-width로 화면 밖 차단 === */
             #view-chat .chat-msg,
             #view-chat .chat-msg.me,
             #view-chat .chat-msg.them {
-                max-width: 75% !important;
+                max-width: calc(100vw - 80px) !important;  /* 화면폭 - padding/avatar buffer */
                 gap: 6px !important;
                 min-width: 0 !important;
                 box-sizing: border-box !important;
                 flex-wrap: nowrap !important;
                 width: auto !important;
+            }
+            /* 버블 자체에도 viewport 기반 max-width — 가장 확실한 안전망 */
+            #view-chat .chat-msg__bubble,
+            #view-chat .chat-msg.me .chat-msg__bubble,
+            #view-chat .chat-msg.them .chat-msg__bubble {
+                max-width: calc(100vw - 90px) !important;
             }
             /* me 메시지 추가 처방 — row-reverse + margin-left:auto 충돌 회피 */
             #view-chat .chat-msg.me {
