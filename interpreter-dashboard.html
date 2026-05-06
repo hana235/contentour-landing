@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="design-tokens.css">
     <link rel="stylesheet" href="interpreter-dashboard.css?v=20260506-5">
     <style>
-        /* build:20260506-1655 ════════════════════════════════════════════
+        /* build:20260506-1705 ════════════════════════════════════════════
            채팅 모바일 — 인라인 스타일로 강제 적용 (CSS 파일 캐시 우회용)
            HTML은 cache-control: no-cache라 매번 새로 받아지므로 외부 캐시 영향 X
            ──────────────────────────────────────────────────────────────── */
@@ -25,6 +25,10 @@
                 height: calc(100dvh - 130px) !important;
                 min-height: 0 !important;
                 position: relative !important;
+                overflow: hidden !important;     /* ← 핵심: chat-main이 화면 밖으로 못 나가게 */
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
             }
             #view-chat .chat-contacts {
                 border-right: none !important;
@@ -35,8 +39,11 @@
             }
             #view-chat .chat-main {
                 position: absolute !important;
-                inset: 0 !important;
-                width: 100% !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: auto !important;          /* inset으로 양쪽 고정, width 명시 X */
                 max-width: 100% !important;
                 background: #f5f7fb !important;
                 transform: translateX(100%) !important;
