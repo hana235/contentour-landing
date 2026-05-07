@@ -418,19 +418,21 @@
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 1.05rem;
             color: var(--gray-400);
             padding: 8px;
-            line-height: 1;
+            line-height: 0;
             min-width: 44px;
             min-height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 10px;
+            transition: color 0.15s, background 0.15s;
         }
 
-        .pw-toggle:hover {
+        .pw-toggle:hover, .pw-toggle:active {
             color: var(--blue);
+            background: rgba(21, 101, 192, 0.08);
         }
 
         /* 2열 그리드 */

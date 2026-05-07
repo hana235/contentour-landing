@@ -44,7 +44,31 @@ window.attachPwToggle = function(input) {
     parent.appendChild(btn);
 };
 
+// 기존에 HTML에 직접 박힌 .pw-toggle 버튼(이모지 사용)도 SVG로 갈아끼움
+window.upgradeExistingPwToggle = function(btn) {
+    if (!btn || btn.dataset.pwToggleUpgraded === '1') return;
+    var input = btn.parentElement && btn.parentElement.querySelector('input[type="password"], input[type="text"]');
+    if (!input) {
+        var m = (btn.getAttribute('onclick') || '').match(/togglePw\s*\(\s*['"]([^'"]+)['"]/);
+        if (m) input = document.getElementById(m[1]);
+    }
+    if (!input) return;
+    btn.innerHTML = __PW_ICON_EYE;
+    btn.removeAttribute('onclick');
+    btn.onclick = function() {
+        if (input.type === 'password') { input.type = 'text'; btn.innerHTML = __PW_ICON_EYE_OFF; }
+        else { input.type = 'password'; btn.innerHTML = __PW_ICON_EYE; }
+    };
+    btn.dataset.pwToggleUpgraded = '1';
+    input.dataset.pwToggle = '1'; // 자동 부착이 중복 안 하도록 마킹
+};
+
 document.addEventListener('DOMContentLoaded', function() {
+    // 1. 기존 수동 토글(.pw-toggle) 먼저 SVG로 업그레이드
+    document.querySelectorAll('button.pw-toggle').forEach(function(btn) {
+        try { window.upgradeExistingPwToggle(btn); } catch(e) {}
+    });
+    // 2. 토글이 없는 password input에 자동 부착
     document.querySelectorAll('input[type="password"]').forEach(function(input) {
         try { window.attachPwToggle(input); } catch(e) {}
     });
