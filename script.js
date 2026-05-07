@@ -204,7 +204,7 @@ function downloadManual(event) {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
-    alert('운영 매뉴얼 가이드가 다운로드되었습니다!');
+    if (typeof showToast === 'function') showToast('운영 매뉴얼 가이드가 다운로드되었습니다!', 'success');
 }
 
 // Counter animation for stats

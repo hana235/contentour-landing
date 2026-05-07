@@ -1794,8 +1794,8 @@
       const fields = ['f-expo','f-location','f-source-lang','f-target-lang','f-start','f-end','f-type','f-message'].map(id => document.getElementById(id));
       let valid = true;
       fields.forEach(f => { if (!f.value) { f.style.borderColor='var(--error)'; valid=false; } else { f.style.borderColor=''; } });
-      if (!document.getElementById('f-consent').checked) { alert('개인정보 수집 및 이용에 동의해주세요.'); return; }
-      if (!valid) { alert('필수 항목을 모두 입력해주세요.'); return; }
+      if (!document.getElementById('f-consent').checked) { showToast('개인정보 수집 및 이용에 동의해주세요.', 'error'); return; }
+      if (!valid) { showToast('필수 항목을 모두 입력해주세요.', 'error'); return; }
 
       // Supabase에 문의 저장
       if (window.sbClient) {
@@ -4990,7 +4990,7 @@
       }
 
       var w = window.open('', '_blank', 'width=900,height=1200');
-      if (!w) { alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.'); return; }
+      if (!w) { showToast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.', 'error'); return; }
       w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>통역 서비스 계약서 - ' + safe.id + '</title>');
       w.document.write('<style>' +
         '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }' +

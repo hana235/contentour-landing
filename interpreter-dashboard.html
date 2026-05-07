@@ -5006,14 +5006,14 @@
 
             var reasonSelect = document.getElementById('intCancelReasonSelect').value;
             var reasonText = document.getElementById('intCancelReasonText').value.trim();
-            if (!reasonSelect) { alert('취소 사유를 선택해주세요.'); return; }
+            if (!reasonSelect) { showToast('취소 사유를 선택해주세요.', 'error'); return; }
             var fullReason = reasonSelect === '기타' ? (reasonText || '기타') : reasonSelect + (reasonText ? ' - ' + reasonText : '');
 
-            if (!window.sbClient) { alert('서비스 연결 오류'); return; }
+            if (!window.sbClient) { showToast('서비스 연결 오류', 'error'); return; }
 
             try {
                 var user = await ContentourAuth.getCurrentUser();
-                if (!user) { alert('로그인이 필요합니다.'); return; }
+                if (!user) { showToast('로그인이 필요합니다.', 'error'); return; }
 
                 var modal = document.getElementById('intCancelModal');
                 var startDate = c.dates ? c.dates.start : new Date().toISOString().split('T')[0];
@@ -5065,10 +5065,10 @@
                 closeIntCancelModal();
                 closeIntContractModal();
                 ctRenderList();
-                alert('파견 취소가 신청되었습니다. 관리자 확인 후 처리됩니다.');
+                showToast('파견 취소가 신청되었습니다. 관리자 확인 후 처리됩니다.', 'success');
             } catch(e) {
                 console.error('취소 신청 실패:', e);
-                alert('취소 신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                showToast('취소 신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
             }
         }
 

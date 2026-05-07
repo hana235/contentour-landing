@@ -242,7 +242,7 @@ async function submitDirectInquiry(interpName, lang, field) {
     var phone = document.getElementById('diq-phone').value.trim();
     var expo = document.getElementById('diq-expo').value.trim();
     var message = document.getElementById('diq-message').value.trim();
-    if (!company || !name || !email || !phone || !expo || !message) { alert('필수 항목(*)을 모두 입력해주세요.'); return; }
+    if (!company || !name || !email || !phone || !expo || !message) { showToast('필수 항목(*)을 모두 입력해주세요.', 'error'); return; }
 
     var location = document.getElementById('diq-location').value.trim();
     var period = document.getElementById('diq-period').value.trim();
@@ -302,7 +302,7 @@ async function submitDirectInquiry(interpName, lang, field) {
 
     } catch (err) {
         console.error('직접 견적의뢰 전송 오류:', err);
-        alert('전송에 실패했습니다. 잠시 후 다시 시도해주세요.\n(' + err.message + ')');
+        showToast('전송에 실패했습니다. 잠시 후 다시 시도해주세요.\n(' + err.message + ')', 'error');
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '견적 의뢰 보내기'; }
     }
 }

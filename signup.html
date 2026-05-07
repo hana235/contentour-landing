@@ -432,15 +432,15 @@
             const password = document.getElementById('password').value;
 
             if (!name || !email || !language || !password) {
-                alert('모든 항목을 입력해주세요.');
+                showToast('모든 항목을 입력해주세요.', 'error');
                 return;
             }
             if (password.length < 8) {
-                alert('비밀번호는 8자 이상이어야 합니다.');
+                showToast('비밀번호는 8자 이상이어야 합니다.', 'error');
                 return;
             }
             if (!document.getElementById('agreeTerms').checked) {
-                alert('이용약관 및 개인정보처리방침에 동의해주세요.');
+                showToast('이용약관 및 개인정보처리방침에 동의해주세요.', 'error');
                 return;
             }
 
@@ -459,21 +459,21 @@
                 if (error) {
                     if (btn) { btn.disabled = false; btn.textContent = '파트너 가입 신청'; }
                     if (error.message.includes('already registered')) {
-                        alert('이미 가입된 이메일입니다. 로그인 페이지에서 로그인해주세요.');
+                        showToast('이미 가입된 이메일입니다. 로그인 페이지에서 로그인해주세요.', 'error');
                     } else {
-                        alert('가입 중 오류: ' + error.message);
+                        showToast('가입 중 오류: ' + error.message, 'error');
                     }
                     return;
                 }
 
-                alert('통역사 파트너 가입이 완료되었습니다!\n이메일 인증 후 로그인하실 수 있습니다.\n관리자 승인 후 활동이 가능합니다.');
-                window.location.href = 'client-auth.html';
+                showToast('통역사 파트너 가입이 완료되었습니다!\n이메일 인증 후 로그인해주세요.', 'success');
+                setTimeout(function() { window.location.href = 'client-auth.html'; }, 2000);
                 return;
             }
 
             // ── 데모 모드 ──
-            alert('회원가입 신청이 접수되었습니다. 담당자 승인 후 활동이 가능합니다.');
-            window.location.href = 'login.html';
+            showToast('회원가입 신청이 접수되었습니다. 담당자 승인 후 활동이 가능합니다.', 'success');
+            setTimeout(function() { window.location.href = 'login.html'; }, 2000);
         }
     </script>
 
