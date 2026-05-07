@@ -39,10 +39,13 @@ const ChatData = {
             if (!user) return null;
 
             // 내가 참여한 계약 조회 (통역사 파견 확정 + 취소되지 않은 건만 채팅 활성화)
+            // status='cancelled' 업데이트가 실패한 옛 케이스 대비: cancelled_at IS NULL 필수,
+            // 추가로 51_취소내역에 등록된 contract_id는 제외 (다중 안전망)
             let query = window.sbClient
                 .from('42_통역계약')
-                .select('id, exhibition_name, client_company, language_pair, customer_id, interpreter_id, status, contract_signed, interpreter_accepted')
+                .select('id, exhibition_name, client_company, language_pair, customer_id, interpreter_id, status, contract_signed, interpreter_accepted, cancelled_at')
                 .eq('interpreter_accepted', true)
+                .is('cancelled_at', null)
                 .neq('status', 'cancelled')
                 .order('created_at', { ascending: false });
 
@@ -56,6 +59,21 @@ const ChatData = {
             const { data: contracts, error } = await query;
             if (error) throw error;
             if (!contracts) return [];
+
+            // 51_취소내역에 등록된 계약 ID 제외 (status/cancelled_at 양쪽 다 미반영 대비 최후 안전망)
+            if (contracts.length > 0) {
+                const ids = contracts.map(c => c.id);
+                const { data: cancels } = await window.sbClient
+                    .from('51_취소내역')
+                    .select('contract_id')
+                    .in('contract_id', ids);
+                if (cancels && cancels.length > 0) {
+                    const cancelledIds = new Set(cancels.map(r => r.contract_id));
+                    const filtered = contracts.filter(c => !cancelledIds.has(c.id));
+                    contracts.length = 0;
+                    contracts.push(...filtered);
+                }
+            }
 
             // 상대방 이름 조회 (SECURITY DEFINER 함수로 RLS 안전하게 우회)
             let partnerNames = {};
