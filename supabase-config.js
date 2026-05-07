@@ -12,9 +12,9 @@
 // 페이지 로드 시 type="password" input마다 우측에 👁 버튼을 자동으로 붙임.
 // 동적으로 추가되는 input에는 window.attachPwToggle(el)을 직접 호출하면 됨.
 // 비활성화하려면 input에 data-no-pw-toggle 속성 추가.
-// Heroicons (MIT License, Tailwind Labs) — 상업용 무료
-var __PW_ICON_EYE = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" width="20" height="20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>';
-var __PW_ICON_EYE_OFF = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" width="20" height="20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.244 7.244 3.236 3.236M9.879 9.879a3 3 0 1 0 4.242 4.242M9.879 9.879 14.12 14.12"/></svg>';
+// Heroicons Solid (MIT License, Tailwind Labs) — 상업용 무료, 콘텐츄어 디자인 톤(filled)에 맞춤
+var __PW_ICON_EYE = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path fill-rule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 0 1 0-1.113ZM17.25 12a5.25 5.25 0 1 1-10.5 0 5.25 5.25 0 0 1 10.5 0Z" clip-rule="evenodd"/></svg>';
+var __PW_ICON_EYE_OFF = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true"><path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06l18 18a.75.75 0 1 0 1.06-1.06l-18-18ZM22.676 12.553a11.249 11.249 0 0 1-2.631 4.31l-3.099-3.099a5.25 5.25 0 0 0-6.71-6.71L7.759 4.577a11.217 11.217 0 0 1 4.242-.827c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113Z"/><path d="M15.75 12c0 .18-.013.357-.037.53l-4.244-4.243A3.75 3.75 0 0 1 15.75 12ZM12.53 15.713l-4.243-4.244a3.75 3.75 0 0 0 4.244 4.243Z"/><path d="M6.75 12c0-.619.107-1.213.304-1.764l-3.1-3.1a11.25 11.25 0 0 0-2.63 4.31c-.12.362-.12.752 0 1.114 1.489 4.467 5.704 7.69 10.675 7.69 1.5 0 2.933-.294 4.242-.827l-2.477-2.477A5.25 5.25 0 0 1 6.75 12Z"/></svg>';
 
 window.attachPwToggle = function(input) {
     if (!input || input.type !== 'password' || input.dataset.pwToggle === '1') return;
@@ -34,9 +34,9 @@ window.attachPwToggle = function(input) {
     btn.innerHTML = __PW_ICON_EYE;
     btn.setAttribute('aria-label', '비밀번호 보기/숨기기');
     btn.tabIndex = -1;
-    btn.style.cssText = 'position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;padding:6px;line-height:0;z-index:2;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;transition:color .15s,background .15s;';
-    btn.onmouseenter = function() { btn.style.color = '#333'; btn.style.background = 'rgba(0,0,0,0.05)'; };
-    btn.onmouseleave = function() { btn.style.color = '#888'; btn.style.background = 'none'; };
+    btn.style.cssText = 'position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#8a95a8;padding:6px;line-height:0;z-index:2;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;transition:color .15s,background .15s;';
+    btn.onmouseenter = function() { btn.style.color = '#1565c0'; btn.style.background = 'rgba(21,101,192,0.08)'; };
+    btn.onmouseleave = function() { btn.style.color = '#8a95a8'; btn.style.background = 'none'; };
     btn.onclick = function() {
         if (input.type === 'password') { input.type = 'text'; btn.innerHTML = __PW_ICON_EYE_OFF; }
         else { input.type = 'password'; btn.innerHTML = __PW_ICON_EYE; }
