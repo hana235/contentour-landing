@@ -12,6 +12,10 @@
 // 페이지 로드 시 type="password" input마다 우측에 👁 버튼을 자동으로 붙임.
 // 동적으로 추가되는 input에는 window.attachPwToggle(el)을 직접 호출하면 됨.
 // 비활성화하려면 input에 data-no-pw-toggle 속성 추가.
+// Heroicons (MIT License, Tailwind Labs) — 상업용 무료
+var __PW_ICON_EYE = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" width="20" height="20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>';
+var __PW_ICON_EYE_OFF = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" width="20" height="20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.244 7.244 3.236 3.236M9.879 9.879a3 3 0 1 0 4.242 4.242M9.879 9.879 14.12 14.12"/></svg>';
+
 window.attachPwToggle = function(input) {
     if (!input || input.type !== 'password' || input.dataset.pwToggle === '1') return;
     if (input.hasAttribute('data-no-pw-toggle')) return;
@@ -23,17 +27,19 @@ window.attachPwToggle = function(input) {
 
     // 입력칸 우측에 버튼 공간 확보
     var curPad = parseInt(getComputedStyle(input).paddingRight) || 0;
-    if (curPad < 38) input.style.paddingRight = '38px';
+    if (curPad < 40) input.style.paddingRight = '40px';
 
     var btn = document.createElement('button');
     btn.type = 'button';
-    btn.textContent = '👁';
+    btn.innerHTML = __PW_ICON_EYE;
     btn.setAttribute('aria-label', '비밀번호 보기/숨기기');
     btn.tabIndex = -1;
-    btn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:1rem;padding:4px 8px;line-height:1;z-index:2;';
+    btn.style.cssText = 'position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;padding:6px;line-height:0;z-index:2;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;transition:color .15s,background .15s;';
+    btn.onmouseenter = function() { btn.style.color = '#333'; btn.style.background = 'rgba(0,0,0,0.05)'; };
+    btn.onmouseleave = function() { btn.style.color = '#888'; btn.style.background = 'none'; };
     btn.onclick = function() {
-        if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
-        else { input.type = 'password'; btn.textContent = '👁'; }
+        if (input.type === 'password') { input.type = 'text'; btn.innerHTML = __PW_ICON_EYE_OFF; }
+        else { input.type = 'password'; btn.innerHTML = __PW_ICON_EYE; }
     };
     parent.appendChild(btn);
 };
