@@ -5215,6 +5215,23 @@
                 '<div class="doc-id">계약번호: ' + safe.id + ' | 계약일: ' + contractDate + ' | 템플릿 v1.1</div>' +
             '</div>');
 
+            // 취소 배너
+            if (c.status === 'cancelled') {
+                var cbMap = { customer: '고객사 요청', interpreter: '통역사 요청', admin: '관리자 처리' };
+                var cancelDate = c.cancelledAt ? c.cancelledAt.split('T')[0].replace(/-/g, '.') : '-';
+                var cancelByLabel = cbMap[c.cancelledBy] || c.cancelledBy || '-';
+                var cancelReasonText = _esc(c.cancelReason || '-');
+                w.document.write('<div style="background:#ffebee;border:2px solid #c62828;border-radius:8px;padding:18px 24px;margin-bottom:30px;">' +
+                    '<div style="font-size:17px;font-weight:700;color:#c62828;margin-bottom:10px;">⚠️ 본 계약은 취소되었습니다</div>' +
+                    '<div style="font-size:13px;color:#5d2222;line-height:1.8;">' +
+                        '<div><b>취소일</b>: ' + cancelDate + '</div>' +
+                        '<div><b>취소 주체</b>: ' + cancelByLabel + '</div>' +
+                        '<div><b>취소 사유</b>: ' + cancelReasonText + '</div>' +
+                    '</div>' +
+                    '<div style="margin-top:10px;font-size:11px;color:#888;">본 계약서는 이력 보관 목적으로만 유효하며, 새로운 의무를 발생시키지 않습니다.</div>' +
+                '</div>');
+            }
+
             // Intro
             w.document.write('<div class="doc-intro">' +
                 '본 계약은 "갑"(의뢰인 / 고객사), "을"(서비스 제공자 / 통역사), "병"(중개 플랫폼) 사이에 통역 서비스 제공에 관하여 아래와 같이 체결합니다.' +

@@ -962,6 +962,9 @@ const InterpreterApp = {
                 contractSigned: c.contract_signed || false,
                 customerAgreed: c.contract_signed || false,
                 interpreterAgreed: c.interpreter_accepted || false,
+                cancelledAt: c.cancelled_at || null,
+                cancelledBy: c.cancelled_by || null,
+                cancelReason: c.cancel_reason || null,
                 timeline: this.buildContractTimeline(c)
             };
         });
