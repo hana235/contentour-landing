@@ -1127,7 +1127,7 @@
                                 <label for="reg-pw">비밀번호 <span class="req">*</span></label>
                                 <div class="input-wrap">
                                     <span class="input-icon">🔒</span>
-                                    <input type="password" id="reg-pw" placeholder="8자 이상" autocomplete="new-password"
+                                    <input type="password" id="reg-pw" placeholder="8자 이상 + 대·소문자·숫자" autocomplete="new-password"
                                         required oninput="checkStrength(this)">
                                     <button type="button" class="pw-toggle"
                                         onclick="togglePw('reg-pw', this)">👁️</button>
@@ -1354,8 +1354,9 @@
                 email.classList.add('error'); valid = false;
             } else email.classList.remove('error');
 
-            if (!pw.value || pw.value.length < 8) {
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(pw.value || '')) {
                 pw.classList.add('error'); valid = false;
+                showAlert('비밀번호는 8자 이상이며 대문자·소문자·숫자를 모두 포함해야 합니다.', 'error');
             } else pw.classList.remove('error');
 
             if (pw2.value !== pw.value) {

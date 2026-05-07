@@ -339,7 +339,7 @@
                                 <label for="reg-pw">비밀번호 <span class="req">*</span></label>
                                 <div class="input-wrap">
                                     <span class="input-icon">🔒</span>
-                                    <input type="password" id="reg-pw" placeholder="8자 이상" autocomplete="new-password"
+                                    <input type="password" id="reg-pw" placeholder="8자 이상 + 대·소문자·숫자" autocomplete="new-password"
                                         required oninput="checkStrength(this)">
                                     <button type="button" class="pw-toggle"
                                         onclick="togglePw('reg-pw', this)">👁️</button>
@@ -427,7 +427,7 @@
                 <div id="resetStep3" style="display:none;">
                     <div class="field-group" style="margin-bottom:12px;">
                         <label class="reset-modal__label">새 비밀번호</label>
-                        <input type="password" id="new-pw" placeholder="8자 이상 입력" class="reset-modal__input">
+                        <input type="password" id="new-pw" placeholder="8자 이상 + 대·소문자·숫자" class="reset-modal__input">
                     </div>
                     <div class="field-group" style="margin-bottom:16px;">
                         <label class="reset-modal__label">비밀번호 확인</label>
@@ -842,12 +842,10 @@
                 email.classList.add('error'); valid = false;
             } else email.classList.remove('error');
 
-            // 비밀번호 검증 (8자 이상, 영문+숫자 포함)
-            if (!pw.value || pw.value.length < 8) {
+            // 비밀번호 검증 (8자 이상 + 대문자·소문자·숫자 모두 포함)
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(pw.value || '')) {
                 pw.classList.add('error'); valid = false;
-            } else if (!/[a-zA-Z]/.test(pw.value) || !/[0-9]/.test(pw.value)) {
-                pw.classList.add('error'); valid = false;
-                showAlert('비밀번호는 영문과 숫자를 포함해야 합니다.', 'error');
+                showAlert('비밀번호는 8자 이상이며 대문자·소문자·숫자를 모두 포함해야 합니다.', 'error');
             } else pw.classList.remove('error');
 
             if (pw2.value !== pw.value) {
@@ -1003,8 +1001,8 @@
             const pw = document.getElementById('new-pw').value;
             const pw2 = document.getElementById('new-pw2').value;
 
-            if (!pw || pw.length < 8) {
-                showAlert('비밀번호는 8자 이상이어야 합니다.', 'error');
+            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(pw || '')) {
+                showAlert('비밀번호는 8자 이상이며 대문자·소문자·숫자를 모두 포함해야 합니다.', 'error');
                 return;
             }
             if (pw !== pw2) {
