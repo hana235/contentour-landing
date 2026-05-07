@@ -38,12 +38,43 @@ Disallow: /
 User-agent: Amazonbot
 Disallow: /
 
-# 일반 검색엔진은 허용 (Google, Naver 등)
+# 일반 검색엔진은 허용 (Google, Naver 등) — 단 대시보드·API는 인덱싱 차단
 User-agent: Googlebot
 Allow: /
+Disallow: /admin-dashboard
+Disallow: /admin-interpreters
+Disallow: /customer-dashboard
+Disallow: /interpreter-dashboard
+Disallow: /client-auth-mobile
+Disallow: /api/
 
 User-agent: Yeti
 Allow: /
+Disallow: /admin-dashboard
+Disallow: /admin-interpreters
+Disallow: /customer-dashboard
+Disallow: /interpreter-dashboard
+Disallow: /client-auth-mobile
+Disallow: /api/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin-dashboard
+Disallow: /admin-interpreters
+Disallow: /customer-dashboard
+Disallow: /interpreter-dashboard
+Disallow: /client-auth-mobile
+Disallow: /api/
+
+# 그 외 모든 크롤러 fallback
+User-agent: *
+Allow: /
+Disallow: /admin-dashboard
+Disallow: /admin-interpreters
+Disallow: /customer-dashboard
+Disallow: /interpreter-dashboard
+Disallow: /client-auth-mobile
+Disallow: /api/
+
+# 사이트맵 위치
+Sitemap: https://contentour-landing.vercel.app/sitemap.xml
