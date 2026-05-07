@@ -1797,6 +1797,12 @@
       if (!document.getElementById('f-consent').checked) { showToast('개인정보 수집 및 이용에 동의해주세요.', 'error'); return; }
       if (!valid) { showToast('필수 항목을 모두 입력해주세요.', 'error'); return; }
 
+      // 로딩 상태 (중복 제출 방지)
+      const submitBtn = (event && event.target && event.target.tagName === 'BUTTON') ? event.target : null;
+      const submitBtnOrigText = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '전송 중...'; }
+      const restoreBtn = function() { if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = submitBtnOrigText; } };
+
       // Supabase에 문의 저장
       if (window.sbClient) {
         try {
@@ -1829,6 +1835,7 @@
           if (error) {
             console.error('문의 저장 실패:', error);
             showJToast('&#9888;&#65039; 문의 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            restoreBtn();
             return;
           }
 
@@ -1845,11 +1852,13 @@
           }
         } catch (e) {
           console.error('문의 저장 예외:', e);
+          restoreBtn();
+          return;
         }
       }
 
       showJToast('&#9989; 문의가 성공적으로 접수되었습니다!');
-      setTimeout(() => { resetForm(); switchView('list'); }, 1200);
+      setTimeout(() => { resetForm(); switchView('list'); restoreBtn(); }, 1200);
     }
     function resetForm() { document.getElementById('inquiryForm').reset(); document.querySelectorAll('#view-inquiry input,#view-inquiry select,#view-inquiry textarea').forEach(f => f.style.borderColor=''); }
     function filterList(q) { document.querySelectorAll('.inquiry-card').forEach(c => { c.style.display = c.dataset.title.toLowerCase().includes(q.toLowerCase()) ? 'flex' : 'none'; }); }
@@ -4823,6 +4832,12 @@
 
       if (!window.sbClient) { showContractToast('서비스 연결 오류'); return; }
 
+      // 로딩 상태
+      var cancelBtn = (event && event.target && event.target.tagName === 'BUTTON') ? event.target : null;
+      var cancelBtnOrig = cancelBtn ? cancelBtn.innerHTML : '';
+      if (cancelBtn) { cancelBtn.disabled = true; cancelBtn.innerHTML = '처리 중...'; }
+      var restoreCancelBtn = function() { if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.innerHTML = cancelBtnOrig; } };
+
       try {
         var user = await ContentourAuth.getCurrentUser();
         if (!user) { showContractToast('로그인이 필요합니다.'); return; }
@@ -4867,6 +4882,7 @@
       } catch(e) {
         console.error('취소 신청 실패:', e);
         showContractToast('취소 신청 중 오류가 발생했습니다: ' + (e.message || ''));
+        restoreCancelBtn();
       }
     }
 

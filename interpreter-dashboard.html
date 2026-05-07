@@ -5011,9 +5011,15 @@
 
             if (!window.sbClient) { showToast('서비스 연결 오류', 'error'); return; }
 
+            // 로딩 상태
+            var intCancelBtn = (event && event.target && event.target.tagName === 'BUTTON') ? event.target : null;
+            var intCancelBtnOrig = intCancelBtn ? intCancelBtn.innerHTML : '';
+            if (intCancelBtn) { intCancelBtn.disabled = true; intCancelBtn.innerHTML = '처리 중...'; }
+            var restoreIntCancelBtn = function() { if (intCancelBtn) { intCancelBtn.disabled = false; intCancelBtn.innerHTML = intCancelBtnOrig; } };
+
             try {
                 var user = await ContentourAuth.getCurrentUser();
-                if (!user) { showToast('로그인이 필요합니다.', 'error'); return; }
+                if (!user) { showToast('로그인이 필요합니다.', 'error'); restoreIntCancelBtn(); return; }
 
                 var modal = document.getElementById('intCancelModal');
                 var startDate = c.dates ? c.dates.start : new Date().toISOString().split('T')[0];
@@ -5069,6 +5075,7 @@
             } catch(e) {
                 console.error('취소 신청 실패:', e);
                 showToast('취소 신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                restoreIntCancelBtn();
             }
         }
 

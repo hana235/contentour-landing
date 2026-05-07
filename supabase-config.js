@@ -8,6 +8,42 @@
     }
 })();
 
+// ══════════════ 비밀번호 보기 토글 (모든 password input에 자동 적용) ══════════════
+// 페이지 로드 시 type="password" input마다 우측에 👁 버튼을 자동으로 붙임.
+// 동적으로 추가되는 input에는 window.attachPwToggle(el)을 직접 호출하면 됨.
+// 비활성화하려면 input에 data-no-pw-toggle 속성 추가.
+window.attachPwToggle = function(input) {
+    if (!input || input.type !== 'password' || input.dataset.pwToggle === '1') return;
+    if (input.hasAttribute('data-no-pw-toggle')) return;
+    input.dataset.pwToggle = '1';
+
+    var parent = input.parentElement;
+    if (!parent) return;
+    if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+
+    // 입력칸 우측에 버튼 공간 확보
+    var curPad = parseInt(getComputedStyle(input).paddingRight) || 0;
+    if (curPad < 38) input.style.paddingRight = '38px';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = '👁';
+    btn.setAttribute('aria-label', '비밀번호 보기/숨기기');
+    btn.tabIndex = -1;
+    btn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:1rem;padding:4px 8px;line-height:1;z-index:2;';
+    btn.onclick = function() {
+        if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+        else { input.type = 'password'; btn.textContent = '👁'; }
+    };
+    parent.appendChild(btn);
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[type="password"]').forEach(function(input) {
+        try { window.attachPwToggle(input); } catch(e) {}
+    });
+});
+
 // ══════════════ 공용 토스트 (alert 대체) ══════════════
 // 페이지에 #__toastRoot이 없으면 자동 생성. type: 'info' | 'success' | 'error'
 window.showToast = window.showToast || function(message, type) {
