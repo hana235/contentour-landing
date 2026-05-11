@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
 
         if (error) throw error;
 
-        res.setHeader('Cache-Control', 'no-store, max-age=0');
+        res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
         return res.status(200).json(data || []);
     } catch (e) {
         console.error('Cases query error:', e);
