@@ -129,41 +129,33 @@ const PaymentData = {
         if (!contractId || typeof contractId !== 'string') return { success: false, error: '유효하지 않은 계약 ID' };
         if (!paymentType || !['deposit', 'balance', 'full'].includes(paymentType)) return { success: false, error: '유효하지 않은 결제 유형' };
         if (typeof amount !== 'number' || amount <= 0) return { success: false, error: '유효하지 않은 결제 금액' };
-        if (!merchantUid) return { success: false, error: '거래 ID가 없습니다' };
+        if (!impUid && !merchantUid) return { success: false, error: '결제 ID가 없습니다' };
 
         try {
-            // Edge Function으로 서버 측 결제 검증
-            const { data: fnData, error: fnError } = await supabase.functions.invoke('verify-payment', {
-                body: {
+            // 로그인 토큰 (서버 API가 본인 계약 검증 수행)
+            const session = await supabase.auth.getSession();
+            const token = session && session.data && session.data.session && session.data.session.access_token;
+            if (!token) return { success: false, error: '로그인이 필요합니다.' };
+
+            // 서버에서 PortOne V2 REST로 결제 검증 + process_payment RPC 호출
+            const res = await fetch('/api/verify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({
                     paymentId: impUid || merchantUid,
                     contractId: contractId,
                     paymentType: paymentType,
                     expectedAmount: amount
-                }
+                })
             });
-
-            if (fnError) throw fnError;
-            if (fnData && !fnData.success) throw new Error(fnData.error || '결제 검증 실패');
-
-            return fnData || { success: true };
-        } catch (e) {
-            console.error('결제 검증 실패, 폴백 처리:', e);
-            // Edge Function 실패 시 기존 RPC 폴백
-            try {
-                const { data, error } = await supabase.rpc('process_payment', {
-                    p_contract_id: contractId,
-                    p_payment_type: paymentType,
-                    p_amount: amount,
-                    p_method: method,
-                    p_merchant_uid: merchantUid,
-                    p_imp_uid: impUid || ''
-                });
-                if (error) throw error;
-                return data || { success: true };
-            } catch (e2) {
-                console.error('결제 DB 저장 실패:', e2);
-                return { success: false, error: e2.message };
+            const data = await res.json();
+            if (!res.ok || !data || data.success === false) {
+                return { success: false, error: (data && data.error) || '결제 검증 실패' };
             }
+            return data;
+        } catch (e) {
+            console.error('결제 검증 요청 실패:', e);
+            return { success: false, error: e.message || '결제 검증 중 오류' };
         }
     },
 
