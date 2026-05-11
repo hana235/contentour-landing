@@ -1406,7 +1406,7 @@
             const file = input.files[0];
             const ext = file.name.split('.').pop();
             const path = `certifications/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-            const { data, error } = await sbClient.storage.from('resumes').upload(path, file, {
+            const { data, error } = await sbClient.storage.from('interpreter-docs').upload(path, file, {
                 cacheControl: '3600', upsert: false
             });
             if (error) { console.error('자격증 파일 업로드 실패:', error); return null; }
@@ -1527,7 +1527,7 @@
             if (!sbClient || !file) return null;
             const ext = file.name.split('.').pop();
             const path = `applications/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-            const { data, error } = await sbClient.storage.from('resumes').upload(path, file, {
+            const { data, error } = await sbClient.storage.from('interpreter-docs').upload(path, file, {
                 cacheControl: '3600',
                 upsert: false
             });

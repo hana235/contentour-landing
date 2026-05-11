@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
 
     // 파일 경로 파라미터
     const filePath = req.query.path;
-    const bucket = req.query.bucket || 'resumes';
+    const bucket = req.query.bucket || 'interpreter-docs';
     if (!filePath) return res.status(400).json({ error: 'path 파라미터가 필요합니다.' });
 
     try {

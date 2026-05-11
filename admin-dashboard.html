@@ -11166,7 +11166,7 @@
                 const token = session?.data?.session?.access_token;
                 if (!token) { showToast('로그인이 필요합니다.', 'error'); return; }
 
-                const res = await fetch('/api/file-url?path=' + encodeURIComponent(filePath) + '&bucket=resumes', {
+                const res = await fetch('/api/file-url?path=' + encodeURIComponent(filePath) + '&bucket=interpreter-docs', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const json = await res.json();
