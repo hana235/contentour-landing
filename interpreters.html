@@ -987,17 +987,24 @@
                     addProfilesToData(profiles);
                     loaded = true;
                 }
-            } catch(e) {}
+            } catch(e) { console.warn('[interpreters] API 로드 실패:', e); }
 
             // 2차: 클라이언트 Supabase 폴백
             if (!loaded && window.sbClient) {
                 try {
-                    var { data: profiles } = await window.sbClient
+                    var { data: profiles, error: pErr } = await window.sbClient
                         .from('40_통역사프로필')
                         .select('user_id, display_name, languages, specialties, experience_years, intro, profile_image_url, country_code, field_tag, cases_count, rating, satisfaction, rate_by_type, is_active')
                         .eq('is_active', true);
+                    if (pErr) throw pErr;
                     addProfilesToData(profiles);
-                } catch(e) {}
+                    loaded = true;
+                } catch(e) { console.warn('[interpreters] 폴백 로드 실패:', e); }
+            }
+
+            // 두 경로 모두 실패 시 사용자에게 안내
+            if (!loaded && typeof window.showToast === 'function') {
+                window.showToast('통역사 정보를 불러오지 못했습니다. 잠시 후 새로고침해주세요.', 'error');
             }
 
             renderPage();
