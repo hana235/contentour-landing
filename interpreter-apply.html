@@ -1410,13 +1410,20 @@
             const input = document.getElementById('cf-' + id);
             if (!input || !input.files[0] || !sbClient) return null;
             const file = input.files[0];
-            const ext = file.name.split('.').pop();
-            const path = `certifications/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-            const { data, error } = await sbClient.storage.from('interpreter-docs').upload(path, file, {
-                cacheControl: '3600', upsert: false
-            });
-            if (error) { console.error('자격증 파일 업로드 실패:', error); return null; }
-            return { url: path, name: file.name };
+            try {
+                const resp = await fetch('/api/upload-application-file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: file.name, contentType: file.type, kind: 'certification' })
+                });
+                const result = await resp.json();
+                if (!resp.ok) { console.error('자격증 signed URL 발급 실패:', result.error); return null; }
+                const { error: upErr } = await sbClient.storage
+                    .from('interpreter-docs')
+                    .uploadToSignedUrl(result.path, result.token, file);
+                if (upErr) { console.error('자격증 파일 업로드 실패:', upErr); return null; }
+                return { url: result.path, name: file.name };
+            } catch (e) { console.error('자격증 업로드 예외:', e); return null; }
         }
 
         // ── 태그 토글 ──
@@ -1528,17 +1535,23 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpnZXFiZHJmcGVrenV1bWFrbHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzgwMzQsImV4cCI6MjA5MDQxNDAzNH0.C2y3UiPtHIF2s4nPvbGycN927HOG4YpO86FfgZAelUw';
         const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-        // ── 이력서 파일 업로드 ──
+        // ── 이력서 파일 업로드 (signed URL 발급 후 클라이언트가 직접 PUT) ──
         async function uploadResume(file) {
             if (!sbClient || !file) return null;
-            const ext = file.name.split('.').pop();
-            const path = `applications/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-            const { data, error } = await sbClient.storage.from('interpreter-docs').upload(path, file, {
-                cacheControl: '3600',
-                upsert: false
-            });
-            if (error) { console.error('파일 업로드 실패:', error); return null; }
-            return { url: path, name: file.name };
+            try {
+                const resp = await fetch('/api/upload-application-file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: file.name, contentType: file.type, kind: 'resume' })
+                });
+                const result = await resp.json();
+                if (!resp.ok) { console.error('이력서 signed URL 발급 실패:', result.error); return null; }
+                const { error: upErr } = await sbClient.storage
+                    .from('interpreter-docs')
+                    .uploadToSignedUrl(result.path, result.token, file);
+                if (upErr) { console.error('이력서 파일 업로드 실패:', upErr); return null; }
+                return { url: result.path, name: file.name };
+            } catch (e) { console.error('이력서 업로드 예외:', e); return null; }
         }
 
         // ── 최종 제출 ──
