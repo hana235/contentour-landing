@@ -1624,18 +1624,26 @@
                 String(now6.getDate()).padStart(2, '0') + '-' +
                 String(Math.floor(Math.random() * 10000)).padStart(4, '0');
 
-            if (sbClient) {
-                const { error } = await sbClient
-                    .from('48_통역사지원서')
-                    .insert(payload);
-
-                if (error) {
-                    console.error('지원서 저장 실패:', error);
-                    showToast('⚠️ 지원서 저장에 실패했습니다. 다시 시도해주세요.');
+            try {
+                const resp = await fetch('/api/submit-application', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await resp.json();
+                if (!resp.ok || !result.ok) {
+                    console.error('지원서 저장 실패:', result.error);
+                    showToast('⚠️ ' + (result.error || '지원서 저장에 실패했습니다. 다시 시도해주세요.'));
                     submitBtn.disabled = false;
                     submitBtn.textContent = '🚀 지원서 제출하기';
                     return;
                 }
+            } catch (e) {
+                console.error('지원서 전송 오류:', e);
+                showToast('⚠️ 네트워크 오류. 잠시 후 다시 시도해주세요.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 지원서 제출하기';
+                return;
             }
 
             // 완료 화면

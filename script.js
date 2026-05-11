@@ -332,47 +332,34 @@ function initInquiryForm() {
         if (status) status.textContent = "전송 중입니다…";
 
         try {
-            // ── Supabase DB 저장 ──
-            if (window.sbClient) {
-                const { data, error } = await window.sbClient
-                    .from('46_ITQ견적문의')
-                    .insert({
-                        company: payload.company,
-                        contact_name: payload.name,
-                        email: payload.email,
-                        phone: payload.phone,
-                        exhibition_name: payload.expoName,
-                        location: payload.location,
-                        venue: payload.venue || null,
-                        start_date: payload.startDate,
-                        end_date: payload.endDate,
-                        language_pair: (payload.sourceLang && payload.targetLang) ? payload.sourceLang + ' ↔ ' + payload.targetLang : payload.languages || null,
-                        service_type: payload.type || null,
-                        headcount: parseInt(payload.headcount) || 1,
-                        working_hours: payload.workingHours || null,
-                        keywords: payload.keywords || null,
-                        message: payload.message || null,
-                        consent: payload.consent || false
-                    })
-                    .select()
-                    .single();
-
-                if (error) throw error;
-
-                if (status) status.textContent = "접수가 완료되었습니다! 담당자가 확인 후 연락드리겠습니다.";
-                if (btn) { btn.textContent = "접수 완료!"; }
-                setTimeout(() => {
-                    form.reset();
-                    if (btn) { btn.disabled = false; btn.textContent = "통역 섭외 문의 보내기"; }
-                    document.getElementById('contact').classList.remove('active');
-                    document.body.style.overflow = '';
-                    if (status) status.textContent = "";
-                }, 2500);
-                return;
+            const res = await fetch('/api/submit-inquiry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    company: payload.company,
+                    contact_name: payload.name,
+                    email: payload.email,
+                    phone: payload.phone,
+                    exhibition_name: payload.expoName,
+                    location: payload.location,
+                    venue: payload.venue || null,
+                    start_date: payload.startDate,
+                    end_date: payload.endDate,
+                    language_pair: (payload.sourceLang && payload.targetLang) ? payload.sourceLang + ' ↔ ' + payload.targetLang : payload.languages || null,
+                    service_type: payload.type || null,
+                    headcount: parseInt(payload.headcount) || 1,
+                    working_hours: payload.workingHours || null,
+                    keywords: payload.keywords || null,
+                    message: payload.message || null,
+                    consent: payload.consent === true
+                })
+            });
+            const result = await res.json();
+            if (!res.ok || !result.ok) {
+                throw new Error(result.error || '전송 실패');
             }
 
-            // ── 데모 모드 (Supabase 미연결 시) ──
-            if (status) status.textContent = "접수가 완료되었습니다(데모). 담당자가 확인 후 연락드리겠습니다.";
+            if (status) status.textContent = "접수가 완료되었습니다! 담당자가 확인 후 연락드리겠습니다.";
             if (btn) { btn.textContent = "접수 완료!"; }
             setTimeout(() => {
                 form.reset();
@@ -380,10 +367,10 @@ function initInquiryForm() {
                 document.getElementById('contact').classList.remove('active');
                 document.body.style.overflow = '';
                 if (status) status.textContent = "";
-            }, 2000);
+            }, 2500);
         } catch (err) {
             console.error('ITQ 문의 전송 오류:', err);
-            if (status) status.textContent = "전송에 실패했습니다. 잠시 후 다시 시도해주세요.";
+            if (status) status.textContent = (err && err.message) ? err.message : "전송에 실패했습니다. 잠시 후 다시 시도해주세요.";
             if (btn) { btn.disabled = false; btn.textContent = "통역 섭외 문의 보내기"; }
         }
     });
