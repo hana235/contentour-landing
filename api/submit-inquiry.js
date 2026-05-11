@@ -60,9 +60,21 @@ module.exports = async function handler(req, res) {
     }
 
     try {
+        // 같은 이메일로 이미 가입한 회원이 있으면 user_id 자동 매칭
+        var user_id = null;
+        try {
+            var { data: existing } = await sb
+                .from('01_회원')
+                .select('id')
+                .eq('email', email)
+                .maybeSingle();
+            if (existing && existing.id) user_id = existing.id;
+        } catch (e) { /* 매칭 실패해도 견적 제출은 진행 */ }
+
         var { data, error } = await sb
             .from('46_ITQ견적문의')
             .insert({
+                user_id: user_id,
                 company: company,
                 contact_name: contact_name,
                 email: email,
