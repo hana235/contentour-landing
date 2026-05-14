@@ -1029,18 +1029,18 @@
             <div class="fs-body">
                 <div class="grid2">
                     <div class="field" id="f-name">
-                        <label>이름 (한글) <span class="req">*</span></label>
-                        <input type="text" id="name-ko" placeholder="예: 홍길동">
+                        <label for="name-ko">이름 (한글) <span class="req">*</span></label>
+                        <input type="text" id="name-ko" name="name-ko" autocomplete="name" placeholder="예: 홍길동">
                         <div class="field-err">이름을 입력해주세요.</div>
                     </div>
                     <div class="field" id="f-name-en">
-                        <label>이름 (영문) <span class="req">*</span></label>
-                        <input type="text" id="name-en" placeholder="예: Gildong Hong">
+                        <label for="name-en">이름 (영문) <span class="req">*</span></label>
+                        <input type="text" id="name-en" name="name-en" placeholder="예: Gildong Hong">
                         <div class="field-err">영문 이름을 입력해주세요.</div>
                     </div>
                     <div class="field" id="f-nationality">
-                        <label>국적 <span class="req">*</span></label>
-                        <select id="nationality">
+                        <label for="nationality">국적 <span class="req">*</span></label>
+                        <select id="nationality" name="nationality">
                             <option value="">선택</option>
                             <option>대한민국</option>
                             <option>일본</option>
@@ -1055,35 +1055,35 @@
                         <div class="field-err">국적을 선택해주세요.</div>
                     </div>
                     <div class="field" id="f-birth">
-                        <label>생년월일</label>
-                        <input type="date" id="birth">
+                        <label for="birth">생년월일</label>
+                        <input type="date" id="birth" name="birth" autocomplete="bday">
                     </div>
                     <div class="field" id="f-email">
-                        <label>이메일 <span class="req">*</span></label>
-                        <input type="email" id="email" placeholder="example@email.com">
+                        <label for="email">이메일 <span class="req">*</span></label>
+                        <input type="email" id="email" name="email" autocomplete="email" placeholder="example@email.com">
                         <div class="field-err">올바른 이메일을 입력해주세요.</div>
                     </div>
                     <div class="field" id="f-phone">
-                        <label>연락처 <span class="req">*</span></label>
-                        <input type="tel" id="phone" placeholder="010-0000-0000">
+                        <label for="phone">연락처 <span class="req">*</span></label>
+                        <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="010-0000-0000">
                         <div class="field-err">연락처를 입력해주세요.</div>
                     </div>
                     <div class="field" id="f-gender">
-                        <label>성별</label>
-                        <select id="gender">
+                        <label for="gender">성별</label>
+                        <select id="gender" name="gender">
                             <option value="">선택 안함</option>
                             <option>남성</option>
                             <option>여성</option>
                         </select>
                     </div>
                     <div class="field">
-                        <label>거주 도시</label>
-                        <input type="text" id="city" placeholder="예: 서울, 도쿄, 프랑크푸르트">
+                        <label for="city">거주 도시</label>
+                        <input type="text" id="city" name="city" autocomplete="address-level2" placeholder="예: 서울, 도쿄, 프랑크푸르트">
                     </div>
                 </div>
                 <div class="field">
-                    <label>자기소개 <span class="req">*</span></label>
-                    <textarea id="intro" placeholder="간단한 자기소개, 통역 경험, 강점 등을 자유롭게 작성해주세요. (최소 50자)" rows="4"></textarea>
+                    <label for="intro">자기소개 <span class="req">*</span></label>
+                    <textarea id="intro" name="intro" placeholder="간단한 자기소개, 통역 경험, 강점 등을 자유롭게 작성해주세요. (최소 50자)" rows="4"></textarea>
                     <div class="field-err" id="intro-err">자기소개를 50자 이상 작성해주세요.</div>
                 </div>
                 <div class="form-footer">
@@ -1177,8 +1177,8 @@
                 </div>
 
                 <div class="field" style="margin-top:22px;">
-                    <label>총 통역 경력</label>
-                    <select id="totalExp">
+                    <label for="totalExp">총 통역 경력</label>
+                    <select id="totalExp" name="totalExp">
                         <option value="">선택</option>
                         <option>1년 미만</option>
                         <option>1~3년</option>
@@ -1197,9 +1197,11 @@
                 <div class="field" style="margin-top:22px;">
                     <label>학력</label>
                     <div class="grid2">
-                        <input type="text" id="edu-school" placeholder="대학교/기관명"
+                        <label for="edu-school" class="sr-only">대학교/기관명</label>
+                        <input type="text" id="edu-school" name="edu-school" placeholder="대학교/기관명"
                             style="padding:10px 12px;border:1.5px solid var(--g200);border-radius:9px;font-size:0.87rem;font-family:inherit;background:var(--g100);outline:none;">
-                        <input type="text" id="edu-major" placeholder="전공/학과"
+                        <label for="edu-major" class="sr-only">전공/학과</label>
+                        <input type="text" id="edu-major" name="edu-major" placeholder="전공/학과"
                             style="padding:10px 12px;border:1.5px solid var(--g200);border-radius:9px;font-size:0.87rem;font-family:inherit;background:var(--g100);outline:none;">
                     </div>
                 </div>
@@ -1243,14 +1245,14 @@
 
                 <!-- 포트폴리오 URL -->
                 <div class="field" style="margin-top:18px;">
-                    <label>포트폴리오 / 링크드인 URL <span style="color:var(--g400);font-weight:500;">(선택)</span></label>
-                    <input type="url" id="portfolio" placeholder="https://...">
+                    <label for="portfolio">포트폴리오 / 링크드인 URL <span style="color:var(--g400);font-weight:500;">(선택)</span></label>
+                    <input type="url" id="portfolio" name="portfolio" placeholder="https://...">
                 </div>
 
                 <!-- 지원 동기 -->
                 <div class="field">
-                    <label>콘텐츄어 지원 동기 <span style="color:var(--g400);font-weight:500;">(선택)</span></label>
-                    <textarea id="motivation" rows="3"
+                    <label for="motivation">콘텐츄어 지원 동기 <span style="color:var(--g400);font-weight:500;">(선택)</span></label>
+                    <textarea id="motivation" name="motivation" rows="3"
                         placeholder="콘텐츄어를 선택한 이유, 함께 이루고 싶은 목표 등을 자유롭게 작성해주세요."></textarea>
                 </div>
 
@@ -1335,13 +1337,13 @@
             const div = document.createElement('div');
             div.className = 'lang-row'; div.id = `lang-${id}`;
             div.innerHTML = `
-    <select id="ls-${id}">
+    <select id="ls-${id}" aria-label="출발 언어">
       <option value="">출발 언어</option>
       <option>한국어</option><option>일본어</option><option>독일어</option>
       <option>영어</option><option>중국어</option><option>베트남어</option>
       <option>프랑스어</option><option>스페인어</option>
     </select>
-    <select id="lt-${id}">
+    <select id="lt-${id}" aria-label="도착 언어">
       <option value="">도착 언어</option>
       <option>한국어</option><option>일본어</option><option>독일어</option>
       <option>영어</option><option>중국어</option><option>베트남어</option>
@@ -1369,19 +1371,19 @@
     </div>
     <div class="grid2">
       <div class="field" style="margin-bottom:10px;">
-        <label>전시회/행사명</label>
+        <label for="ce-${id}">전시회/행사명</label>
         <input type="text" id="ce-${id}" placeholder="예: MEDICA 2024, CES 2023">
       </div>
       <div class="field" style="margin-bottom:10px;">
-        <label>개최지</label>
+        <label for="cl-${id}">개최지</label>
         <input type="text" id="cl-${id}" placeholder="예: 독일 뒤셀도르프">
       </div>
       <div class="field" style="margin-bottom:10px;">
-        <label>기간</label>
+        <label for="cp-${id}">기간</label>
         <input type="text" id="cp-${id}" placeholder="예: 2024.11">
       </div>
       <div class="field" style="margin-bottom:10px;">
-        <label>사용 언어</label>
+        <label for="cln-${id}">사용 언어</label>
         <input type="text" id="cln-${id}" placeholder="예: 한국어 ↔ 독일어">
       </div>
     </div>`;
@@ -1399,8 +1401,8 @@
             const div = document.createElement('div');
             div.className = 'cert-row has-file'; div.id = `cert-${id}`;
             div.innerHTML = `
-    <input type="text" id="cn-${id}" placeholder="자격증명 (예: JLPT N1)">
-    <input type="text" id="cy-${id}" placeholder="취득연도">
+    <input type="text" id="cn-${id}" aria-label="자격증명" placeholder="자격증명 (예: JLPT N1)">
+    <input type="text" id="cy-${id}" aria-label="취득연도" placeholder="취득연도">
     <label class="cert-file-label" id="cfl-${id}">
         <input type="file" id="cf-${id}" accept=".pdf,.jpg,.jpeg,.png" onchange="handleCertFile(${id}, this)">
         📎 증빙파일
