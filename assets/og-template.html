@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1200px; height: 630px; overflow: hidden; }
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: linear-gradient(135deg, #0a2a5e 0%, #1565c0 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 64px;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+}
+.bg-pattern {
+    position: absolute; inset: 0;
+    background:
+        radial-gradient(circle at 12% 18%, rgba(79, 195, 247, 0.18) 0%, transparent 42%),
+        radial-gradient(circle at 88% 82%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+}
+.logo {
+    width: 280px;
+    height: auto;
+    margin-bottom: 36px;
+    z-index: 1;
+}
+.title {
+    font-size: 60px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    margin-bottom: 28px;
+    z-index: 1;
+    line-height: 1.18;
+}
+.title .accent { color: #4fc3f7; }
+.sub {
+    font-size: 28px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
+    margin-bottom: 52px;
+    letter-spacing: -0.4px;
+    z-index: 1;
+}
+.url {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    padding: 12px 36px;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-radius: 100px;
+    z-index: 1;
+    letter-spacing: 0.6px;
+}
+</style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<img src="footer_logo.png" class="logo" alt="">
+<div class="title">전시회 현장 통역 <span class="accent">&amp;</span> 비즈매칭</div>
+<div class="sub">80개국 검증된 전문 통역사 네트워크</div>
+<div class="url">contentour.co.kr</div>
+</body>
+</html>
