@@ -33,9 +33,12 @@
             </div>
             <h2 style="font-size:1.2rem;font-weight:800;color:#1a2a4a;margin-bottom:6px;">CONTENTOUR</h2>
             <p style="font-size:0.82rem;color:#8a95a8;margin-bottom:24px;">접근이 제한된 페이지입니다. 비밀번호를 입력하세요.</p>
-            <input id="pwInput" type="password" placeholder="비밀번호 입력" style="width:100%;padding:14px 16px;border:2px solid #e0e5ec;border-radius:12px;font-size:0.92rem;outline:none;box-sizing:border-box;font-family:inherit;transition:border 0.2s;" onfocus="this.style.borderColor='#1565c0'" onblur="this.style.borderColor='#e0e5ec'">
-            <div id="pwError" style="color:#c62828;font-size:0.78rem;margin-top:8px;height:20px;"></div>
-            <button onclick="checkPw()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:12px;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">확인</button>
+            <form id="pwForm" onsubmit="event.preventDefault();checkPw();" autocomplete="off">
+                <label for="pwInput" class="sr-only">비밀번호</label>
+                <input id="pwInput" name="password" type="password" aria-label="비밀번호" placeholder="비밀번호 입력" style="width:100%;padding:14px 16px;border:2px solid #e0e5ec;border-radius:12px;font-size:0.92rem;outline:none;box-sizing:border-box;font-family:inherit;transition:border 0.2s;" onfocus="this.style.borderColor='#1565c0'" onblur="this.style.borderColor='#e0e5ec'">
+                <div id="pwError" style="color:#c62828;font-size:0.78rem;margin-top:8px;height:20px;"></div>
+                <button type="submit" style="width:100%;padding:14px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:12px;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">확인</button>
+            </form>
         </div>
     </div>
     <script src="pw-gate.js"></script>
@@ -54,7 +57,7 @@
                         <span class="nav__menu-desc">서비스 이용 안내</span>
                     </div>
                 </a>
-<a href="service.html">
+                <a href="service.html">
                     <span class="nav__menu-icon">🏢</span>
                     <div class="nav__menu-text">
                         <span class="nav__menu-title">서비스 안내</span>
@@ -89,7 +92,7 @@
     </header>
 
     <main class="page">
-        <section class="hero" style="min-height:36vh;background:linear-gradient(rgba(26,32,44,0.88),rgba(15,23,42,0.92)),url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');background-size:cover;background-position:center;">
+        <section class="hero" style="min-height:36vh;background:linear-gradient(rgba(10,22,50,0.78),rgba(15,23,42,0.88)),url('assets/hero-bg.jpg');background-size:cover;background-position:center;">
             <div class="hero-overlay"></div>
             <div class="hero-content">
                 <h1>대표 고객사례</h1>
@@ -146,11 +149,11 @@
                 </div>
             </div>
             <div style="margin-top:16px;display:flex;gap:20px;flex-wrap:wrap;">
-                <a href="terms.html#sec-common" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.78rem;">서비스 이용약관</a>
-                <a href="terms.html#sec-customer" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.78rem;">고객사 이용약관</a>
-                <a href="terms.html#sec-interpreter" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.78rem;">통역사 이용약관</a>
-                <a href="terms.html#sec-operation" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.78rem;">서비스 운영정책</a>
-                <a href="terms.html#sec-privacy" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.78rem;">개인정보처리방침</a>
+                <a href="terms.html#sec-common" class="footer-terms-link">서비스 이용약관</a>
+                <a href="terms.html#sec-customer" class="footer-terms-link">고객사 이용약관</a>
+                <a href="terms.html#sec-interpreter" class="footer-terms-link">통역사 이용약관</a>
+                <a href="terms.html#sec-operation" class="footer-terms-link">서비스 운영정책</a>
+                <a href="terms.html#sec-privacy" class="footer-terms-link">개인정보처리방침</a>
             </div>
             <div class="footer-bottom-pro" style="margin-top:20px;">
                 <p>&copy; 2026 CONTENTOUR Co., Ltd. All Rights Reserved.</p>

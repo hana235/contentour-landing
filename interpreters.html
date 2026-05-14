@@ -263,9 +263,12 @@
             </div>
             <h2 style="font-size:1.2rem;font-weight:800;color:#1a2a4a;margin-bottom:6px;">CONTENTOUR</h2>
             <p style="font-size:0.82rem;color:#8a95a8;margin-bottom:24px;">접근이 제한된 페이지입니다. 비밀번호를 입력하세요.</p>
-            <input id="pwInput" type="password" placeholder="비밀번호 입력" style="width:100%;padding:14px 16px;border:2px solid #e0e5ec;border-radius:12px;font-size:0.92rem;outline:none;box-sizing:border-box;font-family:inherit;transition:border 0.2s;" onfocus="this.style.borderColor='#1565c0'" onblur="this.style.borderColor='#e0e5ec'">
-            <div id="pwError" style="color:#c62828;font-size:0.78rem;margin-top:8px;height:20px;"></div>
-            <button onclick="checkPw()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:12px;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">확인</button>
+            <form id="pwForm" onsubmit="event.preventDefault();checkPw();" autocomplete="off">
+                <label for="pwInput" class="sr-only">비밀번호</label>
+                <input id="pwInput" name="password" type="password" aria-label="비밀번호" placeholder="비밀번호 입력" style="width:100%;padding:14px 16px;border:2px solid #e0e5ec;border-radius:12px;font-size:0.92rem;outline:none;box-sizing:border-box;font-family:inherit;transition:border 0.2s;" onfocus="this.style.borderColor='#1565c0'" onblur="this.style.borderColor='#e0e5ec'">
+                <div id="pwError" style="color:#c62828;font-size:0.78rem;margin-top:8px;height:20px;"></div>
+                <button type="submit" style="width:100%;padding:14px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:12px;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">확인</button>
+            </form>
         </div>
     </div>
     <script src="pw-gate.js"></script>
@@ -337,7 +340,8 @@
             <div class="interp-toolbar">
                 <div class="interp-search">
                     <span class="interp-search__icon">🔍</span>
-                    <input type="text" id="searchInput" placeholder="통역사 이름, 언어, 분야로 검색" oninput="onSearch()">
+                    <label for="searchInput" class="sr-only">통역사 검색</label>
+                    <input type="text" id="searchInput" aria-label="통역사 검색" placeholder="통역사 이름, 언어, 분야로 검색" oninput="onSearch()">
                 </div>
                 <div class="interp-sort">
                     <button class="interp-sort__btn active" onclick="sortBy('recommend', this)">추천순</button>

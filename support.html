@@ -21,6 +21,12 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="통역지원 서비스 - 콘텐츄어">
     <meta name="twitter:description" content="고객사 문의부터 통역사 매칭, 현장 파견, 정산까지. 체계적 협업 시스템.">
+    <!-- Preconnect: 외부 도메인 핸드셰이크 사전 수행 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://flagcdn.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
     <link rel="stylesheet" href="design-tokens.css">
     <link rel="stylesheet" href="styles.css?v=1.1">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -35,9 +41,12 @@
             </div>
             <h2 style="font-size:1.2rem;font-weight:800;color:#1a2a4a;margin-bottom:6px;">CONTENTOUR</h2>
             <p style="font-size:0.82rem;color:#8a95a8;margin-bottom:24px;">접근이 제한된 페이지입니다. 비밀번호를 입력하세요.</p>
-            <input id="pwInput" type="password" placeholder="비밀번호 입력" style="width:100%;padding:14px 16px;border:2px solid #e0e5ec;border-radius:12px;font-size:0.92rem;outline:none;box-sizing:border-box;font-family:inherit;transition:border 0.2s;" onfocus="this.style.borderColor='#1565c0'" onblur="this.style.borderColor='#e0e5ec'">
-            <div id="pwError" style="color:#c62828;font-size:0.78rem;margin-top:8px;height:20px;"></div>
-            <button onclick="checkPw()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:12px;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">확인</button>
+            <form id="pwForm" onsubmit="event.preventDefault();checkPw();" autocomplete="off">
+                <label for="pwInput" class="sr-only">비밀번호</label>
+                <input id="pwInput" name="password" type="password" aria-label="비밀번호" placeholder="비밀번호 입력" style="width:100%;padding:14px 16px;border:2px solid #e0e5ec;border-radius:12px;font-size:0.92rem;outline:none;box-sizing:border-box;font-family:inherit;transition:border 0.2s;" onfocus="this.style.borderColor='#1565c0'" onblur="this.style.borderColor='#e0e5ec'">
+                <div id="pwError" style="color:#c62828;font-size:0.78rem;margin-top:8px;height:20px;"></div>
+                <button type="submit" style="width:100%;padding:14px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:12px;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">확인</button>
+            </form>
         </div>
     </div>
     <script src="pw-gate.js"></script>
@@ -224,7 +233,7 @@
 
     <!-- Blue ITQ Section -->
     <section id="contact" class="blue-itq">
-        <button class="blue-itq__close" id="closeInquiry" aria-label="Close inquiry form">×</button>
+        <button class="blue-itq__close" id="closeInquiry" aria-label="견적 문의 닫기">×</button>
         <div class="blue-itq__wrap">
             <header class="blue-itq__head">
                 <p class="blue-itq__eyebrow">Interpreter Quote</p>
