@@ -611,28 +611,6 @@
             }
         })();
 
-        // 패널 열린 후 별점 배지 삽입 (MutationObserver)
-        var _panelObserver = new MutationObserver(function() {
-            if (!window._dbRatings) return;
-            document.querySelectorAll('.ip-card__name').forEach(function(el) {
-                var name = el.textContent.trim();
-                var r = window._dbRatings[name];
-                if (!r) return;
-                var card = el.closest('.ip-card');
-                if (!card || card.querySelector('.db-rating-inline')) return;
-                var stars = '';
-                for (var i = 0; i < 5; i++) stars += i < Math.round(parseFloat(r.score)) ? '★' : '☆';
-                var badge = document.createElement('div');
-                badge.className = 'db-rating-inline';
-                badge.style.cssText = 'display:flex;align-items:center;gap:4px;padding:6px 10px;background:linear-gradient(135deg,#fff8e1,#fff3e0);border-radius:8px;margin:6px 0;border:1px solid #ffe0b2;font-size:0.78rem;';
-                badge.innerHTML = '<span style="color:#f57c00;letter-spacing:1px;">' + stars + '</span><b style="color:#f57c00;">' + r.score + '</b><span style="color:#999;">(' + r.count + '개 리뷰)</span>';
-                var intro = card.querySelector('.ip-card__intro');
-                if (intro) intro.parentNode.insertBefore(badge, intro);
-            });
-        });
-        _panelObserver.observe(document.getElementById('interpPanel'), { childList: true, subtree: true });
-        _panelObserver.observe(document.getElementById('interpPanel2'), { childList: true, subtree: true });
-
         // 플로팅 CTA: 스크롤 300px 이후 표시, 견적 폼 근처에서 숨김
         (function() {
             var cta = document.getElementById('floatingCta');
