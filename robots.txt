@@ -1,3 +1,6 @@
+# ⚠️ 출시 전 모드: 모든 검색엔진 차단
+# 정식 오픈 시점에 일반 검색엔진 섹션을 Allow:/로 복구할 것
+
 # AI 크롤러 차단
 User-agent: GPTBot
 Disallow: /
@@ -38,43 +41,19 @@ Disallow: /
 User-agent: Amazonbot
 Disallow: /
 
-# 일반 검색엔진은 허용 (Google, Naver 등) — 단 대시보드·API는 인덱싱 차단
+# 일반 검색엔진도 출시 전까지 차단 (PW gate 활성 중)
 User-agent: Googlebot
-Allow: /
-Disallow: /admin-dashboard
-Disallow: /admin-interpreters
-Disallow: /customer-dashboard
-Disallow: /interpreter-dashboard
-Disallow: /client-auth-mobile
-Disallow: /api/
+Disallow: /
 
 User-agent: Yeti
-Allow: /
-Disallow: /admin-dashboard
-Disallow: /admin-interpreters
-Disallow: /customer-dashboard
-Disallow: /interpreter-dashboard
-Disallow: /client-auth-mobile
-Disallow: /api/
+Disallow: /
 
 User-agent: Bingbot
-Allow: /
-Disallow: /admin-dashboard
-Disallow: /admin-interpreters
-Disallow: /customer-dashboard
-Disallow: /interpreter-dashboard
-Disallow: /client-auth-mobile
-Disallow: /api/
+Disallow: /
 
 # 그 외 모든 크롤러 fallback
 User-agent: *
-Allow: /
-Disallow: /admin-dashboard
-Disallow: /admin-interpreters
-Disallow: /customer-dashboard
-Disallow: /interpreter-dashboard
-Disallow: /client-auth-mobile
-Disallow: /api/
+Disallow: /
 
-# 사이트맵 위치
+# 사이트맵 위치 (출시 후 활성화)
 Sitemap: https://contentour-landing.vercel.app/sitemap.xml

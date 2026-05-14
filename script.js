@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', function () {
     initActiveNavLink();
     initSmoothScroll();
     initScrollAnimations();
-    initParallax();
     initInquiryForm();
     initExpoAutocomplete();
+
 
     initFaqAccessibility();
     initCountryCardKeyboard();
@@ -144,22 +144,6 @@ function initScrollAnimations() {
         item.style.transform = 'scale(0.8)';
         item.style.transition = `all 0.5s ease ${index * 0.1}s`;
         observer.observe(item);
-    });
-}
-
-// Parallax effect for hero section
-function initParallax() {
-    const hero = document.querySelector('.hero');
-
-    if (!hero) return;
-
-    window.addEventListener('scroll', function () {
-        const scrolled = window.pageYOffset;
-        const parallaxSpeed = 0.5;
-
-        if (scrolled < window.innerHeight) {
-            hero.style.backgroundPositionY = `${scrolled * parallaxSpeed}px`;
-        }
     });
 }
 
