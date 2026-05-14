@@ -1014,6 +1014,9 @@
             </div>
         </div>
 
+        <!-- 통역사 지원 폼 (4 step 통합) — onsubmit preventDefault로 Enter 자동 제출 차단 -->
+        <form id="applyForm" onsubmit="event.preventDefault();return false;" autocomplete="on" novalidate>
+
         <!-- STEP 1: 기본 정보 -->
         <div class="form-section active" id="step1">
             <div class="fs-head">
@@ -1086,7 +1089,7 @@
                 <div class="form-footer">
                     <a href="index.html" style="text-decoration:none;"><button class="btn-back" type="button">←
                             메인으로</button></a>
-                    <button class="btn-next" onclick="nextStep(1)">다음 단계 →</button>
+                    <button class="btn-next" type="button" onclick="nextStep(1)">다음 단계 →</button>
                 </div>
             </div>
         </div>
@@ -1105,54 +1108,54 @@
                     <label>통역 가능 언어 <span class="req">*</span> <span style="color:var(--g400);font-weight:500;">(복수 추가
                             가능)</span></label>
                     <div class="lang-list" id="langList"></div>
-                    <button class="add-btn" onclick="addLang()">+ 언어 추가</button>
+                    <button class="add-btn" type="button" onclick="addLang()">+ 언어 추가</button>
                 </div>
 
                 <div class="field" style="margin-top:22px;">
                     <label>전문 분야 <span class="req">*</span> <span style="color:var(--g400);font-weight:500;">(해당되는 것 모두
                             선택)</span></label>
                     <div class="tags-grid" id="specTags">
-                        <button class="field-tag" onclick="toggleTag(this)">🏭 제조·산업</button>
-                        <button class="field-tag" onclick="toggleTag(this)">⚡ 에너지·환경</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🏥 의료·바이오</button>
-                        <button class="field-tag" onclick="toggleTag(this)">💻 IT·전자</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🍽️ 식품·농업</button>
-                        <button class="field-tag" onclick="toggleTag(this)">👗 패션·뷰티</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🏗️ 건축·건설</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🚗 자동차·모빌리티</button>
-                        <button class="field-tag" onclick="toggleTag(this)">✈️ 항공·방위</button>
-                        <button class="field-tag" onclick="toggleTag(this)">💰 금융·투자</button>
-                        <button class="field-tag" onclick="toggleTag(this)">📦 물류·무역</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🎨 문화·예술</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🏭 제조·산업</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">⚡ 에너지·환경</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🏥 의료·바이오</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">💻 IT·전자</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🍽️ 식품·농업</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">👗 패션·뷰티</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🏗️ 건축·건설</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🚗 자동차·모빌리티</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">✈️ 항공·방위</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">💰 금융·투자</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">📦 물류·무역</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🎨 문화·예술</button>
                     </div>
                 </div>
 
                 <div class="field" style="margin-top:22px;">
                     <label>통역 형태 <span style="color:var(--g400);font-weight:500;">(가능한 것 모두 선택)</span></label>
                     <div class="tags-grid" id="typeTags">
-                        <button class="field-tag" onclick="toggleTag(this)">🏢 부스 상주</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🤝 미팅 동행</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🎤 현장 운영</button>
-                        <button class="field-tag" onclick="toggleTag(this)">📱 원격 통역</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🏢 부스 상주</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🤝 미팅 동행</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🎤 현장 운영</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">📱 원격 통역</button>
                     </div>
                 </div>
 
                 <div class="field" style="margin-top:22px;">
                     <label>희망 파견 지역 <span style="color:var(--g400);font-weight:500;">(가능한 지역 모두 선택)</span></label>
                     <div class="tags-grid" id="regionTags">
-                        <button class="field-tag" onclick="toggleTag(this)">🇰🇷 한국</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🇯🇵 일본</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🇩🇪 독일·유럽</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🇺🇸 미국</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🇨🇳 중국</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🇻🇳 동남아</button>
-                        <button class="field-tag" onclick="toggleTag(this)">🌍 전 세계</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🇰🇷 한국</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🇯🇵 일본</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🇩🇪 독일·유럽</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🇺🇸 미국</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🇨🇳 중국</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🇻🇳 동남아</button>
+                        <button class="field-tag" type="button" onclick="toggleTag(this)">🌍 전 세계</button>
                     </div>
                 </div>
 
                 <div class="form-footer">
-                    <button class="btn-back" onclick="prevStep(2)">← 이전</button>
-                    <button class="btn-next" onclick="nextStep(2)">다음 단계 →</button>
+                    <button class="btn-back" type="button" onclick="prevStep(2)">← 이전</button>
+                    <button class="btn-next" type="button" onclick="nextStep(2)">다음 단계 →</button>
                 </div>
             </div>
         </div>
@@ -1170,7 +1173,7 @@
                 <div class="field">
                     <label>통역 경력 <span style="color:var(--g400);font-weight:500;">(전시회·비즈니스 통역 경험)</span></label>
                     <div class="career-list" id="careerList"></div>
-                    <button class="add-btn" onclick="addCareer()">+ 경력 추가</button>
+                    <button class="add-btn" type="button" onclick="addCareer()">+ 경력 추가</button>
                 </div>
 
                 <div class="field" style="margin-top:22px;">
@@ -1188,7 +1191,7 @@
                 <div class="field" style="margin-top:22px;">
                     <label>자격증 / 수료증 <span style="color:var(--g400);font-weight:500;">(선택)</span></label>
                     <div class="cert-list" id="certList"></div>
-                    <button class="add-btn" onclick="addCert()">+ 자격증 추가</button>
+                    <button class="add-btn" type="button" onclick="addCert()">+ 자격증 추가</button>
                 </div>
 
                 <div class="field" style="margin-top:22px;">
@@ -1202,8 +1205,8 @@
                 </div>
 
                 <div class="form-footer">
-                    <button class="btn-back" onclick="prevStep(3)">← 이전</button>
-                    <button class="btn-next" onclick="nextStep(3)">다음 단계 →</button>
+                    <button class="btn-back" type="button" onclick="prevStep(3)">← 이전</button>
+                    <button class="btn-next" type="button" onclick="nextStep(3)">다음 단계 →</button>
                 </div>
             </div>
         </div>
@@ -1232,7 +1235,7 @@
                     <div class="upload-preview" id="uploadPreview">
                         <span>📎</span>
                         <span id="uploadFileName"></span>
-                        <button onclick="removeFile()"
+                        <button type="button" onclick="removeFile()"
                             style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--error);font-size:0.8rem;font-weight:700;">✕
                             제거</button>
                     </div>
@@ -1274,11 +1277,14 @@
                 </div>
 
                 <div class="form-footer">
-                    <button class="btn-back" onclick="prevStep(4)">← 이전</button>
-                    <button class="btn-submit" onclick="submitForm()">🚀 지원서 제출하기</button>
+                    <button class="btn-back" type="button" onclick="prevStep(4)">← 이전</button>
+                    <button class="btn-submit" type="button" onclick="submitForm()">🚀 지원서 제출하기</button>
                 </div>
             </div>
         </div>
+
+        </form>
+        <!-- /applyForm -->
 
         <!-- 완료 화면 -->
         <div class="complete-card" id="completeCard">
@@ -1341,7 +1347,7 @@
       <option>영어</option><option>중국어</option><option>베트남어</option>
       <option>프랑스어</option><option>스페인어</option>
     </select>
-    <button class="lang-del" onclick="removeLang(${id})">✕</button>`;
+    <button class="lang-del" type="button" onclick="removeLang(${id})">✕</button>`;
             document.getElementById('langList').appendChild(div);
         }
         function removeLang(id) {
@@ -1359,7 +1365,7 @@
             div.innerHTML = `
     <div class="career-item-head">
       <span>경력 ${careers.length}</span>
-      <button class="career-del" onclick="removeCareer(${id})">✕ 삭제</button>
+      <button class="career-del" type="button" onclick="removeCareer(${id})">✕ 삭제</button>
     </div>
     <div class="grid2">
       <div class="field" style="margin-bottom:10px;">
@@ -1399,7 +1405,7 @@
         <input type="file" id="cf-${id}" accept=".pdf,.jpg,.jpeg,.png" onchange="handleCertFile(${id}, this)">
         📎 증빙파일
     </label>
-    <button class="lang-del" onclick="removeCert(${id})">✕</button>`;
+    <button class="lang-del" type="button" onclick="removeCert(${id})">✕</button>`;
             document.getElementById('certList').appendChild(div);
         }
         function removeCert(id) {
