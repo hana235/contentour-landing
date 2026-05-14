@@ -5,6 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>고객사 로그인 - 콘텐츄어 통역 운영 시스템</title>
+    <meta name="description" content="콘텐츄어 고객사 로그인. 견적 문의·계약·결제·상담일지 등 통역 운영 시스템에 접속하세요.">
+    <!-- 출시 전 모드: noindex (robots.txt와 정합). 출시 시 'index, follow'로 복구 -->
+    <meta name="robots" content="noindex, nofollow">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="design-tokens.css">
@@ -83,7 +91,7 @@
 
             <div class="brand-body">
                 <p class="brand-eyebrow">Corporate Service</p>
-                <h1 class="brand-headline">글로벌 비즈니스의 시작,<br><em>콘텐츄어</em>와 함께<br>완성하세요.</h1>
+                <h1 class="brand-headline">글로벌 비즈니스의 시작, <br><em>콘텐츄어</em>와 함께 <br>완성하세요.</h1>
                 <p class="brand-desc">
                     복잡한 통역사 섭외부터 현장 운영까지.<br>
                     고객사 전용 포털에서 모든 과정을 통합 관리하세요.
@@ -408,13 +416,13 @@
             </div>
             <div class="reset-modal__body">
                 <!-- Step 1: 이메일 입력 -->
-                <div id="resetStep1">
+                <form id="resetStep1" onsubmit="event.preventDefault();sendResetEmail();">
                     <div class="field-group" style="margin-bottom:16px;">
-                        <label class="reset-modal__label">이메일 주소</label>
-                        <input type="email" id="reset-email" placeholder="가입 시 사용한 이메일" class="reset-modal__input">
+                        <label for="reset-email" class="reset-modal__label">이메일 주소</label>
+                        <input type="email" id="reset-email" name="email" placeholder="가입 시 사용한 이메일" class="reset-modal__input" autocomplete="email">
                     </div>
-                    <button onclick="sendResetEmail()" id="resetSendBtn" class="reset-modal__btn reset-modal__btn--primary">재설정 링크 발송</button>
-                </div>
+                    <button type="submit" id="resetSendBtn" class="reset-modal__btn reset-modal__btn--primary">재설정 링크 발송</button>
+                </form>
                 <!-- Step 2: 발송 완료 -->
                 <div id="resetStep2" style="display:none;">
                     <div class="reset-modal__result">
@@ -424,17 +432,17 @@
                     </div>
                 </div>
                 <!-- Step 3: 새 비밀번호 입력 (재설정 링크 클릭 후) -->
-                <div id="resetStep3" style="display:none;">
+                <form id="resetStep3" style="display:none;" onsubmit="event.preventDefault();submitNewPassword();">
                     <div class="field-group" style="margin-bottom:12px;">
-                        <label class="reset-modal__label">새 비밀번호</label>
-                        <input type="password" id="new-pw" placeholder="8자 이상 + 대·소문자·숫자" class="reset-modal__input">
+                        <label for="new-pw" class="reset-modal__label">새 비밀번호</label>
+                        <input type="password" id="new-pw" name="new-password" placeholder="8자 이상 + 대·소문자·숫자" class="reset-modal__input" autocomplete="new-password">
                     </div>
                     <div class="field-group" style="margin-bottom:16px;">
-                        <label class="reset-modal__label">비밀번호 확인</label>
-                        <input type="password" id="new-pw2" placeholder="비밀번호를 다시 입력" class="reset-modal__input">
+                        <label for="new-pw2" class="reset-modal__label">비밀번호 확인</label>
+                        <input type="password" id="new-pw2" name="new-password-confirm" placeholder="비밀번호를 다시 입력" class="reset-modal__input" autocomplete="new-password">
                     </div>
-                    <button onclick="submitNewPassword()" id="resetSubmitBtn" class="reset-modal__btn reset-modal__btn--success">비밀번호 변경</button>
-                </div>
+                    <button type="submit" id="resetSubmitBtn" class="reset-modal__btn reset-modal__btn--success">비밀번호 변경</button>
+                </form>
             </div>
             <div class="reset-modal__footer">
                 <a href="javascript:void(0)" onclick="closeResetModal()" class="reset-modal__close">닫기</a>

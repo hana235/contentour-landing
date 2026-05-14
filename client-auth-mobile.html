@@ -3,14 +3,20 @@
 
 <head>
     <meta charset="UTF-8">
-    <!-- AI 크롤링 차단 -->
-    <meta name="robots" content="noai, noimageai">
+    <!-- 출시 전 모드: noindex (robots.txt와 정합) + AI 크롤링 차단. 출시 시 'index, follow'로 복구 -->
+    <meta name="robots" content="noindex, nofollow, noai, noimageai">
     <meta name="GPTBot" content="noindex, nofollow">
     <meta name="anthropic-ai" content="noindex, nofollow">
     <meta name="Google-Extended" content="noindex, nofollow">
     <meta name="CCBot" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>고객사 로그인 - 콘텐츄어 통역 운영 시스템</title>
+    <meta name="description" content="콘텐츄어 고객사 로그인 (모바일). 견적 문의·계약·결제·상담일지 등 통역 운영 시스템에 접속하세요.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="design-tokens.css">
@@ -925,7 +931,7 @@
 
             <div class="brand-body">
                 <p class="brand-eyebrow">Corporate Service</p>
-                <h1 class="brand-headline">글로벌 비즈니스의 시작,<br><em>콘텐츄어</em>와 함께<br>완성하세요.</h1>
+                <h1 class="brand-headline">글로벌 비즈니스의 시작, <br><em>콘텐츄어</em>와 함께 <br>완성하세요.</h1>
                 <p class="brand-desc">
                     복잡한 통역사 섭외부터 현장 운영까지.<br>
                     고객사 전용 포털에서 모든 과정을 통합 관리하세요.
