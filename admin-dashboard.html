@@ -907,7 +907,7 @@
                             <option value="normal">일반</option>
                         </select>
                         <span id="loyAdminCount" style="font-size:0.75rem;color:var(--g600);font-weight:600;"></span>
-                        <button onclick="runLoyaltyExpire()" title="만료된 적립금(12개월 경과, 사용 시 자동 연장)을 일괄 처리합니다" style="margin-left:auto;padding:10px 16px;background:#fff;color:#c62828;border:1.5px solid #ffcdd2;border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">⏰ 만료 처리 실행</button>
+                        <button onclick="runLoyaltyExpire()" title="가입 1년 경과 회원에게 연간 보관 수수료 -1000P 일괄 차감 (회원당 1년 1회)" style="margin-left:auto;padding:10px 16px;background:#fff;color:#c62828;border:1.5px solid #ffcdd2;border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">⏰ 연간 수수료 처리</button>
                     </div>
 
                     <!-- 테이블 -->
@@ -4274,19 +4274,19 @@
 
             async function runLoyaltyExpire() {
                 if (!supabase) return;
-                if (!confirm('만료 대상(12개월 경과, 사용 시 자동 연장) 적립금을 일괄 처리합니다.\n\n모든 사용자에 적용되며 되돌릴 수 없습니다. 진행할까요?')) return;
+                if (!confirm('연간 보관 수수료를 일괄 처리합니다.\n\n• 가입 후 1년이 지난 회원 대상\n• 회원당 1년에 1회 -1000P 차감\n• 잔액 1000P 미만이면 잔액만큼만\n\n매일 KST 04:00 자동 실행되므로 보통 누를 필요는 없습니다. 진행할까요?')) return;
                 try {
                     var { data, error } = await supabase.rpc('expire_loyalty_points');
                     if (error) throw error;
                     var r = (data && data[0]) || { processed_users: 0, total_expired: 0 };
                     if ((r.processed_users || 0) === 0) {
-                        showToast('만료 대상이 없습니다.');
+                        showToast('차감 대상 회원이 없습니다.');
                     } else {
-                        showToast('✅ 만료 처리 완료 — ' + r.processed_users + '명, ' + (r.total_expired || 0).toLocaleString() + 'P 차감');
+                        showToast('✅ 처리 완료 — ' + r.processed_users + '명, 총 ' + (r.total_expired || 0).toLocaleString() + 'P 차감');
                     }
                     loadLoyaltyAdmin();
                 } catch(e) {
-                    showToast('만료 처리 실패: ' + (e.message || ''));
+                    showToast('처리 실패: ' + (e.message || ''));
                 }
             }
 
