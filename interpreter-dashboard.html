@@ -5256,11 +5256,16 @@
             '</div>');
 
             // Parties — 갑/을 가로 2바 + 병은 아래 가로 한 줄
+            // 회사명: 값이 있고 담당자명과 다를 때만 표시 (개인 고객 계정 케이스 대응)
+            var _ipClientName = (safe.clientName || '').trim();
+            var _ipClientCompanyRaw = (safe.clientCompany || '').trim();
+            var _ipHasCompany = !!_ipClientCompanyRaw && _ipClientCompanyRaw !== _ipClientName;
+            var _ipPartyTitle = _ipHasCompany ? '갑 (의뢰인 / 고객사)' : '갑 (의뢰인)';
             w.document.write('<div class="party-box">' +
                 '<div class="party">' +
-                    '<div class="party-title">갑 (의뢰인 / 고객사)</div>' +
-                    '<div class="party-row"><span class="label">회사명</span><span class="value">' + (safe.clientCompany || '-') + '</span></div>' +
-                    '<div class="party-row"><span class="label">담당자</span><span class="value">' + (safe.clientName || '-') + '</span></div>' +
+                    '<div class="party-title">' + _ipPartyTitle + '</div>' +
+                    (_ipHasCompany ? '<div class="party-row"><span class="label">회사명</span><span class="value">' + _ipClientCompanyRaw + '</span></div>' : '') +
+                    '<div class="party-row"><span class="label">' + (_ipHasCompany ? '담당자' : '성명') + '</span><span class="value">' + (_ipClientName || '-') + '</span></div>' +
                 '</div>' +
                 '<div class="party">' +
                     '<div class="party-title">을 (서비스 제공자 / 통역사)</div>' +
@@ -5417,8 +5422,8 @@
             w.document.write('<div class="sign-area">' +
                 '<div class="sign-block">' +
                     '<div class="sign-label">갑 (의뢰인)</div>' +
-                    '<div class="sign-name">' + (safe.clientCompany || '-') + '</div>' +
-                    '<div class="sign-sub">' + (safe.clientName || '-') + '</div>' +
+                    '<div class="sign-name">' + (_ipHasCompany ? _ipClientCompanyRaw : (_ipClientName || '-')) + '</div>' +
+                    (_ipHasCompany ? '<div class="sign-sub">' + (_ipClientName || '') + '</div>' : '') +
                 '</div>' +
                 '<div class="sign-block">' +
                     '<div class="sign-label">을 (서비스 제공자)</div>' +
