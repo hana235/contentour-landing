@@ -5038,9 +5038,15 @@
         contractDate = today;
       }
 
+      // 표시용 계약번호: 계약일 YYYYMMDD + 원본 ID 끝 4자 (내부 ID는 그대로 유지)
+      var _ctDispDate = (contractDate || '').replace(/[^0-9]/g, '').slice(0, 8);
+      if (_ctDispDate.length !== 8) _ctDispDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      var _ctDispSuffix = (safe.id || '').replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || '0000';
+      var displayContractId = 'CT-' + _ctDispDate + '-' + _ctDispSuffix;
+
       var w = window.open('', '_blank', 'width=900,height=1200');
       if (!w) { showToast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.', 'error'); return; }
-      w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>통역 서비스 계약서 - ' + safe.id + '</title>');
+      w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>통역 서비스 계약서 - ' + displayContractId + '</title>');
       w.document.write('<style>' +
         '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }' +
         'body { font-family: "Montserrat","Noto Sans KR",sans-serif; color: #1a1a1a; background: #f5f5f5; padding: 30px; line-height: 1.7; }' +
@@ -5088,7 +5094,7 @@
       // Header
       w.document.write('<div class="doc-header">' +
         '<h1>통역 서비스 계약서</h1>' +
-        '<div class="doc-id">계약번호: ' + safe.id + ' | 계약일: ' + contractDate + ' | 템플릿 v1.3</div>' +
+        '<div class="doc-id">계약번호: ' + displayContractId + ' | 계약일: ' + contractDate + ' | 템플릿 v1.3</div>' +
       '</div>');
 
       // 취소 배너
