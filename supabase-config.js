@@ -23,7 +23,19 @@ window.attachPwToggle = function(input) {
 
     var parent = input.parentElement;
     if (!parent) return;
-    if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+
+    // input만 감싸는 wrapper 생성 (parent에 label 같은 다른 자식이 있으면
+    // absolute 버튼의 top:50%가 input이 아니라 parent 전체 기준이 돼서 위로 떠 보임)
+    var wrap;
+    if (parent.dataset.pwToggleWrap === '1') {
+        wrap = parent;
+    } else {
+        wrap = document.createElement('span');
+        wrap.dataset.pwToggleWrap = '1';
+        wrap.style.cssText = 'position:relative;display:block;';
+        parent.insertBefore(wrap, input);
+        wrap.appendChild(input);
+    }
 
     // 입력칸 우측에 버튼 공간 확보
     var curPad = parseInt(getComputedStyle(input).paddingRight) || 0;
@@ -41,7 +53,7 @@ window.attachPwToggle = function(input) {
         if (input.type === 'password') { input.type = 'text'; btn.innerHTML = __PW_ICON_EYE_OFF; }
         else { input.type = 'password'; btn.innerHTML = __PW_ICON_EYE; }
     };
-    parent.appendChild(btn);
+    wrap.appendChild(btn);
 };
 
 // 기존에 HTML에 직접 박힌 .pw-toggle 버튼(이모지 사용)도 SVG로 갈아끼움
