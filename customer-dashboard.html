@@ -3193,11 +3193,50 @@
             console.warn('계약 realtime 구독 실패:', e);
         }
     }
+    // 적립금 Realtime: 관리자/cron이 잔액 변경 시 새로고침 없이 즉시 화면 반영
+    let _customerLoyaltyChannel = null;
+    async function subscribeLoyaltyRealtime() {
+        if (!window.sbClient) return;
+        if (_customerLoyaltyChannel) return;
+        try {
+            const { data: { user } } = await window.sbClient.auth.getUser();
+            if (!user) return;
+            const onLoyaltyChange = async function(payload) {
+                console.log('[Realtime] 적립금 변경:', payload.table, payload.eventType);
+                try {
+                    await loyLoadFromDB();
+                    if (typeof loyRenderAll === 'function') loyRenderAll();
+                } catch (e) { console.warn('적립금 realtime 재로드 실패:', e); }
+            };
+            _customerLoyaltyChannel = window.sbClient
+                .channel('customer-loyalty-' + user.id)
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: '30_적립금',
+                    filter: 'user_id=eq.' + user.id
+                }, onLoyaltyChange)
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: '31_적립금이력',
+                    filter: 'user_id=eq.' + user.id
+                }, onLoyaltyChange)
+                .subscribe();
+        } catch (e) {
+            console.warn('적립금 realtime 구독 실패:', e);
+        }
+    }
+
     // 로그아웃 시 ContentourAuth.logout()에서 호출 — 채널 정리
     window.unsubscribeCustomerRealtime = function() {
         if (_customerContractChannel && window.sbClient) {
             try { window.sbClient.removeChannel(_customerContractChannel); } catch (e) {}
             _customerContractChannel = null;
+        }
+        if (_customerLoyaltyChannel && window.sbClient) {
+            try { window.sbClient.removeChannel(_customerLoyaltyChannel); } catch (e) {}
+            _customerLoyaltyChannel = null;
         }
     };
 
@@ -6364,10 +6403,11 @@
       updateChatBadges();
       setupDragDrop(); // #1
       subscribeContractRealtime(); // 통역사 측 변경(취소·승인) 실시간 반영
-      // 적립금 캐시 hydrate (결제 모달의 동기 loyGetData() 대비)
+      // 적립금 캐시 hydrate (결제 모달의 동기 loyGetData() 대비) + realtime 구독
       (async function() {
         await loyMigrateFromLocalStorage();
         await loyLoadFromDB();
+        subscribeLoyaltyRealtime();
       })();
     });
   </script>
