@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const { emailContractCancelled } = require('../lib/email-templates');
 
 const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpnZXFiZHJmcGVrenV1bWFrbHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzgwMzQsImV4cCI6MjA5MDQxNDAzNH0.C2y3UiPtHIF2s4nPvbGycN927HOG4YpO86FfgZAelUw';
@@ -176,6 +177,48 @@ module.exports = async function handler(req, res) {
                 email: email,
                 emailSent: emailResult.success
             });
+
+        } else if (action === 'notifyCancellation') {
+            // 클라이언트(admin-dashboard)가 취소 승인/거절 처리 후 호출
+            // body: { contractId, decision: 'approved'|'rejected', cancelReason, cancelledByRole }
+            const { contractId, decision, cancelReason, cancelledByRole } = req.body;
+            if (!contractId || !decision) return res.status(400).json({ error: 'contractId/decision 필수' });
+
+            const { data: ct } = await supabase
+                .from('42_통역계약')
+                .select('exhibition_name, customer_id, interpreter_id')
+                .eq('id', contractId).single();
+            if (!ct) return res.status(404).json({ error: '계약을 찾을 수 없습니다.' });
+
+            const cancelledByLabel = cancelledByRole === 'customer' ? '고객사' : (cancelledByRole === 'interpreter' ? '통역사' : '관리자');
+
+            // 양쪽 회원 정보 조회
+            const ids = [ct.customer_id, ct.interpreter_id].filter(Boolean);
+            const { data: users } = await supabase.from('01_회원').select('id, email, name, role').in('id', ids);
+            const userMap = {};
+            (users || []).forEach(u => { userMap[u.id] = u; });
+
+            const sendOps = [];
+            if (ct.customer_id && userMap[ct.customer_id] && userMap[ct.customer_id].email) {
+                sendOps.push(emailContractCancelled({
+                    recipientEmail: userMap[ct.customer_id].email,
+                    recipientName: userMap[ct.customer_id].name,
+                    recipientRole: 'customer',
+                    expo: ct.exhibition_name,
+                    cancelReason, cancelledByLabel, action: decision
+                }));
+            }
+            if (ct.interpreter_id && userMap[ct.interpreter_id] && userMap[ct.interpreter_id].email) {
+                sendOps.push(emailContractCancelled({
+                    recipientEmail: userMap[ct.interpreter_id].email,
+                    recipientName: userMap[ct.interpreter_id].name,
+                    recipientRole: 'interpreter',
+                    expo: ct.exhibition_name,
+                    cancelReason, cancelledByLabel, action: decision
+                }));
+            }
+            const results = await Promise.all(sendOps);
+            return res.status(200).json({ success: true, sent: results.filter(r => r.success).length });
 
         } else if (action === 'directInquiryRenotify') {
             const { inquiryId } = req.body;

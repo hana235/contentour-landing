@@ -4,6 +4,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
+const { emailPaymentCompleteToCustomer, emailPaymentCompleteToInterpreter } = require('../lib/email-templates');
 
 const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -117,6 +118,44 @@ async function handleVerifyPayment(req, res, rawBody) {
             return res.status(500).json({ success: false, error: '결제 기록 저장 실패' });
         }
         if (rpcResult && rpcResult.success === false) return res.status(400).json(rpcResult);
+
+        // 이메일 발송 (실패해도 결제 결과 영향 없음)
+        try {
+            const { data: contractFull } = await sb
+                .from('42_통역계약')
+                .select('customer_id, interpreter_id, exhibition_name, client_company, total_amount')
+                .eq('id', contractId).single();
+            if (contractFull) {
+                let customerEmail = null, customerName = null;
+                if (contractFull.customer_id) {
+                    const { data: cust } = await sb.from('01_회원').select('email, name').eq('id', contractFull.customer_id).single();
+                    if (cust) { customerEmail = cust.email; customerName = cust.name; }
+                }
+                let interpreterEmail = null, interpreterName = null;
+                if (contractFull.interpreter_id) {
+                    const { data: itp } = await sb.from('01_회원').select('email, name').eq('id', contractFull.interpreter_id).single();
+                    if (itp) { interpreterEmail = itp.email; interpreterName = itp.name; }
+                }
+                if (customerEmail) {
+                    await emailPaymentCompleteToCustomer({
+                        customerEmail, customerName,
+                        expo: contractFull.exhibition_name,
+                        paymentType, amount: actualAmount,
+                        totalAmount: contractFull.total_amount
+                    });
+                }
+                if (interpreterEmail) {
+                    await emailPaymentCompleteToInterpreter({
+                        interpreterEmail, interpreterName,
+                        expo: contractFull.exhibition_name,
+                        paymentType,
+                        customerCompany: contractFull.client_company
+                    });
+                }
+            }
+        } catch (mailErr) {
+            console.error('[verify-payment] 이메일 발송 단계 오류 (무시):', mailErr && mailErr.message);
+        }
 
         return res.status(200).json(Object.assign({ success: true }, rpcResult || {}));
     } catch (e) {

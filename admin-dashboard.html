@@ -4073,12 +4073,44 @@
                     if (cancel && cancel.contract_id && cancel.cancelled_user_id) {
                         reversed = await reverseLoyaltyForContract(cancel.contract_id, cancel.cancelled_user_id);
                     }
+                    // 이메일 발송 (실패해도 무시)
+                    notifyCancellationEmail(cancel, 'approved');
                     showToast(reversed > 0
                         ? '✅ 취소 승인 완료 (적립금 ' + reversed.toLocaleString() + 'P 회수)'
                         : '✅ 취소가 승인되었습니다.');
                     loadCancellations();
                 } catch(e) {
                     showToast('승인 실패: ' + e.message);
+                }
+            }
+
+            // 취소 알림 메일 호출 (admin-app.js의 notifyCancellation action)
+            async function notifyCancellationEmail(cancel, decision) {
+                if (!cancel || !cancel.contract_id) return;
+                try {
+                    var session = await supabase.auth.getSession();
+                    var token = session && session.data && session.data.session && session.data.session.access_token;
+                    if (!token) return;
+                    // cancelled_by_role 추정: cancelled_user_id가 고객/통역사 중 누구인지
+                    var ct = await supabase.from('42_통역계약').select('customer_id, interpreter_id').eq('id', cancel.contract_id).single();
+                    var byRole = 'admin';
+                    if (ct && ct.data) {
+                        if (cancel.cancelled_user_id === ct.data.customer_id) byRole = 'customer';
+                        else if (cancel.cancelled_user_id === ct.data.interpreter_id) byRole = 'interpreter';
+                    }
+                    await fetch('/api/admin-app', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({
+                            action: 'notifyCancellation',
+                            contractId: cancel.contract_id,
+                            decision: decision,
+                            cancelReason: cancel.reason || cancel.detail || '-',
+                            cancelledByRole: byRole
+                        })
+                    });
+                } catch (e) {
+                    console.warn('[email] 취소 알림 발송 실패:', e && e.message);
                 }
             }
 
@@ -4101,6 +4133,8 @@
                         }).eq('id', cancel.contract_id);
                     }
 
+                    // 이메일 발송 (실패해도 무시)
+                    if (cancel) notifyCancellationEmail(cancel, 'rejected');
                     showToast('❌ 취소가 거절되었습니다. 계약이 복구되었습니다.');
                     loadCancellations();
                 } catch(e) {

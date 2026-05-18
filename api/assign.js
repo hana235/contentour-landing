@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { emailContractAssignedToCustomer, emailContractAssignedToInterpreter } = require('../lib/email-templates');
 
 const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -165,6 +166,38 @@ module.exports = async function handler(req, res) {
                 message: '"' + (expo || '') + '" (' + (startDate || '') + ' ~ ' + (endDate || '') + ') 건이 배정되었습니다. 계약 탭에서 확인해주세요.',
                 is_read: false
             });
+        }
+
+        // 6. 이메일 발송 (실패해도 메인 흐름 영향 없음)
+        try {
+            // 고객사 이메일 — req.body.email 우선 사용, 없으면 customer_id로 조회
+            let customerEmail = email || null;
+            let customerName = null;
+            if (customerId) {
+                const { data: custInfo } = await sb.from('01_회원').select('email, name').eq('id', customerId).single();
+                if (custInfo) {
+                    if (!customerEmail) customerEmail = custInfo.email;
+                    customerName = custInfo.name;
+                }
+            }
+            if (customerEmail) {
+                await emailContractAssignedToCustomer({
+                    customerEmail, customerName, interpreterName,
+                    expo, startDate, endDate, totalAmount
+                });
+            }
+
+            // 통역사 이메일
+            const { data: interpInfo } = await sb.from('01_회원').select('email, name').eq('id', interpreterId).single();
+            if (interpInfo && interpInfo.email) {
+                await emailContractAssignedToInterpreter({
+                    interpreterEmail: interpInfo.email,
+                    interpreterName: interpInfo.name || interpreterName,
+                    expo, customerCompany: company, startDate, endDate
+                });
+            }
+        } catch (mailErr) {
+            console.error('[assign] 이메일 발송 단계 오류 (무시):', mailErr && mailErr.message);
         }
 
         return res.status(200).json({ ok: true, contractId });
