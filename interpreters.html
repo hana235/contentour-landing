@@ -1024,6 +1024,10 @@
         }
 
         function submitDirectInquiry(interpName, lang, field) {
+            // 더블클릭 방지 — 제출 버튼 즉시 비활성화
+            var submitBtn = document.querySelector('.diq__submit');
+            if (submitBtn && submitBtn.disabled) return;
+
             var company = document.getElementById('diq-company').value.trim();
             var name = document.getElementById('diq-name').value.trim();
             var email = document.getElementById('diq-email').value.trim();
@@ -1035,6 +1039,8 @@
                 showToast('필수 항목(*)을 모두 입력해주세요.', 'error');
                 return;
             }
+
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '전송 중...'; }
 
             var inquiry = {
                 id: 'DIQ-' + Date.now(),
