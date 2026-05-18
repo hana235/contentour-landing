@@ -64,7 +64,7 @@ async function sendApprovalEmail(email, name, tempPw) {
                     </div>
                     <div style="background:#f8fafc;padding:20px 32px;border:1px solid #e5eaf2;border-top:none;border-radius:0 0 16px 16px;">
                         <p style="font-size:0.75rem;color:#999;margin:0;">
-                            콘텐츄어 | 서울시 구로구 디지털로26길 43, 대륭포스트타워 8차 L동 204호<br>
+                            주식회사 콘텐츄어 | 서울시 구로구 디지털로26길 43, 대륭포스트타워 8차 L동 2층 204호<br>
                             문의: info@contentour.co.kr | 02-868-1522
                         </p>
                     </div>
