@@ -1151,7 +1151,8 @@
             try {
                 var { data: reviews } = await window.sbClient
                     .from('49_통역사리뷰')
-                    .select('interpreter_id, rating_expertise, rating_manner, rating_communication, rating_overall, review_text');
+                    .select('interpreter_id, rating_expertise, rating_manner, rating_communication, rating_overall, review_text')
+                    .eq('is_public', true);
                 if (!reviews || reviews.length === 0) return;
 
                 // 통역사별 집계

@@ -1655,20 +1655,45 @@ const InterpreterApp = {
 
             listEl.innerHTML = reviews.map(r => {
                 const custName = customerMap[r.customer_id] || '고객';
+                const reported = r.report_status === 'reported';
+                const hidden = r.report_status === 'hidden';
+                const kept = r.report_status === 'reviewed_kept';
+                const hasReply = r.interpreter_reply && r.interpreter_reply.trim().length > 0;
+
+                let statusBadge = '';
+                if (reported) statusBadge = '<span style="display:inline-block;padding:3px 10px;background:#fff3e0;color:#e65100;border-radius:6px;font-size:0.7rem;font-weight:700;margin-left:8px;">🚩 신고 검토 중</span>';
+                else if (hidden) statusBadge = '<span style="display:inline-block;padding:3px 10px;background:#ffebee;color:#c62828;border-radius:6px;font-size:0.7rem;font-weight:700;margin-left:8px;">🔒 관리자 숨김 처리</span>';
+                else if (kept) statusBadge = '<span style="display:inline-block;padding:3px 10px;background:#e3f2fd;color:#1565c0;border-radius:6px;font-size:0.7rem;font-weight:700;margin-left:8px;">✓ 검토 완료 (유지)</span>';
+
+                const cardBg = hidden ? '#fafafa' : '#fff';
+                const cardOpacity = hidden ? '0.7' : '1';
+
                 return `
-                    <div style="background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:20px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                            <div>
-                                <div style="font-weight:700;font-size:0.95rem;">${escHtml(r.exhibition_name || '')}</div>
+                    <div style="background:${cardBg};border:1px solid var(--gray-200);border-radius:12px;padding:20px;opacity:${cardOpacity};">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:12px;">
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-weight:700;font-size:0.95rem;">${escHtml(r.exhibition_name || '')}${statusBadge}</div>
                                 <div style="font-size:0.8rem;color:var(--gray-500);margin-top:2px;">${custName} · ${this.formatDate(r.created_at)}</div>
                             </div>
-                            <div style="font-size:1.1rem;">${renderStars(r.rating_overall)}</div>
+                            <div style="font-size:1.1rem;flex-shrink:0;">${renderStars(r.rating_overall)}</div>
                         </div>
                         ${r.review_text ? `<div style="font-size:0.88rem;color:var(--gray-600);line-height:1.6;margin-bottom:12px;">"${escHtml(r.review_text)}"</div>` : ''}
-                        <div style="display:flex;gap:16px;font-size:0.78rem;color:var(--gray-400);">
+                        <div style="display:flex;gap:16px;font-size:0.78rem;color:var(--gray-400);flex-wrap:wrap;">
                             <span>전문성 ${renderStars(r.rating_expertise)}</span>
                             <span>매너 ${renderStars(r.rating_manner)}</span>
                             <span>소통 ${renderStars(r.rating_communication)}</span>
+                        </div>
+
+                        ${hasReply ? `
+                            <div style="margin-top:16px;padding:12px 14px;background:#f0f7ff;border-left:3px solid var(--blue-600);border-radius:6px;">
+                                <div style="font-size:0.74rem;color:var(--blue-600);font-weight:700;margin-bottom:6px;">💬 통역사 답글 · ${this.formatDate(r.interpreter_reply_at)}</div>
+                                <div style="font-size:0.84rem;color:var(--gray-700);line-height:1.6;white-space:pre-wrap;">${escHtml(r.interpreter_reply)}</div>
+                            </div>
+                        ` : ''}
+
+                        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+                            ${!hasReply ? `<button onclick="InterpreterApp.openReplyForm('${r.id}')" style="padding:7px 14px;background:#fff;border:1.5px solid var(--blue-600);color:var(--blue-600);border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">💬 답글 작성</button>` : `<button onclick="InterpreterApp.openReplyForm('${r.id}')" style="padding:7px 14px;background:#fff;border:1.5px solid var(--gray-300);color:var(--gray-600);border-radius:8px;font-size:0.78rem;cursor:pointer;font-family:inherit;">✏️ 답글 수정</button>`}
+                            ${!reported && !hidden && !kept ? `<button onclick="InterpreterApp.openReportModal('${r.id}')" style="padding:7px 14px;background:#fff;border:1.5px solid #ef9a9a;color:#c62828;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">🚩 신고</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -1678,6 +1703,122 @@ const InterpreterApp = {
             console.error('후기 로드 실패:', e);
             listEl.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray-400);">후기를 불러오지 못했습니다.</div>';
         }
+    },
+
+    // ── 답글 작성/수정 모달 ──
+    async openReplyForm(reviewId) {
+        if (!window.sbClient) return;
+        try {
+            const { data, error } = await window.sbClient
+                .from('49_통역사리뷰')
+                .select('interpreter_reply, exhibition_name, review_text')
+                .eq('id', reviewId)
+                .single();
+            if (error) throw error;
+
+            this._showInlineModal({
+                title: '💬 통역사 답글',
+                subtitle: data.exhibition_name || '',
+                bodyHTML: `
+                    ${data.review_text ? `<div style="background:#f8f9fb;padding:12px;border-radius:8px;font-size:0.84rem;color:var(--gray-600);margin-bottom:14px;line-height:1.6;">"${escHtml(data.review_text)}"</div>` : ''}
+                    <textarea id="replyTextarea" maxlength="500" placeholder="고객 후기에 대한 답글을 작성해주세요. 정중하고 사실 위주로 작성해주시기 바랍니다." style="width:100%;min-height:140px;padding:12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;line-height:1.6;resize:vertical;box-sizing:border-box;">${escHtml(data.interpreter_reply || '')}</textarea>
+                    <div style="font-size:0.72rem;color:var(--gray-400);margin-top:6px;">최대 500자 · 답글도 관리자가 모니터링합니다</div>
+                `,
+                confirmLabel: '답글 저장',
+                onConfirm: async () => {
+                    const text = (document.getElementById('replyTextarea').value || '').trim();
+                    if (!text) { alert('답글 내용을 입력해주세요.'); return false; }
+                    if (window.ReviewFilter) {
+                        const fr = window.ReviewFilter.check(text);
+                        if (fr.blockedHard) { alert('부적절한 표현이 포함되어 저장할 수 없습니다.'); return false; }
+                    }
+                    const { error: upErr } = await window.sbClient
+                        .from('49_통역사리뷰')
+                        .update({ interpreter_reply: text, interpreter_reply_at: new Date().toISOString() })
+                        .eq('id', reviewId);
+                    if (upErr) { alert('저장 실패: ' + upErr.message); return false; }
+                    this.loadReviewsView();
+                    return true;
+                }
+            });
+        } catch (e) {
+            console.error('답글 폼 오류:', e);
+            alert('답글 폼을 열 수 없습니다.');
+        }
+    },
+
+    // ── 신고 모달 ──
+    openReportModal(reviewId) {
+        this._showInlineModal({
+            title: '🚩 후기 신고',
+            subtitle: '허위·욕설·개인정보·계약 무관 내용만 신고해주세요',
+            bodyHTML: `
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;cursor:pointer;font-size:0.86rem;">
+                        <input type="radio" name="reportReason" value="허위 사실" /> 허위 사실 / 사실과 다른 내용
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;cursor:pointer;font-size:0.86rem;">
+                        <input type="radio" name="reportReason" value="욕설/비방" /> 욕설 / 인격 모독 / 비방
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;cursor:pointer;font-size:0.86rem;">
+                        <input type="radio" name="reportReason" value="개인정보 노출" /> 개인정보 / 연락처 노출
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;cursor:pointer;font-size:0.86rem;">
+                        <input type="radio" name="reportReason" value="계약 무관 내용" /> 통역 서비스와 무관한 내용
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;cursor:pointer;font-size:0.86rem;">
+                        <input type="radio" name="reportReason" value="기타" /> 기타
+                    </label>
+                </div>
+                <textarea id="reportDetail" maxlength="300" placeholder="추가 설명 (선택, 최대 300자)" style="width:100%;min-height:80px;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:0.86rem;font-family:inherit;line-height:1.5;resize:vertical;box-sizing:border-box;"></textarea>
+            `,
+            confirmLabel: '신고 접수',
+            confirmColor: '#c62828',
+            onConfirm: async () => {
+                const reasonEl = document.querySelector('input[name="reportReason"]:checked');
+                if (!reasonEl) { alert('신고 사유를 선택해주세요.'); return false; }
+                const detail = (document.getElementById('reportDetail').value || '').trim();
+                const reason = detail ? `${reasonEl.value} — ${detail}` : reasonEl.value;
+                const { error: upErr } = await window.sbClient
+                    .from('49_통역사리뷰')
+                    .update({ report_status: 'reported', report_reason: reason, reported_at: new Date().toISOString() })
+                    .eq('id', reviewId);
+                if (upErr) { alert('신고 실패: ' + upErr.message); return false; }
+                this.loadReviewsView();
+                alert('신고가 접수되었습니다. 관리자가 검토 후 처리합니다.');
+                return true;
+            }
+        });
+    },
+
+    // ── 공용 인라인 모달 ──
+    _showInlineModal({ title, subtitle, bodyHTML, confirmLabel, confirmColor, onConfirm }) {
+        const old = document.getElementById('reviewInlineModal');
+        if (old) old.remove();
+        const overlay = document.createElement('div');
+        overlay.id = 'reviewInlineModal';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,42,94,0.55);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        overlay.innerHTML = `
+            <div style="background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 18px 50px rgba(0,0,0,0.3);">
+                <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200);">
+                    <div style="font-size:1.05rem;font-weight:800;color:var(--gray-800);">${escHtml(title)}</div>
+                    ${subtitle ? `<div style="font-size:0.78rem;color:var(--gray-500);margin-top:4px;">${escHtml(subtitle)}</div>` : ''}
+                </div>
+                <div style="padding:20px 24px;">${bodyHTML}</div>
+                <div style="padding:14px 24px;border-top:1px solid var(--gray-200);display:flex;gap:10px;justify-content:flex-end;">
+                    <button id="rimCancel" style="padding:10px 18px;background:#fff;border:1.5px solid var(--gray-300);color:var(--gray-600);border-radius:8px;font-size:0.86rem;font-weight:600;cursor:pointer;font-family:inherit;">취소</button>
+                    <button id="rimConfirm" style="padding:10px 18px;background:${confirmColor || 'var(--blue-600)'};border:none;color:#fff;border-radius:8px;font-size:0.86rem;font-weight:700;cursor:pointer;font-family:inherit;">${escHtml(confirmLabel || '확인')}</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        const close = () => overlay.remove();
+        document.getElementById('rimCancel').addEventListener('click', close);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+        document.getElementById('rimConfirm').addEventListener('click', async () => {
+            const ok = await onConfirm();
+            if (ok !== false) close();
+        });
     }
 };
 

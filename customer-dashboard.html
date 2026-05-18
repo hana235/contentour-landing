@@ -173,6 +173,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.portone.io/v2/browser-sdk.js" async onerror="console.warn('PortOne SDK 로드 실패 - 데모 결제 모드')"></script>
   <script src="supabase-config.js"></script>
+  <script src="review-filter.js?v=20260518"></script>
   <script src="shared-constants.js"></script>
   <script src="chat-data.js?v=20260507-cancelled-at"></script>
   <script src="payment-data.js"></script>
@@ -4750,11 +4751,24 @@
 
       if (!window.sbClient) { showContractToast('서비스 연결 오류'); return; }
 
+      var reviewText = document.getElementById('reviewText').value.trim();
+
+      // 금칙어 체크 — 하드 차단 + 소프트 플래그
+      var filterResult = { ok: true, blockedHard: false, flaggedSoft: false, hardMatches: [], softMatches: [] };
+      if (reviewText && window.ReviewFilter) {
+        filterResult = window.ReviewFilter.check(reviewText);
+      }
+
+      if (filterResult.blockedHard) {
+        showContractToast('부적절한 표현이 포함되어 등록할 수 없습니다. 내용을 수정해주세요.');
+        return;
+      }
+
       try {
         var user = await ContentourAuth.getCurrentUser();
         if (!user) { showContractToast('로그인이 필요합니다.'); return; }
 
-        var { error } = await window.sbClient.from('49_통역사리뷰').insert({
+        var insertPayload = {
           contract_id: contractId,
           customer_id: user.id,
           interpreter_id: c.interpreter.id,
@@ -4763,9 +4777,14 @@
           rating_manner: _reviewRatings.manner,
           rating_communication: _reviewRatings.communication,
           rating_overall: _reviewRatings.overall,
-          review_text: document.getElementById('reviewText').value.trim() || null,
-          is_public: true
-        });
+          review_text: reviewText || null,
+          // 소프트 플래그 매칭 시 자동 보류 (관리자 검토 대기)
+          is_public: !filterResult.flaggedSoft,
+          auto_flagged: filterResult.flaggedSoft,
+          flagged_keywords: filterResult.flaggedSoft ? filterResult.softMatches.join(',') : null
+        };
+
+        var { error } = await window.sbClient.from('49_통역사리뷰').insert(insertPayload);
 
         if (error) throw error;
 
@@ -4774,7 +4793,11 @@
         try { loyEarnPoints(5000, c.expo + ' 리뷰 작성 보너스', 'review', String(contractId)); } catch(e) {}
         closeReviewModal();
         renderContracts();
-        showContractToast('리뷰가 등록되었습니다! 5,000P가 적립됩니다.');
+        if (filterResult.flaggedSoft) {
+          showContractToast('리뷰가 접수되었습니다. 일부 표현이 포함되어 관리자 검토 후 공개됩니다. (5,000P 적립)');
+        } else {
+          showContractToast('리뷰가 등록되었습니다! 5,000P가 적립됩니다.');
+        }
       } catch (e) {
         console.error('리뷰 제출 실패:', e);
         showContractToast('리뷰 등록 중 오류가 발생했습니다: ' + (e.message || ''));

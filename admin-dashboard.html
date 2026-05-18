@@ -164,6 +164,10 @@
             <a class="sb-item" id="sb-loyalty" onclick="switchTab('loyalty')">
                 <span class="sb-item__icon">⭐</span> 적립금 관리
             </a>
+            <a class="sb-item" id="sb-reviews" onclick="switchTab('reviews')">
+                <span class="sb-item__icon">🚩</span> 리뷰 검토
+                <span class="sb-item__badge" id="reviewsBadge" style="display:none;background:#e65100;">0</span>
+            </a>
             <a class="sb-item" id="sb-cases" onclick="switchTab('cases')">
                 <span class="sb-item__icon">🏆</span> 성과사례 관리
             </a>
@@ -929,6 +933,24 @@
                                 <tr><td colspan="8" style="padding:40px;text-align:center;color:#999;">불러오는 중...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <!-- ══ 리뷰 검토 뷰 ══ -->
+                <div class="view" id="view-reviews">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+                        <div style="display:flex;gap:8px;">
+                            <button class="rev-filter-chip" data-filter="pending" onclick="reviewsApplyFilter('pending', this)" style="padding:8px 16px;border:1.5px solid var(--navy);background:var(--navy);color:#fff;border-radius:20px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;">⏳ 검토 대기 <span id="revCntPending">0</span></button>
+                            <button class="rev-filter-chip" data-filter="auto" onclick="reviewsApplyFilter('auto', this)" style="padding:8px 16px;border:1.5px solid var(--g200);background:#fff;color:var(--g600);border-radius:20px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">⚠️ 자동 플래그 <span id="revCntAuto">0</span></button>
+                            <button class="rev-filter-chip" data-filter="reported" onclick="reviewsApplyFilter('reported', this)" style="padding:8px 16px;border:1.5px solid var(--g200);background:#fff;color:var(--g600);border-radius:20px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">🚩 통역사 신고 <span id="revCntReported">0</span></button>
+                            <button class="rev-filter-chip" data-filter="hidden" onclick="reviewsApplyFilter('hidden', this)" style="padding:8px 16px;border:1.5px solid var(--g200);background:#fff;color:var(--g600);border-radius:20px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">🔒 숨김 처리됨</button>
+                            <button class="rev-filter-chip" data-filter="all" onclick="reviewsApplyFilter('all', this)" style="padding:8px 16px;border:1.5px solid var(--g200);background:#fff;color:var(--g600);border-radius:20px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">전체</button>
+                        </div>
+                        <button onclick="loadReviewsAdmin()" style="margin-left:auto;padding:8px 14px;background:#fff;border:1.5px solid var(--g200);border-radius:8px;font-size:0.78rem;cursor:pointer;font-family:inherit;">🔄 새로고침</button>
+                    </div>
+
+                    <div id="reviewsAdminList" style="display:flex;flex-direction:column;gap:12px;">
+                        <div style="padding:40px;text-align:center;color:#999;">불러오는 중...</div>
                     </div>
                 </div>
 
@@ -1983,6 +2005,7 @@
                 if (tab === 'applications') { title = '통역사 지원서 관리'; loadApplications(); }
                 if (tab === 'customers') { title = '고객사 관리'; custInit(); }
                 if (tab === 'loyalty') { title = '적립금 관리'; loadLoyaltyAdmin(); }
+                if (tab === 'reviews') { title = '리뷰 검토 관리'; loadReviewsAdmin(); }
                 if (tab === 'cancellations') { title = '취소 관리'; loadCancellations(); }
                 if (tab === 'cases') { title = '성과사례 관리'; loadAdminCases(); }
                 if (tab === 'system-settings') { title = '시스템 설정'; loadSystemSettings(); }
@@ -1993,7 +2016,7 @@
                 if (tab === 'interpreters') { title = '통역사 관리'; loadInterpVerifyList(); }
 
                 // Sidebar highlighting
-                ['sb-inquiries', 'sb-contracts', 'sb-cancellations', 'sb-calendar', 'sb-journal', 'sb-settlement', 'sb-chatmon', 'sb-applications', 'sb-customers', 'sb-bizverify', 'sb-loyalty', 'sb-cases', 'sb-exhibitions', 'sb-system-settings', 'sb-interp-verify'].forEach(id => {
+                ['sb-inquiries', 'sb-contracts', 'sb-cancellations', 'sb-calendar', 'sb-journal', 'sb-settlement', 'sb-chatmon', 'sb-applications', 'sb-customers', 'sb-bizverify', 'sb-loyalty', 'sb-reviews', 'sb-cases', 'sb-exhibitions', 'sb-system-settings', 'sb-interp-verify'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.classList.remove('active');
                 });
@@ -4402,6 +4425,218 @@
 
             window.autoFillCountryFlag = autoFillCountryFlag;
             window.updateFlagPreview = updateFlagPreview;
+
+            // ══════════════════════════════════════════
+            // ══════ 리뷰 검토 관리 (모더레이션) ══════
+            // ══════════════════════════════════════════
+            let _reviewsAdminAll = [];
+            let _reviewsAdminFilter = 'pending';
+
+            async function loadReviewsAdmin() {
+                const listEl = document.getElementById('reviewsAdminList');
+                if (!listEl || !supabase) return;
+                listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#999;">불러오는 중...</div>';
+                try {
+                    const { data, error } = await supabase
+                        .from('49_통역사리뷰')
+                        .select('*')
+                        .order('created_at', { ascending: false })
+                        .limit(500);
+                    if (error) throw error;
+                    _reviewsAdminAll = data || [];
+
+                    // 회원 이름 조회 (고객사 + 통역사)
+                    const userIds = [...new Set(_reviewsAdminAll.flatMap(r => [r.customer_id, r.interpreter_id, r.hidden_by]).filter(Boolean))];
+                    if (userIds.length > 0) {
+                        const { data: users } = await supabase.from('01_회원').select('id, name, email').in('id', userIds);
+                        _reviewsAdminUserMap = {};
+                        (users || []).forEach(u => { _reviewsAdminUserMap[u.id] = u; });
+                    }
+
+                    updateReviewsBadgeCounts();
+                    renderReviewsAdmin();
+                } catch (e) {
+                    console.error('리뷰 로드 실패:', e);
+                    listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#c62828;">불러오기 실패: ' + (e.message || '') + '</div>';
+                }
+            }
+
+            let _reviewsAdminUserMap = {};
+
+            function updateReviewsBadgeCounts() {
+                const pendingCount = _reviewsAdminAll.filter(r => r.auto_flagged && r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept').length
+                                   + _reviewsAdminAll.filter(r => r.report_status === 'reported').length;
+                const autoCount = _reviewsAdminAll.filter(r => r.auto_flagged).length;
+                const reportedCount = _reviewsAdminAll.filter(r => r.report_status === 'reported').length;
+
+                const pe = document.getElementById('revCntPending'); if (pe) pe.textContent = pendingCount;
+                const ae = document.getElementById('revCntAuto');    if (ae) ae.textContent = autoCount;
+                const re = document.getElementById('revCntReported');if (re) re.textContent = reportedCount;
+
+                const sidebarBadge = document.getElementById('reviewsBadge');
+                if (sidebarBadge) {
+                    if (pendingCount > 0) { sidebarBadge.style.display = ''; sidebarBadge.textContent = pendingCount; }
+                    else sidebarBadge.style.display = 'none';
+                }
+            }
+
+            function reviewsApplyFilter(filter, btn) {
+                _reviewsAdminFilter = filter;
+                document.querySelectorAll('.rev-filter-chip').forEach(c => {
+                    c.style.background = '#fff';
+                    c.style.borderColor = 'var(--g200)';
+                    c.style.color = 'var(--g600)';
+                    c.style.fontWeight = '600';
+                });
+                if (btn) {
+                    btn.style.background = 'var(--navy)';
+                    btn.style.borderColor = 'var(--navy)';
+                    btn.style.color = '#fff';
+                    btn.style.fontWeight = '700';
+                }
+                renderReviewsAdmin();
+            }
+            window.reviewsApplyFilter = reviewsApplyFilter;
+
+            function renderReviewsAdmin() {
+                const listEl = document.getElementById('reviewsAdminList');
+                if (!listEl) return;
+
+                let filtered = _reviewsAdminAll;
+                if (_reviewsAdminFilter === 'pending') {
+                    filtered = _reviewsAdminAll.filter(r =>
+                        (r.auto_flagged && r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept')
+                        || r.report_status === 'reported'
+                    );
+                } else if (_reviewsAdminFilter === 'auto') {
+                    filtered = _reviewsAdminAll.filter(r => r.auto_flagged);
+                } else if (_reviewsAdminFilter === 'reported') {
+                    filtered = _reviewsAdminAll.filter(r => r.report_status === 'reported');
+                } else if (_reviewsAdminFilter === 'hidden') {
+                    filtered = _reviewsAdminAll.filter(r => r.report_status === 'hidden');
+                }
+
+                if (filtered.length === 0) {
+                    listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#999;background:#fff;border-radius:12px;border:1.5px solid var(--g200);">해당하는 리뷰가 없습니다.</div>';
+                    return;
+                }
+
+                const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+                const fmtDate = (d) => {
+                    if (!d) return '';
+                    const dt = new Date(d);
+                    return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0') + ' ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+                };
+                const renderStars = (n) => '★'.repeat(Math.round(n||0)) + '☆'.repeat(5 - Math.round(n||0));
+
+                listEl.innerHTML = filtered.map(r => {
+                    const customer = _reviewsAdminUserMap[r.customer_id] || {};
+                    const interpreter = _reviewsAdminUserMap[r.interpreter_id] || {};
+                    const hider = _reviewsAdminUserMap[r.hidden_by] || {};
+
+                    let badgesHTML = '';
+                    if (r.auto_flagged) badgesHTML += `<span style="display:inline-block;padding:3px 10px;background:#fff3e0;color:#e65100;border-radius:6px;font-size:0.7rem;font-weight:700;margin-right:4px;">⚠️ 자동 플래그</span>`;
+                    if (r.report_status === 'reported') badgesHTML += `<span style="display:inline-block;padding:3px 10px;background:#ffebee;color:#c62828;border-radius:6px;font-size:0.7rem;font-weight:700;margin-right:4px;">🚩 통역사 신고</span>`;
+                    if (r.report_status === 'hidden') badgesHTML += `<span style="display:inline-block;padding:3px 10px;background:#e0e0e0;color:#424242;border-radius:6px;font-size:0.7rem;font-weight:700;margin-right:4px;">🔒 숨김</span>`;
+                    if (r.report_status === 'reviewed_kept') badgesHTML += `<span style="display:inline-block;padding:3px 10px;background:#e3f2fd;color:#1565c0;border-radius:6px;font-size:0.7rem;font-weight:700;margin-right:4px;">✓ 유지 결정</span>`;
+
+                    const showActions = r.report_status === 'reported' || (r.auto_flagged && r.report_status === 'none') || r.auto_flagged && (r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept');
+                    const canRestore = r.report_status === 'hidden';
+
+                    return `
+                        <div style="background:#fff;border:1.5px solid var(--g200);border-radius:12px;padding:18px 20px;${r.report_status === 'hidden' ? 'opacity:0.7;' : ''}">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;">
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-weight:700;font-size:0.92rem;color:#0d2647;">${esc(r.exhibition_name || '')}</div>
+                                    <div style="font-size:0.74rem;color:#8a95a8;margin-top:3px;">
+                                        고객사: ${esc(customer.name || '?')} → 통역사: ${esc(interpreter.name || '?')} · ${fmtDate(r.created_at)}
+                                    </div>
+                                </div>
+                                <div style="font-size:0.95rem;color:#f9a825;flex-shrink:0;">${renderStars(r.rating_overall)}</div>
+                            </div>
+
+                            <div style="margin-bottom:10px;">${badgesHTML}</div>
+
+                            ${r.review_text ? `<div style="background:#f8f9fb;padding:12px 14px;border-radius:8px;font-size:0.86rem;color:#333;line-height:1.6;margin-bottom:10px;white-space:pre-wrap;">"${esc(r.review_text)}"</div>` : ''}
+
+                            <div style="display:flex;gap:14px;font-size:0.72rem;color:#8a95a8;margin-bottom:10px;flex-wrap:wrap;">
+                                <span>전문성 ${renderStars(r.rating_expertise)}</span>
+                                <span>매너 ${renderStars(r.rating_manner)}</span>
+                                <span>소통 ${renderStars(r.rating_communication)}</span>
+                            </div>
+
+                            ${r.flagged_keywords ? `<div style="background:#fff8e1;border-left:3px solid #ffa000;padding:8px 12px;border-radius:6px;font-size:0.78rem;color:#5d4037;margin-bottom:10px;"><strong>매칭 키워드:</strong> ${esc(r.flagged_keywords)}</div>` : ''}
+
+                            ${r.report_reason ? `<div style="background:#ffebee;border-left:3px solid #c62828;padding:8px 12px;border-radius:6px;font-size:0.78rem;color:#5d4037;margin-bottom:10px;"><strong>신고 사유:</strong> ${esc(r.report_reason)}</div>` : ''}
+
+                            ${r.interpreter_reply ? `<div style="background:#f0f7ff;border-left:3px solid #1565c0;padding:10px 12px;border-radius:6px;font-size:0.82rem;color:#0d2647;margin-bottom:10px;white-space:pre-wrap;"><strong>💬 통역사 답글</strong> · ${fmtDate(r.interpreter_reply_at)}<br>${esc(r.interpreter_reply)}</div>` : ''}
+
+                            ${r.report_status === 'hidden' && r.hide_reason ? `<div style="font-size:0.74rem;color:#8a95a8;margin-bottom:10px;">숨김 처리: ${esc(hider.name || '관리자')} · ${fmtDate(r.hidden_at)} · 사유: ${esc(r.hide_reason)}</div>` : ''}
+
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--g200);padding-top:12px;">
+                                ${(r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept') ? `
+                                    <button onclick="reviewAdminKeep('${r.id}')" style="padding:8px 16px;background:#fff;border:1.5px solid #2e7d32;color:#2e7d32;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">✓ 유지 (공개)</button>
+                                    <button onclick="reviewAdminHide('${r.id}')" style="padding:8px 16px;background:#c62828;border:none;color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">🔒 숨김 처리</button>
+                                ` : ''}
+                                ${canRestore ? `<button onclick="reviewAdminRestore('${r.id}')" style="padding:8px 16px;background:#fff;border:1.5px solid #1565c0;color:#1565c0;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">↻ 복원 (재공개)</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            async function reviewAdminKeep(reviewId) {
+                if (!confirm('이 리뷰를 그대로 유지(공개)할까요? 통역사 신고/자동 플래그가 해제됩니다.')) return;
+                try {
+                    const { error } = await supabase.from('49_통역사리뷰').update({
+                        report_status: 'reviewed_kept',
+                        auto_flagged: false,
+                        is_public: true,
+                        hidden_by: null, hidden_at: null, hide_reason: null
+                    }).eq('id', reviewId);
+                    if (error) throw error;
+                    alert('리뷰가 유지 처리되었습니다.');
+                    loadReviewsAdmin();
+                } catch (e) { alert('처리 실패: ' + (e.message || '')); }
+            }
+            window.reviewAdminKeep = reviewAdminKeep;
+
+            async function reviewAdminHide(reviewId) {
+                const reason = prompt('숨김 사유를 입력해주세요:', '');
+                if (reason === null) return;
+                if (!reason.trim()) { alert('사유를 입력해주세요.'); return; }
+                try {
+                    const me = await ContentourAuth.getCurrentUser();
+                    const { error } = await supabase.from('49_통역사리뷰').update({
+                        report_status: 'hidden',
+                        is_public: false,
+                        hidden_by: me ? me.id : null,
+                        hidden_at: new Date().toISOString(),
+                        hide_reason: reason.trim()
+                    }).eq('id', reviewId);
+                    if (error) throw error;
+                    alert('리뷰가 숨김 처리되었습니다.');
+                    loadReviewsAdmin();
+                } catch (e) { alert('처리 실패: ' + (e.message || '')); }
+            }
+            window.reviewAdminHide = reviewAdminHide;
+
+            async function reviewAdminRestore(reviewId) {
+                if (!confirm('숨김을 해제하고 다시 공개할까요?')) return;
+                try {
+                    const { error } = await supabase.from('49_통역사리뷰').update({
+                        report_status: 'reviewed_kept',
+                        is_public: true,
+                        hidden_by: null, hidden_at: null, hide_reason: null
+                    }).eq('id', reviewId);
+                    if (error) throw error;
+                    alert('리뷰가 복원되었습니다.');
+                    loadReviewsAdmin();
+                } catch (e) { alert('처리 실패: ' + (e.message || '')); }
+            }
+            window.reviewAdminRestore = reviewAdminRestore;
+
+            window.loadReviewsAdmin = loadReviewsAdmin;
 
             async function loadAdminCases() {
                 var listEl = document.getElementById('caseAdminList');
@@ -8159,6 +8394,25 @@
         // URL 파라미터로 탭 전환 (예: admin-dashboard.html?tab=customers)
         const _urlTab = new URLSearchParams(location.search).get('tab');
         if (_urlTab) switchTab(_urlTab);
+
+        // 사이드바 뱃지: 진입 시 리뷰 검토 대기 건수 카운트
+        setTimeout(function() {
+            try {
+                if (typeof supabase === 'undefined' || !supabase) return;
+                supabase.from('49_통역사리뷰')
+                    .select('id, auto_flagged, report_status')
+                    .or('auto_flagged.eq.true,report_status.eq.reported')
+                    .then(function(res) {
+                        var data = res && res.data ? res.data : [];
+                        var pending = data.filter(function(r) {
+                            return (r.auto_flagged && r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept')
+                                || r.report_status === 'reported';
+                        }).length;
+                        var badge = document.getElementById('reviewsBadge');
+                        if (badge && pending > 0) { badge.style.display = ''; badge.textContent = pending; }
+                    });
+            } catch (e) { /* ignore */ }
+        }, 1500);
 
         // ══════════════ 해외전시회 DB 관리 ══════════════
         var exAllRows = [];
