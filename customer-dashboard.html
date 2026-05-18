@@ -173,7 +173,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.portone.io/v2/browser-sdk.js" async onerror="console.warn('PortOne SDK 로드 실패 - 데모 결제 모드')"></script>
   <script src="supabase-config.js"></script>
-  <script src="review-filter.js?v=20260518b"></script>
+  <script src="review-filter.js?v=20260518c"></script>
   <script src="shared-constants.js"></script>
   <script src="chat-data.js?v=20260507-cancelled-at"></script>
   <script src="payment-data.js"></script>
@@ -4764,11 +4764,12 @@
         return;
       }
 
-      // 낮은 별점 자동 보류: 종합 ≤ 2점이면 관리자 검토 대기
+      // [출시 초기 정책] 전체 승인제 — 모든 리뷰는 관리자 승인 후 공개
+      // auto_flagged는 우선순위 표시용 (키워드 매칭 또는 별점 ≤ 2)
       var lowRatingFlag = (_reviewRatings.overall || 0) <= 2;
-      var shouldHold = filterResult.flaggedSoft || lowRatingFlag;
+      var priorityFlag = filterResult.flaggedSoft || lowRatingFlag;
 
-      // 보류 사유 라벨 합치기
+      // 우선순위 사유 라벨
       var flaggedReasons = [];
       if (filterResult.flaggedSoft) flaggedReasons = flaggedReasons.concat(filterResult.softMatches);
       if (lowRatingFlag) flaggedReasons.push('낮은 별점(' + _reviewRatings.overall + '점)');
@@ -4787,10 +4788,10 @@
           rating_communication: _reviewRatings.communication,
           rating_overall: _reviewRatings.overall,
           review_text: reviewText || null,
-          // 소프트 플래그 또는 낮은 별점 시 자동 보류 (관리자 검토 대기)
-          is_public: !shouldHold,
-          auto_flagged: shouldHold,
-          flagged_keywords: shouldHold ? flaggedReasons.join(',') : null
+          // 전체 승인제: 모든 신규 리뷰는 비공개 상태로 저장, 관리자가 유지 처리해야 공개됨
+          is_public: false,
+          auto_flagged: priorityFlag,
+          flagged_keywords: priorityFlag ? flaggedReasons.join(',') : null
         };
 
         var { error } = await window.sbClient.from('49_통역사리뷰').insert(insertPayload);
@@ -4802,11 +4803,7 @@
         try { loyEarnPoints(5000, c.expo + ' 리뷰 작성 보너스', 'review', String(contractId)); } catch(e) {}
         closeReviewModal();
         renderContracts();
-        if (shouldHold) {
-          showContractToast('리뷰가 접수되었습니다. 관리자 검토 후 공개됩니다. (5,000P 적립)');
-        } else {
-          showContractToast('리뷰가 등록되었습니다! 5,000P가 적립됩니다.');
-        }
+        showContractToast('리뷰가 접수되었습니다. 관리자 검토 후 공개됩니다. (5,000P 적립)');
       } catch (e) {
         console.error('리뷰 제출 실패:', e);
         showContractToast('리뷰 등록 중 오류가 발생했습니다: ' + (e.message || ''));

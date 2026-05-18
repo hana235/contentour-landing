@@ -940,8 +940,8 @@
                 <div class="view" id="view-reviews">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
                         <div style="display:flex;gap:8px;">
-                            <button class="rev-filter-chip" data-filter="pending" onclick="reviewsApplyFilter('pending', this)" style="padding:8px 16px;border:1.5px solid var(--navy);background:var(--navy);color:#fff;border-radius:20px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;">⏳ 검토 대기 <span id="revCntPending">0</span></button>
-                            <button class="rev-filter-chip" data-filter="auto" onclick="reviewsApplyFilter('auto', this)" style="padding:8px 16px;border:1.5px solid var(--g200);background:#fff;color:var(--g600);border-radius:20px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">⚠️ 자동 플래그 <span id="revCntAuto">0</span></button>
+                            <button class="rev-filter-chip" data-filter="pending" onclick="reviewsApplyFilter('pending', this)" style="padding:8px 16px;border:1.5px solid var(--navy);background:var(--navy);color:#fff;border-radius:20px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;">⏳ 승인 대기 <span id="revCntPending">0</span></button>
+                            <button class="rev-filter-chip" data-filter="auto" onclick="reviewsApplyFilter('auto', this)" style="padding:8px 16px;border:1.5px solid var(--g200);background:#fff;color:var(--g600);border-radius:20px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">⚠️ 우선순위 (키워드/낮은별점) <span id="revCntAuto">0</span></button>
                             <button class="rev-filter-chip" data-filter="reported" onclick="reviewsApplyFilter('reported', this)" style="padding:8px 16px;border:1.5px solid var(--g200);background:#fff;color:var(--g600);border-radius:20px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">🚩 통역사 신고 <span id="revCntReported">0</span></button>
                             <button class="rev-filter-chip" data-filter="hidden" onclick="reviewsApplyFilter('hidden', this)" style="padding:8px 16px;border:1.5px solid var(--g200);background:#fff;color:var(--g600);border-radius:20px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">🔒 숨김 처리됨</button>
                             <button class="rev-filter-chip" data-filter="all" onclick="reviewsApplyFilter('all', this)" style="padding:8px 16px;border:1.5px solid var(--g200);background:#fff;color:var(--g600);border-radius:20px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">전체</button>
@@ -4464,8 +4464,10 @@
             let _reviewsAdminUserMap = {};
 
             function updateReviewsBadgeCounts() {
-                const pendingCount = _reviewsAdminAll.filter(r => r.auto_flagged && r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept').length
-                                   + _reviewsAdminAll.filter(r => r.report_status === 'reported').length;
+                // 승인 대기: 비공개 + 아직 결정 안 된 모든 리뷰 (전체 승인제)
+                const pendingCount = _reviewsAdminAll.filter(r =>
+                    !r.is_public && r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept'
+                ).length;
                 const autoCount = _reviewsAdminAll.filter(r => r.auto_flagged).length;
                 const reportedCount = _reviewsAdminAll.filter(r => r.report_status === 'reported').length;
 
@@ -4504,9 +4506,9 @@
 
                 let filtered = _reviewsAdminAll;
                 if (_reviewsAdminFilter === 'pending') {
+                    // 승인 대기: 비공개 + 미결정 모든 리뷰 (전체 승인제)
                     filtered = _reviewsAdminAll.filter(r =>
-                        (r.auto_flagged && r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept')
-                        || r.report_status === 'reported'
+                        !r.is_public && r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept'
                     );
                 } else if (_reviewsAdminFilter === 'auto') {
                     filtered = _reviewsAdminAll.filter(r => r.auto_flagged);
@@ -8400,13 +8402,12 @@
             try {
                 if (typeof supabase === 'undefined' || !supabase) return;
                 supabase.from('49_통역사리뷰')
-                    .select('id, auto_flagged, report_status')
-                    .or('auto_flagged.eq.true,report_status.eq.reported')
+                    .select('id, is_public, report_status')
+                    .eq('is_public', false)
                     .then(function(res) {
                         var data = res && res.data ? res.data : [];
                         var pending = data.filter(function(r) {
-                            return (r.auto_flagged && r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept')
-                                || r.report_status === 'reported';
+                            return r.report_status !== 'hidden' && r.report_status !== 'reviewed_kept';
                         }).length;
                         var badge = document.getElementById('reviewsBadge');
                         if (badge && pending > 0) { badge.style.display = ''; badge.textContent = pending; }
