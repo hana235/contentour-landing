@@ -247,7 +247,7 @@ async function handleWebhook(req, res, rawBody) {
                 ? String(payment.method.type).toLowerCase() : 'virtual';
             const amount = payment.amount && payment.amount.total;
 
-            const { error: rpcErr } = await sb.rpc('process_payment', {
+            const { data: rpcData, error: rpcErr } = await sb.rpc('process_payment', {
                 p_contract_id: contractId,
                 p_payment_type: paymentType,
                 p_amount: amount,
@@ -258,6 +258,47 @@ async function handleWebhook(req, res, rawBody) {
             if (rpcErr) {
                 console.error('webhook process_payment 실패:', rpcErr);
                 return res.status(500).json({ ok: false });
+            }
+            // 중복 처리(이미 client verify-payment로 처리된 결제) 시 메일 발송 생략
+            const isDuplicate = rpcData && rpcData.success === false;
+            if (!isDuplicate) {
+                try {
+                    const { data: contractFull } = await sb
+                        .from('42_통역계약')
+                        .select('customer_id, interpreter_id, exhibition_name, client_company, total_amount')
+                        .eq('id', contractId).single();
+                    if (contractFull) {
+                        let custInfo = null, itpInfo = null;
+                        if (contractFull.customer_id) {
+                            const r = await sb.from('01_회원').select('email, name').eq('id', contractFull.customer_id).single();
+                            custInfo = r.data;
+                        }
+                        if (contractFull.interpreter_id) {
+                            const r = await sb.from('01_회원').select('email, name').eq('id', contractFull.interpreter_id).single();
+                            itpInfo = r.data;
+                        }
+                        if (custInfo && custInfo.email) {
+                            await emailPaymentCompleteToCustomer({
+                                customerEmail: custInfo.email, customerName: custInfo.name,
+                                expo: contractFull.exhibition_name,
+                                paymentType, amount,
+                                totalAmount: contractFull.total_amount
+                            });
+                        }
+                        if (itpInfo && itpInfo.email) {
+                            await emailPaymentCompleteToInterpreter({
+                                interpreterEmail: itpInfo.email, interpreterName: itpInfo.name,
+                                expo: contractFull.exhibition_name,
+                                paymentType,
+                                customerCompany: contractFull.client_company
+                            });
+                        }
+                    }
+                } catch (mailErr) {
+                    console.error('[webhook] 이메일 발송 단계 오류 (무시):', mailErr && mailErr.message);
+                }
+            } else {
+                console.log('[webhook] 결제 중복 — 메일 발송 생략 (client verify-payment에서 이미 처리)');
             }
         }
         else if (type === 'Transaction.Cancelled' || type === 'Transaction.PartialCancelled') {

@@ -4105,7 +4105,7 @@
                             action: 'notifyCancellation',
                             contractId: cancel.contract_id,
                             decision: decision,
-                            cancelReason: cancel.reason || cancel.detail || '-',
+                            cancelReason: cancel.cancel_reason || '-',
                             cancelledByRole: byRole
                         })
                     });
