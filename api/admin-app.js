@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
-const { emailContractCancelled } = require('../lib/email-templates');
+const emailTemplates = require('../lib/email-templates');
+const { emailContractCancelled } = emailTemplates;
 
 const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpnZXFiZHJmcGVrenV1bWFrbHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzgwMzQsImV4cCI6MjA5MDQxNDAzNH0.C2y3UiPtHIF2s4nPvbGycN927HOG4YpO86FfgZAelUw';
@@ -176,6 +177,65 @@ module.exports = async function handler(req, res) {
                 name: name_ko,
                 email: email,
                 emailSent: emailResult.success
+            });
+
+        } else if (action === 'testEmail') {
+            // [임시] 본인 이메일로 6종 템플릿 일괄 발송 — 검증 완료 후 제거 예정
+            const { targetEmail } = req.body;
+            if (!targetEmail) return res.status(400).json({ error: 'targetEmail 필수' });
+            if (!process.env.RESEND_API_KEY) return res.status(500).json({ error: 'RESEND_API_KEY 미설정' });
+
+            const dummy = {
+                expo: 'KOREA AUTO EXPO 2026 (테스트)',
+                startDate: '2026-06-15',
+                endDate: '2026-06-17',
+                customerName: '홍길동',
+                customerCompany: '테스트 주식회사',
+                interpreterName: '김통역',
+                cancelReason: '일정 변경으로 부득이하게 취소 요청드립니다.'
+            };
+
+            const results = {};
+            results.assigned_customer = await emailTemplates.emailContractAssignedToCustomer({
+                customerEmail: targetEmail, customerName: dummy.customerName,
+                interpreterName: dummy.interpreterName, expo: dummy.expo,
+                startDate: dummy.startDate, endDate: dummy.endDate, totalAmount: 750000
+            });
+            results.assigned_interpreter = await emailTemplates.emailContractAssignedToInterpreter({
+                interpreterEmail: targetEmail, interpreterName: dummy.interpreterName,
+                expo: dummy.expo, customerCompany: dummy.customerCompany,
+                startDate: dummy.startDate, endDate: dummy.endDate
+            });
+            results.payment_deposit_customer = await emailTemplates.emailPaymentCompleteToCustomer({
+                customerEmail: targetEmail, customerName: dummy.customerName,
+                expo: dummy.expo, paymentType: 'deposit', amount: 75000, totalAmount: 750000
+            });
+            results.payment_balance_interpreter = await emailTemplates.emailPaymentCompleteToInterpreter({
+                interpreterEmail: targetEmail, interpreterName: dummy.interpreterName,
+                expo: dummy.expo, paymentType: 'balance', customerCompany: dummy.customerCompany
+            });
+            results.cancel_approved_customer = await emailContractCancelled({
+                recipientEmail: targetEmail, recipientName: dummy.customerName, recipientRole: 'customer',
+                expo: dummy.expo, cancelReason: dummy.cancelReason,
+                cancelledByLabel: '관리자', action: 'approved'
+            });
+            results.cancel_rejected_interpreter = await emailContractCancelled({
+                recipientEmail: targetEmail, recipientName: dummy.interpreterName, recipientRole: 'interpreter',
+                expo: dummy.expo, cancelReason: dummy.cancelReason,
+                cancelledByLabel: '고객사', action: 'rejected'
+            });
+            results.dday_reminder = await emailTemplates.emailDdayReminderToInterpreter({
+                interpreterEmail: targetEmail, interpreterName: dummy.interpreterName,
+                expo: dummy.expo, startDate: dummy.startDate, daysLeft: 2
+            });
+
+            const total = Object.keys(results).length;
+            const okCount = Object.values(results).filter(r => r && r.success).length;
+            return res.status(200).json({
+                success: true,
+                target: targetEmail,
+                sent: okCount + '/' + total,
+                results
             });
 
         } else if (action === 'notifyCancellation') {
