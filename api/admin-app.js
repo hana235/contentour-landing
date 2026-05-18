@@ -28,7 +28,8 @@ async function sendApprovalEmail(email, name, tempPw) {
 
     try {
         const { data, error } = await resend.emails.send({
-            from: '콘텐츄어 <noreply@contentour.co.kr>',
+            // ⚠️ contentour.co.kr 도메인 인증 완료 전 임시 우회 (인증 후 noreply@contentour.co.kr로 환원)
+            from: '콘텐츄어 <onboarding@resend.dev>',
             to: email,
             subject: '[콘텐츄어] 통역사 계정이 승인되었습니다',
             html: `
