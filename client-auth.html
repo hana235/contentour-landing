@@ -329,6 +329,7 @@
                                 <input type="email" id="reg-email" placeholder="company@example.com"
                                     autocomplete="email" required>
                             </div>
+                            <p class="field-hint">📌 회사 도메인 이메일을 권장합니다. 개인 이메일(Gmail·Naver 등)도 가입 가능합니다.</p>
                             <p class="field-error">올바른 이메일 주소를 입력해주세요.</p>
                         </div>
 
@@ -352,11 +353,19 @@
                                     <button type="button" class="pw-toggle"
                                         onclick="togglePw('reg-pw', this)">👁️</button>
                                 </div>
-                                <div class="pw-strength-meter" id="pwStrength">
-                                    <div class="pw-strength-bar">
-                                        <div class="pw-strength-fill" id="pwFill"></div>
+                                <div class="pw-checklist" id="pwChecklist">
+                                    <div class="pw-check-item" data-check="length">
+                                        <span class="pw-check-icon">❌</span><span>8자 이상</span>
                                     </div>
-                                    <div class="pw-strength-text" id="pwText">비밀번호를 입력하세요</div>
+                                    <div class="pw-check-item" data-check="upper">
+                                        <span class="pw-check-icon">❌</span><span>대문자 포함</span>
+                                    </div>
+                                    <div class="pw-check-item" data-check="lower">
+                                        <span class="pw-check-icon">❌</span><span>소문자 포함</span>
+                                    </div>
+                                    <div class="pw-check-item" data-check="number">
+                                        <span class="pw-check-icon">❌</span><span>숫자 포함</span>
+                                    </div>
                                 </div>
                                 <p class="field-error">비밀번호를 입력해주세요.</p>
                             </div>
@@ -587,33 +596,24 @@
             }
         }
 
-        // ── 비밀번호 강도 ──
+        // ── 비밀번호 조건 체크리스트 (미충족=빨강, 충족=초록) ──
         function checkStrength(input) {
             const val = input.value;
-            const wrap = document.getElementById('pwStrength');
-            const fill = document.getElementById('pwFill');
-            const text = document.getElementById('pwText');
-            if (val.length > 0) wrap.classList.add('visible');
-            else wrap.classList.remove('visible');
-
-            let score = 0;
-            if (val.length >= 8) score++;
-            if (/[A-Z]/.test(val)) score++;
-            if (/[0-9]/.test(val)) score++;
-            if (/[^A-Za-z0-9]/.test(val)) score++;
-
-            const levels = [
-                { w: '0%', bg: '#e5eaf2', label: '비밀번호를 입력하세요' },
-                { w: '25%', bg: '#e53935', label: '😟 매우 약함' },
-                { w: '50%', bg: '#fb8c00', label: '😐 약함' },
-                { w: '75%', bg: '#f9a825', label: '🙂 보통' },
-                { w: '100%', bg: '#2e7d32', label: '💪 강함' },
-            ];
-            const l = levels[score] || levels[0];
-            fill.style.width = l.w;
-            fill.style.background = l.bg;
-            text.textContent = l.label;
-            text.style.color = l.bg;
+            const list = document.getElementById('pwChecklist');
+            if (!list) return;
+            const checks = {
+                length: val.length >= 8,
+                upper: /[A-Z]/.test(val),
+                lower: /[a-z]/.test(val),
+                number: /[0-9]/.test(val),
+            };
+            list.querySelectorAll('.pw-check-item').forEach(item => {
+                const key = item.dataset.check;
+                const ok = !!checks[key];
+                item.classList.toggle('met', ok);
+                const icon = item.querySelector('.pw-check-icon');
+                if (icon) icon.textContent = ok ? '✅' : '❌';
+            });
         }
 
         // ── 전체 동의 ──
