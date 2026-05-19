@@ -1648,7 +1648,7 @@
 
     <!-- ══════════════ 계좌 등록 모달 ══════════════ -->
     <div class="modal-overlay" id="bankModal" onclick="closeBankModal(event)">
-        <div class="modal" onclick="event.stopPropagation()" style="max-width:480px;">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width:540px;">
             <div class="modal__header">
                 <div>
                     <div class="modal__header-title">🏦 출금 계좌 등록</div>
@@ -1662,8 +1662,14 @@
                     ⚠️ 계좌가 등록되지 않았습니다. 아래 정보를 입력해주세요.
                 </div>
 
-                <!-- 입력 폼 -->
-                <div style="display:flex;flex-direction:column;gap:16px;">
+                <!-- 국내/해외 토글 -->
+                <div style="display:flex;gap:8px;margin-bottom:18px;background:#f3f5f9;padding:4px;border-radius:10px;">
+                    <button type="button" id="bankTypeDomesticBtn" onclick="bankTypeSwitch('domestic')" style="flex:1;padding:10px;border:none;background:#1565c0;color:#fff;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">🇰🇷 국내 계좌</button>
+                    <button type="button" id="bankTypeOverseasBtn" onclick="bankTypeSwitch('overseas')" style="flex:1;padding:10px;border:none;background:transparent;color:#666;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:inherit;">🌐 해외 계좌</button>
+                </div>
+
+                <!-- ━━━━━ 국내 계좌 폼 ━━━━━ -->
+                <div id="bankFormDomestic" style="display:flex;flex-direction:column;gap:16px;">
                     <div>
                         <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">은행명 <span style="color:#e53935;">*</span></label>
                         <select id="bankModalName" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;background:#fff;">
@@ -1692,11 +1698,104 @@
                     </div>
                 </div>
 
+                <!-- ━━━━━ 해외 계좌 폼 ━━━━━ -->
+                <div id="bankFormOverseas" style="display:none;flex-direction:column;gap:14px;">
+                    <!-- 송금 도구 선택 -->
+                    <div>
+                        <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:8px;">송금 도구 <span style="color:#e53935;">*</span></label>
+                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+                            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #d0d7e3;border-radius:10px;cursor:pointer;font-size:0.82rem;font-family:inherit;" data-payout-method-label="bank_swift">
+                                <input type="radio" name="payoutMethod" value="bank_swift" onchange="overseasMethodSwitch('bank_swift')" style="margin:0;">
+                                <span>🏦 SWIFT 은행 송금</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #d0d7e3;border-radius:10px;cursor:pointer;font-size:0.82rem;font-family:inherit;" data-payout-method-label="wise">
+                                <input type="radio" name="payoutMethod" value="wise" onchange="overseasMethodSwitch('wise')" style="margin:0;">
+                                <span>💸 Wise (권장)</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #d0d7e3;border-radius:10px;cursor:pointer;font-size:0.82rem;font-family:inherit;" data-payout-method-label="paypal">
+                                <input type="radio" name="payoutMethod" value="paypal" onchange="overseasMethodSwitch('paypal')" style="margin:0;">
+                                <span>🅿️ PayPal</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #d0d7e3;border-radius:10px;cursor:pointer;font-size:0.82rem;font-family:inherit;" data-payout-method-label="payoneer">
+                                <input type="radio" name="payoutMethod" value="payoneer" onchange="overseasMethodSwitch('payoneer')" style="margin:0;">
+                                <span>💳 Payoneer</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 공통: 국가·통화 -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div>
+                            <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">국가 <span style="color:#e53935;">*</span></label>
+                            <input type="text" id="bankOverseasCountry" placeholder="예: United States" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">통화 <span style="color:#e53935;">*</span></label>
+                            <select id="bankOverseasCurrency" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;background:#fff;">
+                                <option value="USD">USD (미국 달러)</option>
+                                <option value="EUR">EUR (유로)</option>
+                                <option value="JPY">JPY (일본 엔)</option>
+                                <option value="CNY">CNY (중국 위안)</option>
+                                <option value="GBP">GBP (영국 파운드)</option>
+                                <option value="AUD">AUD (호주 달러)</option>
+                                <option value="SGD">SGD (싱가포르 달러)</option>
+                                <option value="HKD">HKD (홍콩 달러)</option>
+                                <option value="VND">VND (베트남 동)</option>
+                                <option value="THB">THB (태국 바트)</option>
+                                <option value="OTHER">기타</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SWIFT 은행 송금 필드 -->
+                    <div id="bankSwiftFields" style="display:none;flex-direction:column;gap:12px;padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e5eaf2;">
+                        <div>
+                            <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">수령자 영문 이름 <span style="color:#e53935;">*</span></label>
+                            <input type="text" id="bankSwiftBeneficiary" placeholder="예: HONG GIL DONG" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;text-transform:uppercase;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">영문 은행명 <span style="color:#e53935;">*</span></label>
+                            <input type="text" id="bankSwiftBankName" placeholder="예: BANK OF AMERICA" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div>
+                                <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">SWIFT/BIC 코드 <span style="color:#e53935;">*</span></label>
+                                <input type="text" id="bankSwiftCode" placeholder="예: BOFAUS3N" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;text-transform:uppercase;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">계좌번호 / IBAN <span style="color:#e53935;">*</span></label>
+                                <input type="text" id="bankSwiftIban" placeholder="계좌번호 또는 IBAN" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">은행 주소</label>
+                            <input type="text" id="bankSwiftBankAddress" placeholder="예: 100 N Tryon St, Charlotte, NC 28255" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">수령자 주소</label>
+                            <input type="text" id="bankSwiftBeneficiaryAddress" placeholder="수령자 영문 주소" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <!-- Wise / PayPal / Payoneer 공용 이메일 필드 -->
+                    <div id="bankEmailFields" style="display:none;flex-direction:column;gap:10px;padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e5eaf2;">
+                        <div>
+                            <label id="bankEmailLabel" style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">계정 이메일 <span style="color:#e53935;">*</span></label>
+                            <input type="email" id="bankPayoutEmail" placeholder="등록된 계정 이메일" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75rem;font-weight:700;color:#333;display:block;margin-bottom:6px;">수령자 이름</label>
+                            <input type="text" id="bankPayoutHolder" placeholder="수령자 영문명 (선택)" style="width:100%;padding:11px 14px;border:1.5px solid #d0d7e3;border-radius:10px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 안내 문구 -->
                 <div style="margin-top:16px;padding:12px 14px;background:#f0f7ff;border-radius:10px;font-size:0.72rem;color:#1565c0;line-height:1.6;">
                     <div style="font-weight:700;margin-bottom:4px;">안내사항</div>
                     <div>• 계좌 정보는 정산 입금 시에만 사용되며, 안전하게 보관됩니다.</div>
                     <div>• 관리자 승인이 완료된 정산 건은 계좌 등록 후 자동으로 입금이 진행됩니다.</div>
+                    <div>• 해외 통역사는 SWIFT/Wise/PayPal/Payoneer 중 편한 방식을 선택하세요.</div>
                     <div>• 계좌 정보 변경은 언제든 다시 이 화면에서 가능합니다.</div>
                 </div>
 
@@ -4071,22 +4170,51 @@
         let stlCurrentMonth = 'all';
 
         // ══════════════ 계좌 등록 모달 ══════════════
+        // 현재 모달에서 사용중인 계좌 유형 ('domestic' / 'overseas')
+        var _bankCurrentType = 'domestic';
+        // 현재 선택된 송금 도구 (overseas일 때만 유효)
+        var _bankCurrentMethod = 'bank_swift';
+
         function openBankModal() {
-            // 기존 프로필 계좌 정보를 모달에 동기화
-            var bankName = document.getElementById('bankName') ? document.getElementById('bankName').value : '';
-            var bankHolder = document.getElementById('bankHolder') ? document.getElementById('bankHolder').value : '';
-            var bankAccount = document.getElementById('bankAccount') ? document.getElementById('bankAccount').value : '';
-            document.getElementById('bankModalName').value = bankName;
-            document.getElementById('bankModalHolder').value = bankHolder;
-            document.getElementById('bankModalAccount').value = bankAccount;
+            // DB에 저장된 계좌 정보 (InterpreterApp.bankAccount) 우선, 없으면 프로필 필드 동기화
+            var saved = (window.InterpreterApp && InterpreterApp.bankAccount) || null;
+            var initialType = (saved && saved.account_type) || 'domestic';
+            var initialMethod = (saved && saved.payout_method) || 'bank_domestic';
+
+            bankTypeSwitch(initialType, true); // suppress=true: hydration 단계에서 reset 방지
+
+            if (initialType === 'domestic') {
+                var bankName = (saved && saved.bank_name) || (document.getElementById('bankName') ? document.getElementById('bankName').value : '');
+                var bankHolder = (saved && saved.account_holder) || (document.getElementById('bankHolder') ? document.getElementById('bankHolder').value : '');
+                var bankAccount = (saved && saved.account_number) || (document.getElementById('bankAccount') ? document.getElementById('bankAccount').value : '');
+                document.getElementById('bankModalName').value = bankName || '';
+                document.getElementById('bankModalHolder').value = bankHolder || '';
+                document.getElementById('bankModalAccount').value = bankAccount || '';
+            } else {
+                // 해외 계좌 hydration
+                overseasMethodSwitch(initialMethod, true);
+                document.getElementById('bankOverseasCountry').value = (saved && saved.country_code) || '';
+                document.getElementById('bankOverseasCurrency').value = (saved && saved.currency) || 'USD';
+                if (initialMethod === 'bank_swift') {
+                    document.getElementById('bankSwiftBeneficiary').value = (saved && saved.beneficiary_name_en) || '';
+                    document.getElementById('bankSwiftBankName').value = (saved && saved.bank_name_en) || '';
+                    document.getElementById('bankSwiftCode').value = (saved && saved.swift_code) || '';
+                    document.getElementById('bankSwiftIban').value = (saved && saved.iban_or_account) || '';
+                    document.getElementById('bankSwiftBankAddress').value = (saved && saved.bank_address) || '';
+                    document.getElementById('bankSwiftBeneficiaryAddress').value = (saved && saved.beneficiary_address) || '';
+                } else {
+                    document.getElementById('bankPayoutEmail').value = (saved && saved.payout_email) || '';
+                    document.getElementById('bankPayoutHolder').value = (saved && saved.beneficiary_name_en) || '';
+                }
+            }
 
             // 상태 표시
             var statusEl = document.getElementById('bankModalStatus');
-            if (bankName && bankHolder.trim() && bankAccount.trim()) {
+            if (saved) {
                 statusEl.style.background = '#e8f5e9';
                 statusEl.style.color = '#2e7d32';
                 statusEl.style.border = '1px solid #c8e6c9';
-                statusEl.textContent = '✅ 현재 등록된 계좌: ' + bankName + ' ' + bankHolder;
+                statusEl.textContent = '✅ 현재 등록된 계좌: ' + _bankSummaryText(saved);
             } else {
                 statusEl.style.background = '#fff3e0';
                 statusEl.style.color = '#e65100';
@@ -4096,31 +4224,145 @@
             document.getElementById('bankModal').classList.add('open');
         }
 
+        function _bankSummaryText(saved) {
+            if (saved.account_type === 'overseas') {
+                var m = saved.payout_method;
+                if (m === 'bank_swift') return 'SWIFT · ' + (saved.bank_name_en || '') + ' · ' + (saved.iban_or_account || '').slice(-4);
+                if (m === 'wise') return 'Wise · ' + (saved.payout_email || '');
+                if (m === 'paypal') return 'PayPal · ' + (saved.payout_email || '');
+                if (m === 'payoneer') return 'Payoneer · ' + (saved.payout_email || '');
+            }
+            return (saved.bank_name || '') + ' ' + (saved.account_holder || '');
+        }
+
         function closeBankModal(e) {
             if (e && e.target !== e.currentTarget) return;
             document.getElementById('bankModal').classList.remove('open');
         }
 
-        function saveBankFromModal() {
-            var name = document.getElementById('bankModalName').value;
-            var holder = document.getElementById('bankModalHolder').value.trim();
-            var account = document.getElementById('bankModalAccount').value.trim();
+        // 국내/해외 토글
+        function bankTypeSwitch(type, suppress) {
+            _bankCurrentType = type;
+            var domBtn = document.getElementById('bankTypeDomesticBtn');
+            var ovsBtn = document.getElementById('bankTypeOverseasBtn');
+            var domForm = document.getElementById('bankFormDomestic');
+            var ovsForm = document.getElementById('bankFormOverseas');
+            if (type === 'overseas') {
+                domBtn.style.background = 'transparent'; domBtn.style.color = '#666'; domBtn.style.fontWeight = '600';
+                ovsBtn.style.background = '#1565c0'; ovsBtn.style.color = '#fff'; ovsBtn.style.fontWeight = '700';
+                domForm.style.display = 'none';
+                ovsForm.style.display = 'flex';
+                // 해외 폼 첫 진입 시 기본 SWIFT 선택
+                if (!suppress) overseasMethodSwitch('bank_swift');
+            } else {
+                domBtn.style.background = '#1565c0'; domBtn.style.color = '#fff'; domBtn.style.fontWeight = '700';
+                ovsBtn.style.background = 'transparent'; ovsBtn.style.color = '#666'; ovsBtn.style.fontWeight = '600';
+                domForm.style.display = 'flex';
+                ovsForm.style.display = 'none';
+            }
+        }
 
-            if (!name) { showToast('⚠️ 은행을 선택해주세요.'); return; }
-            if (!holder) { showToast('⚠️ 예금주를 입력해주세요.'); return; }
-            if (!account) { showToast('⚠️ 계좌번호를 입력해주세요.'); return; }
+        // 해외 송금 도구 토글 (SWIFT / Wise / PayPal / Payoneer)
+        function overseasMethodSwitch(method, suppress) {
+            _bankCurrentMethod = method;
+            // 라디오 동기화
+            var radios = document.querySelectorAll('input[name="payoutMethod"]');
+            radios.forEach(function(r) { r.checked = (r.value === method); });
+            // 라벨 border 강조
+            document.querySelectorAll('[data-payout-method-label]').forEach(function(lbl) {
+                lbl.style.borderColor = lbl.getAttribute('data-payout-method-label') === method ? '#1565c0' : '#d0d7e3';
+                lbl.style.background = lbl.getAttribute('data-payout-method-label') === method ? '#f0f7ff' : '#fff';
+            });
+            // 필드 그룹 표시
+            var swift = document.getElementById('bankSwiftFields');
+            var email = document.getElementById('bankEmailFields');
+            if (method === 'bank_swift') {
+                swift.style.display = 'flex';
+                email.style.display = 'none';
+            } else {
+                swift.style.display = 'none';
+                email.style.display = 'flex';
+                var emailLabel = document.getElementById('bankEmailLabel');
+                var placeholder = {
+                    wise: { label: 'Wise 등록 이메일', ph: 'wise@example.com' },
+                    paypal: { label: 'PayPal 등록 이메일', ph: 'paypal@example.com' },
+                    payoneer: { label: 'Payoneer 등록 이메일', ph: 'payoneer@example.com' }
+                }[method] || { label: '계정 이메일', ph: '' };
+                if (emailLabel) emailLabel.innerHTML = placeholder.label + ' <span style="color:#e53935;">*</span>';
+                var emailInput = document.getElementById('bankPayoutEmail');
+                if (emailInput) emailInput.placeholder = placeholder.ph;
+            }
+        }
 
-            // 프로필 설정의 계좌 필드에 동기화
-            document.getElementById('bankName').value = name;
-            document.getElementById('bankHolder').value = holder;
-            document.getElementById('bankAccount').value = account;
+        async function saveBankFromModal() {
+            var bankData = { account_type: _bankCurrentType };
 
-            // localStorage에도 저장
-            try {
-                var saved = JSON.parse(localStorage.getItem('contentour_interpreter_rates') || '{}');
-                saved.bank = { name: name, holder: holder, account: account };
-                localStorage.setItem('contentour_interpreter_rates', JSON.stringify(saved));
-            } catch(e) {}
+            if (_bankCurrentType === 'domestic') {
+                var name = document.getElementById('bankModalName').value;
+                var holder = document.getElementById('bankModalHolder').value.trim();
+                var account = document.getElementById('bankModalAccount').value.trim();
+
+                if (!name) { showToast('⚠️ 은행을 선택해주세요.'); return; }
+                if (!holder) { showToast('⚠️ 예금주를 입력해주세요.'); return; }
+                if (!account) { showToast('⚠️ 계좌번호를 입력해주세요.'); return; }
+
+                bankData.payout_method = 'bank_domestic';
+                bankData.name = name;
+                bankData.holder = holder;
+                bankData.account = account;
+                bankData.currency = 'KRW';
+
+                // 프로필 설정의 계좌 필드에 동기화
+                document.getElementById('bankName').value = name;
+                document.getElementById('bankHolder').value = holder;
+                document.getElementById('bankAccount').value = account;
+            } else {
+                var country = document.getElementById('bankOverseasCountry').value.trim();
+                var currency = document.getElementById('bankOverseasCurrency').value;
+                if (!country) { showToast('⚠️ 국가를 입력해주세요.'); return; }
+
+                bankData.payout_method = _bankCurrentMethod;
+                bankData.country_code = country;
+                bankData.currency = currency;
+
+                if (_bankCurrentMethod === 'bank_swift') {
+                    var ben = document.getElementById('bankSwiftBeneficiary').value.trim();
+                    var bn = document.getElementById('bankSwiftBankName').value.trim();
+                    var sw = document.getElementById('bankSwiftCode').value.trim();
+                    var iban = document.getElementById('bankSwiftIban').value.trim();
+                    if (!ben) { showToast('⚠️ 수령자 영문 이름을 입력해주세요.'); return; }
+                    if (!bn) { showToast('⚠️ 영문 은행명을 입력해주세요.'); return; }
+                    if (!sw) { showToast('⚠️ SWIFT 코드를 입력해주세요.'); return; }
+                    if (!iban) { showToast('⚠️ 계좌번호 또는 IBAN을 입력해주세요.'); return; }
+                    bankData.beneficiary_name_en = ben;
+                    bankData.bank_name_en = bn;
+                    bankData.swift_code = sw;
+                    bankData.iban_or_account = iban;
+                    bankData.bank_address = document.getElementById('bankSwiftBankAddress').value.trim() || null;
+                    bankData.beneficiary_address = document.getElementById('bankSwiftBeneficiaryAddress').value.trim() || null;
+                    // 호환: bank_name·account_holder·account_number에도 영문 정보 미러링
+                    bankData.name = bn;
+                    bankData.holder = ben;
+                    bankData.account = iban;
+                } else {
+                    var email = document.getElementById('bankPayoutEmail').value.trim();
+                    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+                        showToast('⚠️ 올바른 이메일을 입력해주세요.'); return;
+                    }
+                    bankData.payout_email = email;
+                    bankData.beneficiary_name_en = document.getElementById('bankPayoutHolder').value.trim() || null;
+                    // 호환: bank_name에 도구명, account_holder에 이름, account_number에 이메일
+                    bankData.name = _bankCurrentMethod.charAt(0).toUpperCase() + _bankCurrentMethod.slice(1);
+                    bankData.holder = bankData.beneficiary_name_en || email;
+                    bankData.account = email;
+                }
+            }
+
+            // DB 저장
+            if (window.InterpreterApp && typeof InterpreterApp.saveBankAccount === 'function') {
+                var ok = await InterpreterApp.saveBankAccount(bankData);
+                if (!ok) return;
+            }
 
             // 프로필 뱃지 업데이트
             var bankBadge = document.getElementById('bankStatusBadge');
@@ -4128,7 +4370,8 @@
                 bankBadge.style.background = '#e8f5e9';
                 bankBadge.style.color = '#2e7d32';
                 bankBadge.style.border = '1px solid #c8e6c9';
-                bankBadge.textContent = '✅ 등록 완료 — ' + name + ' ' + holder;
+                var summary = (InterpreterApp && InterpreterApp.bankAccount) ? _bankSummaryText(InterpreterApp.bankAccount) : (bankData.name + ' ' + (bankData.holder || ''));
+                bankBadge.textContent = '✅ 등록 완료 — ' + summary;
             }
 
             // 정산 뷰 업데이트
@@ -4139,8 +4382,10 @@
             showToast('✅ 계좌가 등록되었습니다! 승인된 정산 건의 입금이 진행됩니다. 💰');
         }
 
-        // 계좌 등록 여부 확인
+        // 계좌 등록 여부 확인 — DB 또는 프로필 필드 둘 다 검사
         function isBankAccountRegistered() {
+            // DB에 저장된 계좌가 있으면 등록됨으로 판정 (국내·해외 모두)
+            if (window.InterpreterApp && InterpreterApp.bankAccount) return true;
             var bankName = document.getElementById('bankName') ? document.getElementById('bankName').value : '';
             var bankHolder = document.getElementById('bankHolder') ? document.getElementById('bankHolder').value : '';
             var bankAccount = document.getElementById('bankAccount') ? document.getElementById('bankAccount').value : '';

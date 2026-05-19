@@ -1242,11 +1242,25 @@ const InterpreterApp = {
     },
 
     async saveBankAccount(bankData) {
+        // 국내·해외 모두 처리. account_type에 따라 사용할 필드가 다름
         const payload = {
             user_id: this.currentUser.id,
-            bank_name: bankData.name,
-            account_holder: bankData.holder,
-            account_number: bankData.account
+            account_type: bankData.account_type || 'domestic',
+            payout_method: bankData.payout_method || 'bank_domestic',
+            // 국내(또는 SWIFT) 공통 필드 — 해외에서도 일부 재사용
+            bank_name: bankData.name || null,
+            account_holder: bankData.holder || null,
+            account_number: bankData.account || null,
+            // 해외 전용 필드 (없으면 null)
+            country_code: bankData.country_code || null,
+            currency: bankData.currency || (bankData.account_type === 'overseas' ? 'USD' : 'KRW'),
+            beneficiary_name_en: bankData.beneficiary_name_en || null,
+            bank_name_en: bankData.bank_name_en || null,
+            bank_address: bankData.bank_address || null,
+            swift_code: bankData.swift_code || null,
+            iban_or_account: bankData.iban_or_account || null,
+            beneficiary_address: bankData.beneficiary_address || null,
+            payout_email: bankData.payout_email || null
         };
 
         if (this.bankAccount) {
@@ -1255,6 +1269,7 @@ const InterpreterApp = {
                 .update({ ...payload, updated_at: new Date().toISOString() })
                 .eq('id', this.bankAccount.id);
             if (error) { this.showToast('계좌 저장 실패: ' + error.message); return false; }
+            this.bankAccount = { ...this.bankAccount, ...payload };
         } else {
             const { data, error } = await window.sbClient
                 .from('41_계좌정보')
