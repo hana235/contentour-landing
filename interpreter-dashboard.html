@@ -1588,36 +1588,14 @@
                                 <div id="bankSectionAnchor" class="interp-section-title">🏦 출금 계좌 정보</div>
                                 <div id="bankStatusBadge" style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.7rem;font-weight:700;margin-bottom:10px;background:#fff3e0;color:#e65100;border:1px solid #ffcc02;">⚠️ 미등록 — 계좌를 등록해야 정산 입금을 받을 수 있습니다</div>
                                 <div style="background:linear-gradient(135deg,#f0f7ff,#e8f0fe);border:1.5px solid #c2d6f2;border-radius:12px;padding:18px;margin-bottom:24px;">
-                                    <div style="font-size:0.72rem;color:#666;margin-bottom:10px;">정산 입금에 사용될 계좌를 등록해주세요. 입금은 관리자 승인 후 자동으로 진행됩니다.</div>
-                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                                        <div style="display:flex;flex-direction:column;gap:4px;">
-                                            <label style="font-size:0.72rem;font-weight:700;color:#333;">은행명 <span style="color:#e53935;">*</span></label>
-                                            <select id="bankName" style="padding:9px 12px;border:1.5px solid #d0d7e3;border-radius:8px;font-size:0.82rem;font-family:inherit;">
-                                                <option value="" selected>선택</option>
-                                                <option value="KB국민은행">KB국민은행</option>
-                                                <option value="신한은행">신한은행</option>
-                                                <option value="우리은행">우리은행</option>
-                                                <option value="하나은행">하나은행</option>
-                                                <option value="NH농협은행">NH농협은행</option>
-                                                <option value="IBK기업은행">IBK기업은행</option>
-                                                <option value="카카오뱅크">카카오뱅크</option>
-                                                <option value="토스뱅크">토스뱅크</option>
-                                                <option value="케이뱅크">케이뱅크</option>
-                                                <option value="SC제일은행">SC제일은행</option>
-                                                <option value="대구은행">대구은행</option>
-                                                <option value="부산은행">부산은행</option>
-                                            </select>
-                                        </div>
-                                        <div style="display:flex;flex-direction:column;gap:4px;">
-                                            <label style="font-size:0.72rem;font-weight:700;color:#333;">예금주 <span style="color:#e53935;">*</span></label>
-                                            <input type="text" id="bankHolder" value="" placeholder="예금주명" style="padding:9px 12px;border:1.5px solid #d0d7e3;border-radius:8px;font-size:0.82rem;font-family:inherit;">
-                                        </div>
-                                        <div style="display:flex;flex-direction:column;gap:4px;grid-column:span 2;">
-                                            <label style="font-size:0.72rem;font-weight:700;color:#333;">계좌번호 <span style="color:#e53935;">*</span></label>
-                                            <input type="text" id="bankAccount" value="" placeholder="- 포함 입력" style="padding:9px 12px;border:1.5px solid #d0d7e3;border-radius:8px;font-size:0.82rem;font-family:inherit;">
-                                        </div>
-                                    </div>
+                                    <div style="font-size:0.72rem;color:#666;margin-bottom:12px;line-height:1.6;">정산 입금에 사용될 계좌를 등록해주세요.<br>🇰🇷 국내 은행 또는 🌐 해외 계좌(SWIFT·Wise·PayPal·Payoneer) 모두 등록 가능합니다.<br>입금은 관리자 승인 후 자동으로 진행됩니다.</div>
+                                    <div id="bankInlineSummary" style="font-size:0.82rem;color:#1565c0;font-weight:600;padding:10px 14px;background:#fff;border-radius:8px;border:1px dashed #c2d6f2;margin-bottom:12px;display:none;"></div>
+                                    <button type="button" onclick="openBankModal()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;">🏦 계좌 등록 / 변경</button>
                                     <div style="margin-top:10px;font-size:0.68rem;color:#1565c0;font-weight:600;">✓ 계좌 정보는 정산 입금 시에만 사용되며, 안전하게 보관됩니다.</div>
+                                    <!-- 호환성: 기존 코드가 참조하는 hidden 필드들 (모달에서 동기화됨) -->
+                                    <input type="hidden" id="bankName" value="">
+                                    <input type="hidden" id="bankHolder" value="">
+                                    <input type="hidden" id="bankAccount" value="">
                                 </div>
 
                                 <!-- 단가 미리보기 카드 -->
@@ -4365,13 +4343,21 @@
             }
 
             // 프로필 뱃지 업데이트
+            var summary = (InterpreterApp && InterpreterApp.bankAccount) ? _bankSummaryText(InterpreterApp.bankAccount) : (bankData.name + ' ' + (bankData.holder || ''));
             var bankBadge = document.getElementById('bankStatusBadge');
             if (bankBadge) {
                 bankBadge.style.background = '#e8f5e9';
                 bankBadge.style.color = '#2e7d32';
                 bankBadge.style.border = '1px solid #c8e6c9';
-                var summary = (InterpreterApp && InterpreterApp.bankAccount) ? _bankSummaryText(InterpreterApp.bankAccount) : (bankData.name + ' ' + (bankData.holder || ''));
                 bankBadge.textContent = '✅ 등록 완료 — ' + summary;
+            }
+
+            // 인라인 요약 영역 표시
+            var inlineSum = document.getElementById('bankInlineSummary');
+            if (inlineSum) {
+                var typeLabel = bankData.account_type === 'overseas' ? '🌐 해외 계좌' : '🇰🇷 국내 계좌';
+                inlineSum.style.display = 'block';
+                inlineSum.innerHTML = '<div style="font-size:0.7rem;color:#666;font-weight:500;margin-bottom:4px;">' + typeLabel + '</div>' + summary;
             }
 
             // 정산 뷰 업데이트
@@ -4381,6 +4367,42 @@
             closeBankModal();
             showToast('✅ 계좌가 등록되었습니다! 승인된 정산 건의 입금이 진행됩니다. 💰');
         }
+
+        // 초기 로드 시 인라인 요약 표시 (이미 등록된 계좌가 있으면)
+        function updateBankInlineSummary() {
+            var saved = (window.InterpreterApp && InterpreterApp.bankAccount) || null;
+            var inlineSum = document.getElementById('bankInlineSummary');
+            var bankBadge = document.getElementById('bankStatusBadge');
+            if (!saved) {
+                if (inlineSum) inlineSum.style.display = 'none';
+                return;
+            }
+            var summary = _bankSummaryText(saved);
+            var typeLabel = saved.account_type === 'overseas' ? '🌐 해외 계좌' : '🇰🇷 국내 계좌';
+            if (inlineSum) {
+                inlineSum.style.display = 'block';
+                inlineSum.innerHTML = '<div style="font-size:0.7rem;color:#666;font-weight:500;margin-bottom:4px;">' + typeLabel + '</div>' + summary;
+            }
+            if (bankBadge) {
+                bankBadge.style.background = '#e8f5e9';
+                bankBadge.style.color = '#2e7d32';
+                bankBadge.style.border = '1px solid #c8e6c9';
+                bankBadge.textContent = '✅ 등록 완료 — ' + summary;
+            }
+            // hidden 필드도 동기화 (기존 코드 호환)
+            var bn = document.getElementById('bankName');
+            var bh = document.getElementById('bankHolder');
+            var ba = document.getElementById('bankAccount');
+            if (bn) bn.value = saved.bank_name || '';
+            if (bh) bh.value = saved.account_holder || '';
+            if (ba) ba.value = saved.account_number || '';
+        }
+        // 페이지 로드 시 + InterpreterApp 초기화 후 호출
+        document.addEventListener('DOMContentLoaded', function() {
+            // InterpreterApp 초기화는 비동기라 약간 지연 후 시도
+            setTimeout(updateBankInlineSummary, 1500);
+            setTimeout(updateBankInlineSummary, 3000);
+        });
 
         // 계좌 등록 여부 확인 — DB 또는 프로필 필드 둘 다 검사
         function isBankAccountRegistered() {
