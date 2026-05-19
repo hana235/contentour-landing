@@ -1528,6 +1528,10 @@
           await loyMigrateFromLocalStorage();
           await loyLoadFromDB();
           loyRenderAll();
+          // 이용 통계용 계약 데이터 로드 (계약 페이지 미방문 시 빈 상태 방지)
+          if (typeof contractsLoadFromDB === 'function') {
+            try { await contractsLoadFromDB(); } catch(e) {}
+          }
           mypRenderStats();
         })();
       }
@@ -6394,15 +6398,26 @@
       // 서비스 이용 현황
       var statsEl = document.getElementById('mypStatsBody');
       if (statsEl) {
-        var totalContracts = contracts.length;
-        var completedContracts = contracts.filter(function(c){ return c.status === 'complete' || c.status === 'settled'; }).length;
-        var inProgressContracts = contracts.filter(function(c){ return c.status === 'in_progress'; }).length;
-        var totalAmount = contracts.reduce(function(s,c){ return s + (c.subtotal || 0); }, 0);
-        statsEl.innerHTML =
-          '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#e3f0ff;">&#128196;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">총 계약 건수</div><div class="myp-stat-row__sub">전체 진행 계약</div></div><div class="myp-stat-row__value">' + totalContracts + '건</div></div>' +
-          '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#e8f5e9;">&#9989;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">완료 건수</div><div class="myp-stat-row__sub">서비스 종료 및 정산 완료</div></div><div class="myp-stat-row__value">' + completedContracts + '건</div></div>' +
-          '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#fff3e0;">&#9203;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">진행 중</div><div class="myp-stat-row__sub">현재 서비스 진행 중인 계약</div></div><div class="myp-stat-row__value">' + inProgressContracts + '건</div></div>' +
-          '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#fce4ec;">&#128176;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">누적 이용 금액</div><div class="myp-stat-row__sub">플랫폼 수수료 제외</div></div><div class="myp-stat-row__value">' + formatMoney(totalAmount) + '</div></div>';
+        var list = Array.isArray(contracts) ? contracts : [];
+        if (list.length === 0) {
+          statsEl.innerHTML =
+            '<div style="text-align:center;padding:32px 16px;color:var(--gray-400);">' +
+            '<div style="font-size:2rem;margin-bottom:12px;">&#128196;</div>' +
+            '<div style="font-size:0.95rem;font-weight:700;color:var(--gray-600);margin-bottom:6px;">아직 이용 내역이 없습니다</div>' +
+            '<div style="font-size:0.82rem;line-height:1.6;">통역 문의 후 계약이 체결되면<br>이곳에 누적 통계가 표시됩니다.</div>' +
+            '<button onclick="switchView(\'inquiry\')" style="margin-top:16px;padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;">통역 문의하기</button>' +
+            '</div>';
+        } else {
+          var totalContracts = list.length;
+          var completedContracts = list.filter(function(c){ return c.status === 'complete' || c.status === 'settled'; }).length;
+          var inProgressContracts = list.filter(function(c){ return c.status === 'in_progress'; }).length;
+          var totalAmount = list.reduce(function(s,c){ return s + (c.subtotal || 0); }, 0);
+          statsEl.innerHTML =
+            '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#e3f0ff;">&#128196;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">총 계약 건수</div><div class="myp-stat-row__sub">전체 진행 계약</div></div><div class="myp-stat-row__value">' + totalContracts + '건</div></div>' +
+            '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#e8f5e9;">&#9989;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">완료 건수</div><div class="myp-stat-row__sub">서비스 종료 및 정산 완료</div></div><div class="myp-stat-row__value">' + completedContracts + '건</div></div>' +
+            '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#fff3e0;">&#9203;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">진행 중</div><div class="myp-stat-row__sub">현재 서비스 진행 중인 계약</div></div><div class="myp-stat-row__value">' + inProgressContracts + '건</div></div>' +
+            '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#fce4ec;">&#128176;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">누적 이용 금액</div><div class="myp-stat-row__sub">플랫폼 수수료 제외</div></div><div class="myp-stat-row__value">' + formatMoney(totalAmount) + '</div></div>';
+        }
       }
 
       // 언어 분포
