@@ -354,20 +354,6 @@ window.showToast = window.showToast || function(message, type) {
             });
 
             return { data, error };
-        },
-
-        // Google OAuth 로그인
-        async loginWithGoogle() {
-            if (!sb) return { error: { message: 'Supabase가 초기화되지 않았습니다.' } };
-
-            const { data, error } = await sb.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: window.location.origin + '/client-auth.html'
-                }
-            });
-
-            return { data, error };
         }
     };
 })();

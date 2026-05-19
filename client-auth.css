@@ -671,48 +671,6 @@
             line-height: 1.6;
         }
 
-        /* 구분선 */
-        .divider-or {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 24px 0;
-            color: var(--gray-400);
-            font-size: 0.78rem;
-        }
-
-        .divider-or::before,
-        .divider-or::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--gray-200);
-        }
-
-        /* 소셜 로그인 */
-        .btn-social-auth {
-            width: 100%;
-            padding: 14px;
-            background: var(--white);
-            border: 1.5px solid var(--gray-200);
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text);
-            font-family: inherit;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: border-color 0.2s, background 0.2s;
-        }
-
-        .btn-social-auth:hover {
-            border-color: var(--blue);
-            background: var(--light-bg);
-        }
-
         /* 동의 체크박스 */
         .consent-container {
             margin-bottom: 24px;

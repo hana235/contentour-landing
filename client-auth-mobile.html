@@ -523,49 +523,6 @@
             opacity: 0.7;
         }
 
-        /* 구분선 */
-        .divider-or {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 24px 0;
-            color: var(--gray-400);
-            font-size: 0.78rem;
-        }
-
-        .divider-or::before,
-        .divider-or::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--gray-200);
-        }
-
-        /* 소셜 로그인 */
-        .btn-social-auth {
-            width: 100%;
-            padding: clamp(14px, 1.4vw, 16px);
-            background: var(--white);
-            border: 1.5px solid var(--gray-200);
-            border-radius: 12px;
-            font-size: clamp(0.88rem, 0.95vw, 0.95rem);
-            font-weight: 600;
-            color: var(--text);
-            font-family: inherit;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: border-color 0.2s, background 0.2s;
-            min-height: 52px;
-        }
-
-        .btn-social-auth:hover {
-            border-color: var(--blue);
-            background: var(--light-bg);
-        }
-
         /* 동의 체크박스 */
         .consent-container {
             margin-bottom: 24px;
@@ -879,11 +836,6 @@
                 transform: none;
             }
 
-            .btn-social-auth:hover {
-                border-color: var(--gray-200);
-                background: var(--white);
-            }
-
             .forgot-link:hover {
                 text-decoration: none;
             }
@@ -1067,13 +1019,6 @@
                         </button>
                     </form>
 
-                    <div class="divider-or">또는</div>
-
-                    <button type="button" class="btn-social-auth" onclick="loginWithGoogle()">
-                        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.77.87 7.34 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-                        기업용 구글 계정으로 로그인
-                    </button>
-
                     <div class="auth-switch-link">
                         <p>아직 고객사가 아니신가요? <a onclick="switchTab('register')">신규 가입하기</a></p>
                         <div class="admin-link-wrapper">
@@ -1242,27 +1187,6 @@
     </div>
 
     <script>
-        // ── 구글 OAuth 로그인 ──
-        // TODO: Google Cloud Console에서 OAuth 2.0 클라이언트 ID를 발급받아 아래 값을 교체하세요.
-        // 1. https://console.cloud.google.com/ 접속
-        // 2. API 및 서비스 > 사용자 인증 정보 > OAuth 2.0 클라이언트 ID 만들기
-        // 3. 승인된 리디렉션 URI에 REDIRECT_URI 값을 등록
-        const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-        const REDIRECT_URI = window.location.origin + '/oauth/callback';
-
-        function loginWithGoogle() {
-            const params = new URLSearchParams({
-                client_id: GOOGLE_CLIENT_ID,
-                redirect_uri: REDIRECT_URI,
-                response_type: 'code',
-                scope: 'openid email profile',
-                access_type: 'offline',
-                prompt: 'select_account',
-                hd: '*'  // 기업용(Google Workspace) 계정만 허용하려면 도메인 지정 (예: 'contentour.com')
-            });
-            window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
-        }
-
         // ── 탭 전환 ──
         function switchTab(tab) {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
