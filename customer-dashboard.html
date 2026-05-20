@@ -1368,6 +1368,9 @@
                 phone: (member && member.phone) || ''
             };
 
+            // 나만의 양식 저장 키용 (브라우저별 per-user)
+            currentClientId = user.id;
+
             applyUserProfile(_currentUserProfile);
 
             // 사업자등록증 검수 상태 배너 표시
@@ -2355,30 +2358,21 @@
     }
 
     // ===== 양식 전환 =====
-    // ===== 양식 권한 체크 =====
-    // 현재 로그인된 고객사 ID (사이드바 회사명 기준)
-    var currentClientId = 'client-btp'; // 부산테크노파크
+    // ===== 양식 권한 체크 (DB 기반) =====
+    // currentClientId: 나만의 양식(cfb) localStorage 키용 — loadUserProfile에서 user.id로 갱신
+    var currentClientId = 'guest';
+    var _fpRealtimeSub = null;
 
-    function checkFormatPermissions() {
-      var perms = {};
-      try { perms = JSON.parse(localStorage.getItem('contentour_format_permissions') || '{}'); } catch(e) {}
-
-      // 현재 로그인된 고객사의 권한만 확인
-      var hasBusan = false, hasKita = false;
-      if (perms[currentClientId]) {
-        hasBusan = !!perms[currentClientId].busan;
-        hasKita = !!perms[currentClientId].kita;
-      }
+    function _applyFormatPermissions(perm) {
+      var hasBusan = !!(perm && perm.busan);
+      var hasKita = !!(perm && perm.kita);
 
       var tabs = document.querySelectorAll('.jformat-tab');
       var busanTab = tabs[1]; // 부산테크노파크
       var kitaTab = tabs[2];  // 한국무역협회
 
-      if (!hasBusan && busanTab) busanTab.style.display = 'none';
-      else if (busanTab) busanTab.style.display = '';
-
-      if (!hasKita && kitaTab) kitaTab.style.display = 'none';
-      else if (kitaTab) kitaTab.style.display = '';
+      if (busanTab) busanTab.style.display = hasBusan ? '' : 'none';
+      if (kitaTab) kitaTab.style.display = hasKita ? '' : 'none';
 
       // 나만의 양식 탭이 있으므로 탭 바는 항상 표시
       var tabBar = document.querySelector('.jformat-tabs');
@@ -2395,10 +2389,53 @@
       }
     }
 
-    // 페이지 로드 시 & storage 변경 시 권한 체크
-    window.addEventListener('load', checkFormatPermissions);
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'contentour_format_permissions') checkFormatPermissions();
+    async function checkFormatPermissions() {
+      // 권한 없을 때를 기본으로 일단 숨김
+      _applyFormatPermissions({});
+
+      if (!window.sbClient) return;
+      try {
+        var user = window.ContentourAuth ? await ContentourAuth.getCurrentUser() : null;
+        if (!user) {
+          var u = await window.sbClient.auth.getUser();
+          user = u && u.data && u.data.user;
+        }
+        if (!user) return;
+
+        var { data, error } = await window.sbClient
+          .from('01_회원')
+          .select('format_permissions')
+          .eq('id', user.id)
+          .single();
+        if (error) { console.warn('양식 권한 조회 실패:', error); return; }
+
+        _applyFormatPermissions((data && data.format_permissions) || {});
+
+        // Realtime 구독 — admin이 토글한 순간 반영
+        if (!_fpRealtimeSub && window.sbClient.channel) {
+          _fpRealtimeSub = window.sbClient
+            .channel('format-perm-' + user.id)
+            .on('postgres_changes', {
+              event: 'UPDATE',
+              schema: 'public',
+              table: '01_회원',
+              filter: 'id=eq.' + user.id
+            }, function(payload) {
+              var perm = payload && payload.new && payload.new.format_permissions;
+              _applyFormatPermissions(perm || {});
+            })
+            .subscribe();
+        }
+      } catch(e) {
+        console.warn('양식 권한 체크 예외:', e);
+      }
+    }
+
+    // 페이지 로드 시 권한 체크 (Supabase 클라이언트가 준비된 후 실행)
+    window.addEventListener('load', function() {
+      // sbClient가 비동기로 로드될 수 있으므로 약간 지연
+      if (window.sbClient) checkFormatPermissions();
+      else setTimeout(checkFormatPermissions, 500);
     });
 
     function switchFormat(fmt) {

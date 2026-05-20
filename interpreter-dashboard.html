@@ -3259,50 +3259,24 @@
         }
 
         // ══════════════ 양식 전환 (부산테크노파크 / 한국무역협회) ══════════════
-        // ===== 고객사명 → 권한 ID 매핑 =====
-        var clientIdMap = {
-            '(주)삼성전자': 'client-samsung',
-            'SK텔레콤': 'client-sk',
-            '(주)LG전자': 'client-lg',
-            '(주)현대건설': 'client-hyundai',
-            'CJ프레시웨이': 'client-cj',
-            '(주)현대모비스': 'client-mobis',
-            'LG에너지솔루션': 'client-lges',
-            '부산테크노파크': 'client-btp',
-            '한국무역협회 회원사': 'client-kita-member'
-        };
+        // 양식 권한은 01_회원.format_permissions JSONB에서 DB 조회
+        var _jnlFpRealtimeSub = null;
+        var _jnlCurrentCustomerId = null;
 
-        // 선택된 고객사 기준으로 양식 권한 체크
-        function checkJnlFormatPermissions() {
-            var selectedClient = document.getElementById('jnl-client').value;
-            var perms = {};
-            try { perms = JSON.parse(localStorage.getItem('contentour_format_permissions') || '{}'); } catch(e) {}
-
-            var hasBusan = false, hasKita = false;
-
-            if (selectedClient) {
-                var clientId = clientIdMap[selectedClient];
-                if (clientId && perms[clientId]) {
-                    hasBusan = !!perms[clientId].busan;
-                    hasKita = !!perms[clientId].kita;
-                }
-            }
+        function _applyJnlFormatPermissions(perm) {
+            var hasBusan = !!(perm && perm.busan);
+            var hasKita = !!(perm && perm.kita);
 
             var tabs = document.querySelectorAll('.jnl-format-tab');
             var busanTab = tabs[1];
             var kitaTab = tabs[2];
 
-            if (!hasBusan && busanTab) busanTab.style.display = 'none';
-            else if (busanTab) busanTab.style.display = '';
+            if (busanTab) busanTab.style.display = hasBusan ? '' : 'none';
+            if (kitaTab) kitaTab.style.display = hasKita ? '' : 'none';
 
-            if (!hasKita && kitaTab) kitaTab.style.display = 'none';
-            else if (kitaTab) kitaTab.style.display = '';
-
-            // 나만의 양식 탭이 있으므로 탭 바는 항상 표시
             var tabBar = document.querySelector('.jnl-format-tabs');
             if (tabBar) tabBar.style.display = '';
 
-            // 현재 활성화된 양식이 권한 밖이면 콘텐츄어로 복귀
             var busanContent = document.getElementById('jnl-fmt-busan');
             var kitaContent = document.getElementById('jnl-fmt-kita');
             if (!hasBusan && busanContent && busanContent.classList.contains('active')) {
@@ -3313,11 +3287,72 @@
             }
         }
 
-        // 고객사 선택 시 호출
+        // 선택된 전시회의 customer_id 기준으로 양식 권한 체크 (DB)
+        async function checkJnlFormatPermissions() {
+            // 현재 선택된 expo로부터 customer_id 추출
+            var expoName = document.getElementById('jnl-expo') ? document.getElementById('jnl-expo').value : '';
+            var customerId = null;
+            if (expoName && window._jnlContracts) {
+                var match = window._jnlContracts.find(function(c) {
+                    return c.name && c.name.toLowerCase() === expoName.toLowerCase();
+                });
+                if (match) customerId = match.customerId || null;
+            }
+
+            // 권한 없음 기본 상태
+            if (!customerId) {
+                _applyJnlFormatPermissions({});
+                _jnlCurrentCustomerId = null;
+                return;
+            }
+
+            // 이미 같은 customer로 구독 중이면 재조회만
+            _jnlCurrentCustomerId = customerId;
+
+            var sb = window.sbClient || window.supabase;
+            if (!sb) { _applyJnlFormatPermissions({}); return; }
+
+            try {
+                var { data, error } = await sb
+                    .from('01_회원')
+                    .select('format_permissions')
+                    .eq('id', customerId)
+                    .single();
+                if (error) { console.warn('[상담일지] 양식 권한 조회 실패:', error); _applyJnlFormatPermissions({}); return; }
+
+                _applyJnlFormatPermissions((data && data.format_permissions) || {});
+
+                // Realtime: 해당 customer row 변경 시 갱신
+                if (_jnlFpRealtimeSub) {
+                    try { sb.removeChannel(_jnlFpRealtimeSub); } catch(e) {}
+                    _jnlFpRealtimeSub = null;
+                }
+                if (sb.channel) {
+                    _jnlFpRealtimeSub = sb
+                        .channel('jnl-fp-' + customerId)
+                        .on('postgres_changes', {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: '01_회원',
+                            filter: 'id=eq.' + customerId
+                        }, function(payload) {
+                            // 구독 중인 customer가 여전히 선택된 상태일 때만 반영
+                            if (_jnlCurrentCustomerId !== customerId) return;
+                            var perm = payload && payload.new && payload.new.format_permissions;
+                            _applyJnlFormatPermissions(perm || {});
+                        })
+                        .subscribe();
+                }
+            } catch(e) {
+                console.warn('[상담일지] 양식 권한 예외:', e);
+                _applyJnlFormatPermissions({});
+            }
+        }
+
+        // 고객사 선택 시 호출 (현재 jnl-client는 readonly, expo 변경이 트리거)
         function onJnlClientChange() {
             checkJnlFormatPermissions();
 
-            // 부산TP/KITA 양식 내 고객사 필드 자동 채우기
             var client = document.getElementById('jnl-client').value;
             var bpCompany = document.getElementById('jnl-bp-company');
             var ktCompany = document.getElementById('jnl-kt-company');
@@ -3325,9 +3360,9 @@
             if (ktCompany) ktCompany.value = client;
         }
 
-        window.addEventListener('load', checkJnlFormatPermissions);
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'contentour_format_permissions') checkJnlFormatPermissions();
+        window.addEventListener('load', function() {
+            if (window.sbClient) checkJnlFormatPermissions();
+            else setTimeout(checkJnlFormatPermissions, 500);
         });
 
         function switchJnlFormat(fmt) {

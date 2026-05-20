@@ -6473,7 +6473,7 @@
 
                     var { data: customers } = await sb
                         .from('01_회원')
-                        .select('id, name, email, company_name, phone')
+                        .select('id, name, email, company_name, phone, format_permissions')
                         .eq('role', 'customer');
 
                     var seen = {};
@@ -6482,13 +6482,14 @@
                         customers.forEach(function(c) {
                             if (!seen[c.id]) {
                                 seen[c.id] = true;
+                                var fp = c.format_permissions || {};
                                 fpClients.push({
                                     id: c.id,
                                     name: c.company_name || c.name,
                                     manager: c.name,
-                                    busan: false,
-                                    kita: false,
-                                    lastModified: null
+                                    busan: !!fp.busan,
+                                    kita: !!fp.kita,
+                                    lastModified: fp.modified_at ? fp.modified_at.split('T')[0] : null
                                 });
                             }
                         });
@@ -6510,33 +6511,29 @@
                         });
                     }
 
-                    loadFpPermissions();
                     renderFpTable();
                 } catch(e) {
                     console.error('양식 권한 고객사 로드 실패:', e);
                 }
             };
 
-            // localStorage에서 저장된 권한 불러오기
-            function loadFpPermissions() {
-                try {
-                    var saved = JSON.parse(localStorage.getItem('contentour_format_permissions') || '{}');
-                    fpClients.forEach(function(c) {
-                        if (saved[c.id]) {
-                            c.busan = !!saved[c.id].busan;
-                            c.kita = !!saved[c.id].kita;
-                            if (saved[c.id].lastModified) c.lastModified = saved[c.id].lastModified;
-                        }
-                    });
-                } catch(e) {}
-            }
-
-            function saveFpPermissions() {
-                var data = {};
-                fpClients.forEach(function(c) {
-                    data[c.id] = { busan: c.busan, kita: c.kita, lastModified: c.lastModified };
-                });
-                localStorage.setItem('contentour_format_permissions', JSON.stringify(data));
+            // DB UPDATE — 단일 고객사 권한 저장 (RLS 무음 실패 감지 포함)
+            async function saveFpPermissionsForClient(client) {
+                var sb = window.sbClient || window.supabase;
+                if (!sb) throw new Error('Supabase 클라이언트 미초기화');
+                var payload = {
+                    format_permissions: {
+                        busan: !!client.busan,
+                        kita: !!client.kita,
+                        modified_at: new Date().toISOString()
+                    }
+                };
+                var { data, error } = await sb.from('01_회원').update(payload).eq('id', client.id).select('id, format_permissions');
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    throw new Error('RLS 차단 또는 매칭 row 없음 (영향받은 행 0건) — admin 권한 정책을 확인하세요.');
+                }
+                client.lastModified = payload.format_permissions.modified_at.split('T')[0];
             }
 
             function renderFpTable() {
@@ -6565,20 +6562,28 @@
                 }).join('');
             }
 
-            function toggleFpPerm(clientId, format, checked) {
+            async function toggleFpPerm(clientId, format, checked) {
                 var client = fpClients.find(function(c) { return c.id === clientId; });
                 if (!client) return;
+                var prev = client[format];
                 client[format] = checked;
-                client.lastModified = new Date().toISOString().split('T')[0];
-                saveFpPermissions();
                 renderFpTable();
 
                 var formatName = format === 'busan' ? '부산테크노파크' : '한국무역협회';
                 var action = checked ? '허용' : '해제';
-                showToast('🔐 ' + client.name + ' — ' + formatName + ' 양식 권한 ' + action + '됨');
+
+                try {
+                    await saveFpPermissionsForClient(client);
+                    renderFpTable();
+                    showToast('🔐 ' + client.name + ' — ' + formatName + ' 양식 권한 ' + action + '됨');
+                } catch (e) {
+                    console.error('양식 권한 저장 실패:', e);
+                    client[format] = prev;
+                    renderFpTable();
+                    showToast('⚠️ 권한 저장에 실패했습니다. 다시 시도해주세요.');
+                }
             }
 
-            loadFpPermissions();
             renderFpTable();
 
             // ═══════════════════════════════════════════════
