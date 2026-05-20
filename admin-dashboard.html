@@ -6586,6 +6586,62 @@
 
             renderFpTable();
 
+            // Realtime — 신규 고객사 가입 시 자동 목록 추가, 권한 변경 시 행 갱신
+            var _fpClientsRealtimeSub = null;
+            function _subscribeFpClientsRealtime() {
+                var sb = window.sbClient || window.supabase;
+                if (!sb || !sb.channel || _fpClientsRealtimeSub) return;
+                _fpClientsRealtimeSub = sb
+                    .channel('admin-fp-clients')
+                    .on('postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: '01_회원',
+                        filter: 'role=eq.customer'
+                    }, function(payload) {
+                        var c = payload && payload.new;
+                        if (!c || !c.id) return;
+                        if (fpClients.find(function(x) { return x.id === c.id; })) return;
+                        var fp = c.format_permissions || {};
+                        fpClients.push({
+                            id: c.id,
+                            name: c.company_name || c.name,
+                            manager: c.name || '-',
+                            busan: !!fp.busan,
+                            kita: !!fp.kita,
+                            lastModified: fp.modified_at ? fp.modified_at.split('T')[0] : null
+                        });
+                        renderFpTable();
+                    })
+                    .on('postgres_changes', {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: '01_회원'
+                    }, function(payload) {
+                        var c = payload && payload.new;
+                        if (!c || !c.id) return;
+                        var existing = fpClients.find(function(x) { return x.id === c.id; });
+                        if (!existing) return;
+                        var fp = c.format_permissions || {};
+                        existing.busan = !!fp.busan;
+                        existing.kita = !!fp.kita;
+                        existing.lastModified = fp.modified_at ? fp.modified_at.split('T')[0] : existing.lastModified;
+                        existing.name = c.company_name || c.name || existing.name;
+                        existing.manager = c.name || existing.manager;
+                        renderFpTable();
+                    })
+                    .subscribe();
+            }
+            // _loadFpClients 직후 구독 시작
+            (function _wireFpRealtimeAfterLoad() {
+                var orig = window._loadFpClients;
+                if (typeof orig !== 'function') return;
+                window._loadFpClients = async function() {
+                    await orig.apply(this, arguments);
+                    _subscribeFpClientsRealtime();
+                };
+            })();
+
             // ═══════════════════════════════════════════════
             // ═══ 채팅 모니터링 시스템 ═══
             // ═══════════════════════════════════════════════
