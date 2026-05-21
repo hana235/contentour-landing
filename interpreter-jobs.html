@@ -355,6 +355,200 @@
         }
         .ij-empty__error { color: #c62828; }
 
+        /* ── FOR COMPANIES 박스 액션 ── */
+        .ij-corp-cta__actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .ij-corp-cta__btn--primary {
+            background: var(--blue);
+            color: #fff;
+            border: 1.5px solid var(--blue);
+        }
+        .ij-corp-cta__btn--primary:hover {
+            background: #0d47a1;
+            border-color: #0d47a1;
+            color: #fff;
+        }
+        .ij-corp-cta__btn--secondary {
+            background: #fff;
+            color: var(--blue);
+            border: 1.5px solid var(--blue);
+        }
+        .ij-corp-cta__btn--secondary:hover {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        /* ── 공고 등록 모달 ── */
+        .ij-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            display: none;
+        }
+        .ij-modal.is-open { display: block; }
+        .ij-modal__backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 22, 40, 0.5);
+            backdrop-filter: blur(2px);
+        }
+        .ij-modal__sheet {
+            position: relative;
+            max-width: 580px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            padding: 32px 28px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            font-family: 'Montserrat', 'Noto Sans KR', sans-serif;
+        }
+        .ij-modal__close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            font-size: 1.5rem;
+            color: var(--gray-400);
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .ij-modal__close:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--text);
+        }
+        .ij-modal__head {
+            margin-bottom: 22px;
+        }
+        .ij-modal__head h3 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 6px;
+            letter-spacing: -0.2px;
+        }
+        .ij-modal__head p {
+            font-size: 0.82rem;
+            color: var(--gray-400);
+            line-height: 1.5;
+        }
+        .ij-modal__form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px 12px;
+        }
+        .ij-modal__field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .ij-modal__field--full { grid-column: 1 / -1; }
+        .ij-modal__field label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+        .ij-modal__field .req { color: #dc2626; }
+        .ij-modal__field input,
+        .ij-modal__field select,
+        .ij-modal__field textarea {
+            font-family: inherit;
+            font-size: 0.88rem;
+            padding: 9px 11px;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 9px;
+            background: #fff;
+            color: var(--text);
+            outline: none;
+            transition: border 0.15s, box-shadow 0.15s;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        .ij-modal__field input:focus,
+        .ij-modal__field select:focus,
+        .ij-modal__field textarea:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.12);
+        }
+        .ij-modal__field textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+        .ij-modal__field--check {
+            grid-column: 1 / -1;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 12px;
+            background: #f9fafb;
+            border-radius: 9px;
+        }
+        .ij-modal__field--check input { width: auto; margin-top: 2px; }
+        .ij-modal__field--check label {
+            font-size: 0.82rem;
+            line-height: 1.5;
+            color: var(--text);
+            font-weight: 500;
+        }
+        .ij-modal__field--check .help {
+            display: block;
+            font-size: 0.74rem;
+            color: var(--gray-400);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+        .ij-modal__help {
+            grid-column: 1 / -1;
+            font-size: 0.74rem;
+            color: var(--gray-300);
+            line-height: 1.5;
+            margin-top: -6px;
+        }
+        .ij-modal__actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+        .ij-modal__btn {
+            padding: 11px 22px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1.5px solid var(--blue);
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .ij-modal__btn-secondary {
+            background: #fff;
+            color: var(--gray-600);
+            border-color: rgba(0,0,0,0.12);
+        }
+        .ij-modal__btn-secondary:hover {
+            background: #f3f4f6;
+        }
+        .ij-modal__btn-primary {
+            background: var(--blue);
+            color: #fff;
+            border-color: var(--blue);
+        }
+        .ij-modal__btn-primary:hover { background: #0d47a1; border-color: #0d47a1; }
+        .ij-modal__btn-primary:disabled {
+            background: #94a3b8;
+            border-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
         /* ── 모바일 ── */
         @media (max-width: 768px) {
             .ij-page { padding: 32px 16px 60px; }
@@ -366,6 +560,10 @@
             .ij-filter { justify-content: flex-start; }
             .ij-corp-cta { padding: 28px 20px; }
             .ij-corp-cta__title { font-size: 1.1rem; }
+            .ij-modal__sheet { margin: 20px 12px; padding: 24px 20px; }
+            .ij-modal__form { grid-template-columns: 1fr; }
+            .ij-modal__actions { flex-direction: column-reverse; }
+            .ij-modal__btn { width: 100%; }
         }
     </style>
 </head>
@@ -510,12 +708,15 @@
             <!-- 기업용 CTA 박스 -->
             <section class="ij-corp-cta">
                 <div class="ij-corp-cta__label">FOR COMPANIES</div>
-                <h2 class="ij-corp-cta__title">우리 기업도 통역사 매칭받기</h2>
+                <h2 class="ij-corp-cta__title">우리 기업도 통역사 모집하기</h2>
                 <p class="ij-corp-cta__desc">
-                    견적 의뢰 시 '통역사 구인 현황 게재 동의' 체크 한 번으로<br>
-                    검증된 콘텐츄어 통역사 풀에서 자동 매칭됩니다.
+                    지금 바로 공고를 올려 검증된 콘텐츄어 통역사 풀에 노출하세요.<br>
+                    관리자 검토 후 게재되며, 통역사 지원·매칭은 콘텐츄어를 통해서만 진행됩니다.
                 </p>
-                <a href="index.html#contact" class="ij-corp-cta__btn">견적 의뢰하기</a>
+                <div class="ij-corp-cta__actions">
+                    <button type="button" class="ij-corp-cta__btn ij-corp-cta__btn--primary" id="openPostingBtn">공고 올리기</button>
+                    <a href="index.html#contact" class="ij-corp-cta__btn ij-corp-cta__btn--secondary">또는 견적 의뢰하기</a>
+                </div>
             </section>
 
             <!-- 신뢰 푸터 -->
@@ -525,6 +726,128 @@
 
         </div>
     </main>
+
+    <!-- 공고 등록 모달 (로그인 고객사만 열림) -->
+    <div class="ij-modal" id="postingModal" aria-hidden="true">
+        <div class="ij-modal__backdrop" id="postingBackdrop"></div>
+        <div class="ij-modal__sheet" role="dialog" aria-labelledby="postingModalTitle" aria-modal="true">
+            <button class="ij-modal__close" type="button" id="postingCloseBtn" aria-label="닫기">×</button>
+            <header class="ij-modal__head">
+                <h3 id="postingModalTitle">통역사 모집 공고 올리기</h3>
+                <p>입력 후 관리자 검토를 거쳐 게재됩니다. 연락처·회사명은 통역사에게 직접 노출되지 않습니다.</p>
+            </header>
+            <form id="postingForm" class="ij-modal__form" autocomplete="off">
+
+                <div class="ij-modal__field ij-modal__field--full">
+                    <label for="pf-exhibition">전시회명 <span class="req">*</span></label>
+                    <input id="pf-exhibition" name="exhibition_name" required maxlength="300" placeholder="예: CES 2026" />
+                </div>
+
+                <div class="ij-modal__field">
+                    <label for="pf-country">국가 <span class="req">*</span></label>
+                    <select id="pf-country" name="showcase_country_code" required>
+                        <option value="">선택</option>
+                        <option value="JP">일본</option>
+                        <option value="CN">중국</option>
+                        <option value="US">미국</option>
+                        <option value="DE">독일</option>
+                        <option value="VN">베트남</option>
+                        <option value="AE">UAE</option>
+                        <option value="FR">프랑스</option>
+                        <option value="GB">영국</option>
+                        <option value="IT">이탈리아</option>
+                        <option value="ES">스페인</option>
+                        <option value="TH">태국</option>
+                        <option value="ID">인도네시아</option>
+                        <option value="IN">인도</option>
+                        <option value="SG">싱가포르</option>
+                        <option value="TR">튀르키예</option>
+                        <option value="BR">브라질</option>
+                        <option value="MX">멕시코</option>
+                        <option value="OT">기타</option>
+                    </select>
+                </div>
+
+                <div class="ij-modal__field">
+                    <label for="pf-location">개최지(도시) <span class="req">*</span></label>
+                    <input id="pf-location" name="location" required maxlength="200" placeholder="예: 라스베이거스" />
+                </div>
+
+                <div class="ij-modal__field">
+                    <label for="pf-start">시작일 <span class="req">*</span></label>
+                    <input id="pf-start" name="start_date" type="date" required />
+                </div>
+
+                <div class="ij-modal__field">
+                    <label for="pf-end">종료일 <span class="req">*</span></label>
+                    <input id="pf-end" name="end_date" type="date" required />
+                </div>
+
+                <div class="ij-modal__field">
+                    <label for="pf-industry">산업 <span class="req">*</span></label>
+                    <select id="pf-industry" name="showcase_industry" required>
+                        <option value="">선택</option>
+                        <option>IT</option>
+                        <option>의료기기</option>
+                        <option>뷰티·화장품</option>
+                        <option>자동차 부품</option>
+                        <option>식품·F&amp;B</option>
+                        <option>건축·자재</option>
+                        <option>반도체</option>
+                        <option>에너지·환경</option>
+                        <option>섬유·패션</option>
+                        <option>기계·로봇</option>
+                        <option>유아·완구</option>
+                        <option>스포츠·레저</option>
+                        <option>기타</option>
+                    </select>
+                </div>
+
+                <div class="ij-modal__field">
+                    <label for="pf-headcount">필요 인원 <span class="req">*</span></label>
+                    <input id="pf-headcount" name="headcount" type="number" min="1" max="99" required placeholder="예: 2" />
+                </div>
+
+                <div class="ij-modal__field ij-modal__field--full">
+                    <label for="pf-languages">필요 언어 <span class="req">*</span></label>
+                    <input id="pf-languages" name="language_pair" required maxlength="200" placeholder="예: 영어, 일본어" />
+                </div>
+
+                <div class="ij-modal__field ij-modal__field--full">
+                    <label for="pf-venue">전시장 (선택)</label>
+                    <input id="pf-venue" name="venue" maxlength="200" placeholder="예: Las Vegas Convention Center" />
+                </div>
+
+                <div class="ij-modal__field ij-modal__field--check">
+                    <input id="pf-disclose" name="company_name_disclosure" type="checkbox" />
+                    <label for="pf-disclose">
+                        로그인 통역사에게 실제 회사명 공개
+                        <span class="help">기본은 익명 노출입니다. 체크 시 회사명이 가입된 통역사에게만 보입니다. 비로그인 사용자에게는 어떤 경우에도 익명입니다.</span>
+                    </label>
+                </div>
+
+                <div class="ij-modal__field ij-modal__field--full">
+                    <label for="pf-label">익명 라벨 (선택)</label>
+                    <input id="pf-label" name="showcase_label" maxlength="100" placeholder="예: 한국 IT 중견기업 — 비우면 산업 기준 자동 생성" />
+                </div>
+
+                <div class="ij-modal__field ij-modal__field--full">
+                    <label for="pf-message">추가 메모 (선택)</label>
+                    <textarea id="pf-message" name="message" maxlength="2000" placeholder="통역사 지원 시 참고할 추가 정보가 있다면 입력해주세요."></textarea>
+                </div>
+
+                <p class="ij-modal__help">
+                    🛡 통역사가 카드에서 "지원하기"를 누르면 콘텐츄어 관리자가 검토 후 매칭을 제안드립니다.
+                    통역사가 직접 고객사에 연락할 수 없으며, 직접 컨택 적발 시 통역사 풀에서 영구 제명됩니다.
+                </p>
+
+                <div class="ij-modal__actions">
+                    <button type="button" class="ij-modal__btn ij-modal__btn-secondary" id="postingCancelBtn">취소</button>
+                    <button type="submit" class="ij-modal__btn ij-modal__btn-primary" id="postingSubmitBtn">제출</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="footer-professional">
@@ -775,6 +1098,128 @@
         }
         syncFromUrl();
         fetchShowcase();
+
+        // ══════════════ 공고 등록 모달 (Phase 4B) ══════════════
+        var currentProfile = null;
+        var postingModal = document.getElementById('postingModal');
+        var postingForm = document.getElementById('postingForm');
+        var postingSubmitBtn = document.getElementById('postingSubmitBtn');
+
+        function openPostingModal() {
+            postingModal.classList.add('is-open');
+            postingModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            // 첫 입력으로 포커스
+            setTimeout(function () {
+                var first = document.getElementById('pf-exhibition');
+                if (first) first.focus();
+            }, 50);
+        }
+
+        function closePostingModal() {
+            postingModal.classList.remove('is-open');
+            postingModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        async function handleOpenPostingClick() {
+            // 로그인 안 되어 있으면 로그인 페이지로
+            if (!window.ContentourAuth) {
+                if (window.showToast) window.showToast('잠시 후 다시 시도해주세요.', 'error');
+                return;
+            }
+            if (!currentProfile) {
+                if (confirm('로그인하면 직접 공고를 올릴 수 있습니다.\n로그인 페이지로 이동할까요?')) {
+                    location.href = 'client-auth.html';
+                }
+                return;
+            }
+            if (currentProfile.role !== 'customer') {
+                if (window.showToast) window.showToast('고객사 계정만 공고를 등록할 수 있습니다.', 'error');
+                return;
+            }
+            openPostingModal();
+        }
+
+        document.getElementById('openPostingBtn').addEventListener('click', handleOpenPostingClick);
+        document.getElementById('postingCloseBtn').addEventListener('click', closePostingModal);
+        document.getElementById('postingCancelBtn').addEventListener('click', closePostingModal);
+        document.getElementById('postingBackdrop').addEventListener('click', closePostingModal);
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && postingModal.classList.contains('is-open')) closePostingModal();
+        });
+
+        postingForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            if (!window.sbClient) {
+                if (window.showToast) window.showToast('인증 클라이언트 초기화 실패', 'error');
+                return;
+            }
+
+            // access token 가져오기
+            var token = null;
+            try {
+                var sessionRes = await window.sbClient.auth.getSession();
+                token = sessionRes.data && sessionRes.data.session ? sessionRes.data.session.access_token : null;
+            } catch (e) { /* fall through */ }
+            if (!token) {
+                if (window.showToast) window.showToast('로그인이 만료되었습니다. 다시 로그인해주세요.', 'error');
+                return;
+            }
+
+            var fd = new FormData(postingForm);
+            var payload = {
+                exhibition_name: fd.get('exhibition_name'),
+                location: fd.get('location'),
+                venue: fd.get('venue') || null,
+                showcase_country_code: fd.get('showcase_country_code'),
+                start_date: fd.get('start_date'),
+                end_date: fd.get('end_date'),
+                language_pair: fd.get('language_pair'),
+                headcount: parseInt(fd.get('headcount'), 10) || 1,
+                showcase_industry: fd.get('showcase_industry'),
+                showcase_label: fd.get('showcase_label') || null,
+                company_name_disclosure: fd.get('company_name_disclosure') === 'on',
+                message: fd.get('message') || null
+            };
+
+            postingSubmitBtn.disabled = true;
+            postingSubmitBtn.textContent = '제출 중...';
+            try {
+                var r = await fetch('/api/submit-showcase-posting', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(payload)
+                });
+                var json = await r.json().catch(function () { return {}; });
+                if (!r.ok) {
+                    if (window.showToast) window.showToast(json.error || '등록 실패. 잠시 후 다시 시도해주세요.', 'error');
+                    return;
+                }
+                if (window.showToast) window.showToast('공고가 등록되었습니다.\n관리자 검토 후 게재됩니다.', 'success');
+                postingForm.reset();
+                closePostingModal();
+            } catch (err) {
+                console.error('Posting submit failed:', err);
+                if (window.showToast) window.showToast('네트워크 오류. 잠시 후 다시 시도해주세요.', 'error');
+            } finally {
+                postingSubmitBtn.disabled = false;
+                postingSubmitBtn.textContent = '제출';
+            }
+        });
+
+        // 페이지 로드 시 로그인 프로필 확인 (버튼 노출 정책은 항상 보임 — 클릭 시점에 판단)
+        (async function loadProfile() {
+            if (!window.ContentourAuth) return;
+            try {
+                currentProfile = await window.ContentourAuth.getUserProfile();
+            } catch (e) {
+                currentProfile = null;
+            }
+        })();
     </script>
 </body>
 

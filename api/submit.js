@@ -321,6 +321,117 @@ async function handleNotifyAdmins(req, res) {
     }
 }
 
+// ────────────────────────── submit-showcase-posting ──────────────────────────
+// 로그인 고객사가 통역사 구인 현황 페이지에서 직접 공고 등록.
+// source_type='direct_posting', review_status='pending' 으로 INSERT → admin 검토 큐.
+async function handleShowcasePosting(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ error: '로그인이 필요합니다.' });
+
+    const { data: { user }, error: authErr } = await sbAuth.auth.getUser(token);
+    if (authErr || !user) return res.status(401).json({ error: '인증 실패' });
+
+    const { data: profile, error: profErr } = await sb
+        .from('01_회원')
+        .select('role, name, phone, company_name')
+        .eq('id', user.id)
+        .single();
+    if (profErr || !profile) return res.status(403).json({ error: '회원 정보를 찾을 수 없습니다.' });
+    if (profile.role !== 'customer') {
+        return res.status(403).json({ error: '고객사 계정만 공고를 등록할 수 있습니다.' });
+    }
+
+    var b = req.body || {};
+    var exhibition_name        = s(b.exhibition_name, 300);
+    var location               = s(b.location, 200);
+    var venue                  = s(b.venue, 200);
+    var start_date             = s(b.start_date, 20);
+    var end_date               = s(b.end_date, 20);
+    var language_pair          = s(b.language_pair, 200);
+    var showcase_industry      = s(b.showcase_industry, 100);
+    var showcase_country_code  = s(b.showcase_country_code, 2);
+    var showcase_label         = s(b.showcase_label, 100);
+    var message                = s(b.message, 5000);
+    var company_name_disclosure = b.company_name_disclosure === true;
+    var headcount = parseInt(b.headcount);
+    if (!Number.isFinite(headcount) || headcount < 1) headcount = 1;
+    if (headcount > 99) headcount = 99;
+
+    if (!exhibition_name || !location || !start_date || !end_date || !language_pair || !showcase_industry || !showcase_country_code) {
+        return res.status(400).json({ error: '필수 항목이 누락되었습니다.' });
+    }
+    if (start_date > end_date) {
+        return res.status(400).json({ error: '종료일은 시작일 이후로 입력해주세요.' });
+    }
+    if (!/^[A-Z]{2}$/.test(showcase_country_code)) {
+        return res.status(400).json({ error: '국가 코드 형식이 올바르지 않습니다.' });
+    }
+
+    // 익명 게재(기본): showcase_label은 사용자가 정한 익명 라벨
+    // 실명 공개: showcase_label = 회사명 (4F에서 viewer 역할별로 가림)
+    if (!showcase_label) {
+        showcase_label = '한국 ' + showcase_industry + ' 기업';
+    }
+
+    var payload = {
+        source_type: 'direct_posting',
+        review_status: 'pending',
+        posted_by_user_id: user.id,
+        user_id: user.id,
+        company: profile.company_name || profile.name || '직접 등록 고객사',
+        contact_name: profile.name || '',
+        email: user.email || null,
+        phone: profile.phone || null,
+        exhibition_name, location, venue, start_date, end_date,
+        language_pair, headcount, message,
+        showcase_consent: true,
+        showcase_industry,
+        showcase_country_code,
+        showcase_label,
+        company_name_disclosure,
+        status: '접수',
+        consent: true
+    };
+
+    try {
+        var { data, error } = await sb
+            .from('46_ITQ견적문의')
+            .insert(payload)
+            .select('id')
+            .single();
+        if (error) {
+            console.error('직접 등록 공고 저장 실패:', error);
+            return res.status(500).json({ error: '저장 실패. 잠시 후 다시 시도해주세요.' });
+        }
+
+        // admin 알림 (실패해도 본 응답엔 영향 없음)
+        try {
+            const { data: admins } = await sb.from('01_회원').select('id').eq('role', 'admin');
+            if (admins && admins.length > 0) {
+                const companyDisplay = profile.company_name || profile.name || '고객사';
+                const rows = admins.map(a => ({
+                    user_id: a.id,
+                    notification_type: 'service',
+                    title: '📋 직접 등록 공고 검토 요청',
+                    message: companyDisplay + '이 "' + exhibition_name + '" 통역사 모집 공고를 등록했습니다. 검토 대기 중입니다.',
+                    is_read: false
+                }));
+                await sb.from('24_알림').insert(rows);
+            }
+        } catch (notifErr) {
+            console.warn('admin 알림 실패 (무시):', notifErr);
+        }
+
+        return res.status(200).json({ ok: true, postingId: data.id });
+    } catch (e) {
+        console.error('Submit showcase posting error:', e);
+        return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+    }
+}
+
 // ────────────────────────── 디스패처 ──────────────────────────
 module.exports = async function handler(req, res) {
     if (!SERVICE_KEY) return res.status(500).json({ error: '서버 설정 오류(SERVICE_KEY 누락).' });
@@ -329,6 +440,7 @@ module.exports = async function handler(req, res) {
     switch (route) {
         case 'submit-inquiry': return handleInquiry(req, res);
         case 'submit-application': return handleApplication(req, res);
+        case 'submit-showcase-posting': return handleShowcasePosting(req, res);
         case 'upload-application-file': return handleUploadFile(req, res);
         case 'notify-admins': return handleNotifyAdmins(req, res);
         default: return res.status(404).json({ error: 'Unknown route: ' + route });
