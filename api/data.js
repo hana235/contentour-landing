@@ -103,8 +103,12 @@ async function handleReviews(req, res) {
 
 // ────────────────────────── showcase (통역사 구인 현황) ──────────────────────────
 // 공개 카드 그리드 데이터. 화이트리스트 컬럼만 반환 — 회사명/연락처/메시지 등 절대 노출 금지.
-// 노출 조건: showcase_consent = true AND showcase_published_at IS NOT NULL.
+// 두 종류의 공고를 합쳐서 반환:
+//   1) admin_inquiry  → showcase_consent=true AND showcase_published_at IS NOT NULL  (Phase 3 룰)
+//   2) direct_posting → review_status='approved'                                       (Phase 4)
 // 매칭 상태: contract_id IS NULL → recruiting, 아니면 matched.
+
+const SHOWCASE_COLUMNS = 'id, source_type, exhibition_name, start_date, end_date, language_pair, headcount, contract_id, showcase_label, showcase_industry, showcase_country_code, showcase_published_at, reviewed_at, interest_count';
 
 function parseLanguages(pair) {
     if (!pair) return [];
@@ -121,51 +125,73 @@ function calcDaysLeft(startDate) {
     return diff >= 0 ? diff : null;
 }
 
+function rowToCard(r) {
+    const isMatched = !!r.contract_id;
+    const card = {
+        status: isMatched ? 'matched' : 'recruiting',
+        label: r.showcase_label || '한국 기업',
+        industry: r.showcase_industry || '',
+        isAnonymous: true,
+        countryCode: r.showcase_country_code || '',
+        exhibition: r.exhibition_name || '',
+        startDate: r.start_date || '',
+        endDate: r.end_date || '',
+        languages: parseLanguages(r.language_pair),
+        needed: Number.isFinite(r.headcount) ? r.headcount : 1,
+        interestCount: r.interest_count || 0
+    };
+    if (isMatched) {
+        const d = calcDaysLeft(r.start_date);
+        if (d !== null) card.daysLeft = d;
+    }
+    return card;
+}
+
 async function handleShowcase(req, res) {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
     try {
         const region = req.query.region ? String(req.query.region).toUpperCase().slice(0, 2) : '';
+        const regionValid = region && /^[A-Z]{2}$/.test(region);
 
-        let query = supabase
+        // admin_inquiry 쿼리: showcase_consent + showcase_published_at
+        let qInquiry = supabase
             .from('46_ITQ견적문의')
-            .select('id, exhibition_name, start_date, end_date, language_pair, headcount, contract_id, showcase_label, showcase_industry, showcase_country_code, showcase_published_at, interest_count')
+            .select(SHOWCASE_COLUMNS)
+            .eq('source_type', 'admin_inquiry')
             .eq('showcase_consent', true)
             .not('showcase_published_at', 'is', null)
             .order('showcase_published_at', { ascending: false })
             .limit(60);
+        if (regionValid) qInquiry = qInquiry.eq('showcase_country_code', region);
 
-        if (region && /^[A-Z]{2}$/.test(region)) {
-            query = query.eq('showcase_country_code', region);
-        }
+        // direct_posting 쿼리: review_status='approved'
+        let qDirect = supabase
+            .from('46_ITQ견적문의')
+            .select(SHOWCASE_COLUMNS)
+            .eq('source_type', 'direct_posting')
+            .eq('review_status', 'approved')
+            .order('reviewed_at', { ascending: false })
+            .limit(60);
+        if (regionValid) qDirect = qDirect.eq('showcase_country_code', region);
 
-        const { data, error } = await query;
-        if (error) throw error;
+        const [inq, drc] = await Promise.all([qInquiry, qDirect]);
+        if (inq.error) throw inq.error;
+        if (drc.error) throw drc.error;
 
-        const result = (data || []).map(r => {
-            const isMatched = !!r.contract_id;
-            const card = {
-                status: isMatched ? 'matched' : 'recruiting',
-                label: r.showcase_label || '한국 기업',
-                industry: r.showcase_industry || '',
-                isAnonymous: true,
-                countryCode: r.showcase_country_code || '',
-                exhibition: r.exhibition_name || '',
-                startDate: r.start_date || '',
-                endDate: r.end_date || '',
-                languages: parseLanguages(r.language_pair),
-                needed: Number.isFinite(r.headcount) ? r.headcount : 1,
-                interestCount: r.interest_count || 0
-            };
-            if (isMatched) {
-                const d = calcDaysLeft(r.start_date);
-                if (d !== null) card.daysLeft = d;
-            }
-            return card;
-        });
+        // 정렬 키: admin_inquiry는 showcase_published_at, direct_posting은 reviewed_at
+        const combined = [...(inq.data || []), ...(drc.data || [])]
+            .map(r => ({
+                row: r,
+                sortKey: r.source_type === 'direct_posting' ? r.reviewed_at : r.showcase_published_at
+            }))
+            .filter(x => x.sortKey)
+            .sort((a, b) => new Date(b.sortKey) - new Date(a.sortKey))
+            .slice(0, 60)
+            .map(x => rowToCard(x.row));
 
         res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
-        return res.status(200).json(result);
+        return res.status(200).json(combined);
     } catch (e) {
         console.error('Showcase query error:', e);
         return res.status(500).json({ error: 'Failed to load showcase' });
