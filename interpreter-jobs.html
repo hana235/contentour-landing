@@ -1284,6 +1284,42 @@
             }
         })();
 
+        // ══════════════ 전시회명 자동완성 (60_해외전시회DB) ══════════════
+        // script.js의 attachExpoAutocomplete를 모달 input에 attach.
+        // 한글 국가명 → ISO2 매핑으로 국가 select까지 자동 선택.
+        var KO_COUNTRY_TO_ISO2 = {
+            '일본': 'JP', '중국': 'CN', '미국': 'US', '독일': 'DE', '베트남': 'VN',
+            'UAE': 'AE', '아랍에미리트': 'AE', '프랑스': 'FR', '영국': 'GB',
+            '이탈리아': 'IT', '스페인': 'ES', '태국': 'TH', '인도네시아': 'ID',
+            '인도': 'IN', '싱가포르': 'SG', '튀르키예': 'TR', '터키': 'TR',
+            '브라질': 'BR', '멕시코': 'MX', '대만': 'TW', '홍콩': 'HK',
+            '말레이시아': 'MY', '필리핀': 'PH', '러시아': 'RU', '호주': 'AU',
+            '캐나다': 'CA', '네덜란드': 'NL', '폴란드': 'PL', '남아공': 'ZA'
+        };
+        function tryAttachExpoToModal() {
+            if (!window.attachExpoAutocomplete) { setTimeout(tryAttachExpoToModal, 150); return; }
+            var expoInput = document.getElementById('pf-exhibition');
+            if (!expoInput) return;
+            window.attachExpoAutocomplete(expoInput, {
+                location: 'pf-location',
+                venue: 'pf-venue',
+                startDate: 'pf-start',
+                endDate: 'pf-end',
+                onSelect: function (dataset) {
+                    // 국가 select 자동 매핑
+                    var iso2 = KO_COUNTRY_TO_ISO2[dataset.country];
+                    if (iso2) {
+                        var sel = document.getElementById('pf-country');
+                        if (sel) sel.value = iso2;
+                    }
+                    // 개최지가 "국가 / 도시" 형태로 들어가는 걸 도시만 남기게 보정
+                    var locInput = document.getElementById('pf-location');
+                    if (locInput && dataset.city) locInput.value = dataset.city;
+                }
+            });
+        }
+        tryAttachExpoToModal();
+
         // ══════════════ 카드 "지원하기" (Phase 4D) ══════════════
         async function handleApply(postingId, btn) {
             if (!postingId || btn.disabled) return;
