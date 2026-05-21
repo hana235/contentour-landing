@@ -131,4 +131,4 @@
 3) send-notification — 알림 발송 (DB 저장 + 이메일/알림톡 확장 가능)
 
 Edge Function URL 형식:
-https://yvtgfieoeoqhfbofzunk.supabase.co/functions/v1/{함수명}
+https://jgeqbdrfpekzuumaklvx.supabase.co/functions/v1/{함수명}
