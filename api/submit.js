@@ -432,6 +432,110 @@ async function handleShowcasePosting(req, res) {
     }
 }
 
+// ────────────────────────── submit-showcase-apply ──────────────────────────
+// 통역사가 /interpreter-jobs 카드에서 "지원하기" 클릭 시 호출.
+// 70_구인공고지원 INSERT + interest_count 증가 + admin·고객사 알림.
+async function handleShowcaseApply(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ error: '로그인이 필요합니다.' });
+
+    const { data: { user }, error: authErr } = await sbAuth.auth.getUser(token);
+    if (authErr || !user) return res.status(401).json({ error: '인증 실패' });
+
+    // 활성 통역사만 지원 가능
+    const { data: profile } = await sb
+        .from('01_회원')
+        .select('role, name')
+        .eq('id', user.id)
+        .single();
+    if (!profile || profile.role !== 'interpreter') {
+        return res.status(403).json({ error: '통역사 계정만 지원할 수 있습니다.' });
+    }
+    const { data: interpProfile } = await sb
+        .from('40_통역사프로필')
+        .select('display_name, is_active')
+        .eq('user_id', user.id)
+        .single();
+    if (!interpProfile || !interpProfile.is_active) {
+        return res.status(403).json({ error: '승인된 통역사만 지원할 수 있습니다. 검수 대기 중이면 잠시 후 다시 시도해주세요.' });
+    }
+
+    const postingId = req.body && req.body.posting_id ? String(req.body.posting_id).trim() : '';
+    if (!postingId) return res.status(400).json({ error: 'posting_id 필수' });
+
+    // 공고 유효성 확인 (direct_posting + approved + 매칭 전)
+    const { data: posting, error: pErr } = await sb
+        .from('46_ITQ견적문의')
+        .select('id, source_type, review_status, contract_id, exhibition_name, posted_by_user_id, interest_count')
+        .eq('id', postingId)
+        .single();
+    if (pErr || !posting) return res.status(404).json({ error: '공고를 찾을 수 없습니다.' });
+    if (posting.source_type !== 'direct_posting' || posting.review_status !== 'approved') {
+        return res.status(400).json({ error: '지원할 수 없는 공고입니다.' });
+    }
+    if (posting.contract_id) {
+        return res.status(409).json({ error: '이미 매칭 완료된 공고입니다.' });
+    }
+
+    // INSERT — UNIQUE 위반은 409
+    try {
+        const { error: insErr } = await sb
+            .from('70_구인공고지원')
+            .insert({
+                posting_id: postingId,
+                interpreter_id: user.id,
+                status: 'pending'
+            });
+        if (insErr) {
+            if (/duplicate|unique/i.test(insErr.message || '')) {
+                return res.status(409).json({ error: '이미 지원하신 공고입니다.' });
+            }
+            throw insErr;
+        }
+
+        // interest_count +1 (best-effort)
+        try {
+            await sb.from('46_ITQ견적문의')
+                .update({ interest_count: (posting.interest_count || 0) + 1 })
+                .eq('id', postingId);
+        } catch (e) { /* 무시 */ }
+
+        // admin 전체 + 고객사에게 알림
+        try {
+            const interpName = interpProfile.display_name || profile.name || '통역사';
+            const exName = posting.exhibition_name || '공고';
+
+            const { data: admins } = await sb.from('01_회원').select('id').eq('role', 'admin');
+            const adminRows = (admins || []).map(a => ({
+                user_id: a.id,
+                notification_type: 'service',
+                title: '👥 구인공고 신규 지원',
+                message: interpName + '님이 "' + exName + '" 공고에 지원했습니다.',
+                link: 'admin-showcase-review.html',
+                is_read: false
+            }));
+            if (posting.posted_by_user_id) {
+                adminRows.push({
+                    user_id: posting.posted_by_user_id,
+                    notification_type: 'service',
+                    title: '👥 공고에 통역사 지원',
+                    message: '"' + exName + '" 공고에 통역사가 지원했습니다. 콘텐츄어 관리자가 검토 후 매칭 제안을 드립니다.',
+                    is_read: false
+                });
+            }
+            if (adminRows.length > 0) await sb.from('24_알림').insert(adminRows);
+        } catch (e) { console.warn('지원 알림 실패:', e); }
+
+        return res.status(200).json({ ok: true });
+    } catch (e) {
+        console.error('Showcase apply error:', e);
+        return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+    }
+}
+
 // ────────────────────────── 디스패처 ──────────────────────────
 module.exports = async function handler(req, res) {
     if (!SERVICE_KEY) return res.status(500).json({ error: '서버 설정 오류(SERVICE_KEY 누락).' });
@@ -441,6 +545,7 @@ module.exports = async function handler(req, res) {
         case 'submit-inquiry': return handleInquiry(req, res);
         case 'submit-application': return handleApplication(req, res);
         case 'submit-showcase-posting': return handleShowcasePosting(req, res);
+        case 'submit-showcase-apply': return handleShowcaseApply(req, res);
         case 'upload-application-file': return handleUploadFile(req, res);
         case 'notify-admins': return handleNotifyAdmins(req, res);
         default: return res.status(404).json({ error: 'Unknown route: ' + route });

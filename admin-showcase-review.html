@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>구인공고 검토 - 콘텐츄어 Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="design-tokens.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #f4f6fa;
+            font-family: 'Montserrat', 'Noto Sans KR', sans-serif;
+            color: #1a2a4a;
+        }
+        .asr-topbar {
+            background: linear-gradient(135deg, #0a2a5e, #1565c0);
+            color: #fff;
+            padding: 18px 28px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .asr-back {
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.85rem;
+            opacity: 0.85;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .asr-back:hover { background: rgba(255,255,255,0.1); }
+        .asr-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+        }
+        .asr-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 28px 20px 60px;
+        }
+
+        .asr-filters {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 22px;
+            background: #fff;
+            padding: 6px;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            width: fit-content;
+        }
+        .asr-filter {
+            padding: 9px 18px;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-size: 0.86rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .asr-filter:hover { background: #f3f4f6; }
+        .asr-filter.is-active {
+            background: #1565c0;
+            color: #fff;
+        }
+        .asr-filter__count {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 8px;
+            background: rgba(0,0,0,0.08);
+            border-radius: 10px;
+            font-size: 0.72rem;
+        }
+        .asr-filter.is-active .asr-filter__count {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .asr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 16px;
+        }
+        .asr-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 22px 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .asr-card__head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .asr-status {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 10px;
+            letter-spacing: 0.3px;
+        }
+        .asr-status--pending { background: #fff7e6; color: #d97706; }
+        .asr-status--approved { background: #ecfdf5; color: #047857; }
+        .asr-status--rejected { background: #fee2e2; color: #b91c1c; }
+        .asr-card__date {
+            font-size: 0.72rem;
+            color: #9ca3af;
+        }
+        .asr-card__title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a2a4a;
+            line-height: 1.4;
+            margin: 0;
+        }
+        .asr-card__rows {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 6px 12px;
+            font-size: 0.83rem;
+            color: #4a5a75;
+        }
+        .asr-card__rows dt {
+            color: #9ca3af;
+            font-weight: 600;
+            font-size: 0.76rem;
+        }
+        .asr-card__rows dd {
+            margin: 0;
+            color: #1a2a4a;
+            font-weight: 500;
+        }
+        .asr-card__meta {
+            display: flex;
+            gap: 8px;
+            font-size: 0.74rem;
+            color: #6b7280;
+            border-top: 1px dashed rgba(0,0,0,0.08);
+            padding-top: 10px;
+        }
+        .asr-card__chip {
+            background: #eef2ff;
+            color: #4338ca;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .asr-card__message {
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            color: #4a5a75;
+            line-height: 1.55;
+            max-height: 120px;
+            overflow-y: auto;
+            white-space: pre-line;
+        }
+        .asr-card__note {
+            background: #fee2e2;
+            border-left: 3px solid #dc2626;
+            padding: 8px 12px;
+            font-size: 0.78rem;
+            color: #991b1b;
+            border-radius: 6px;
+        }
+        .asr-card__actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .asr-btn {
+            flex: 1;
+            padding: 9px 12px;
+            border-radius: 9px;
+            font-size: 0.83rem;
+            font-weight: 700;
+            border: 1.5px solid;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .asr-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .asr-btn--approve {
+            background: #1565c0;
+            color: #fff;
+            border-color: #1565c0;
+        }
+        .asr-btn--approve:hover:not(:disabled) {
+            background: #0d47a1;
+            border-color: #0d47a1;
+        }
+        .asr-btn--reject {
+            background: #fff;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+        .asr-btn--reject:hover:not(:disabled) {
+            background: #fee2e2;
+        }
+
+        .asr-empty {
+            grid-column: 1 / -1;
+            background: #fff;
+            border: 1px dashed rgba(0,0,0,0.12);
+            border-radius: 14px;
+            padding: 60px 20px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.92rem;
+        }
+
+        /* ── 지원자 모달 ── */
+        .asr-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            display: none;
+        }
+        .asr-modal.is-open { display: block; }
+        .asr-modal__bg {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 22, 40, 0.55);
+        }
+        .asr-modal__sheet {
+            position: relative;
+            max-width: 760px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 18px;
+            padding: 28px 26px;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            font-family: inherit;
+        }
+        .asr-modal__close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            font-size: 1.5rem;
+            color: #9ca3af;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .asr-modal__head h3 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #1a2a4a;
+            margin: 0 0 6px 0;
+        }
+        .asr-modal__head p {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin: 0;
+        }
+        .asr-applicants {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .asr-applicant {
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 16px 18px;
+            background: #fafbfc;
+        }
+        .asr-applicant--matched { background: #ecfdf5; border-color: #a7f3d0; }
+        .asr-applicant--declined { opacity: 0.55; }
+        .asr-applicant__top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .asr-applicant__name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1a2a4a;
+        }
+        .asr-applicant__status {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 8px;
+            background: #eef2ff;
+            color: #4338ca;
+        }
+        .asr-applicant__rows {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 4px 12px;
+            font-size: 0.8rem;
+            color: #4a5a75;
+            margin-bottom: 10px;
+        }
+        .asr-applicant__rows dt {
+            color: #9ca3af;
+            font-weight: 600;
+        }
+        .asr-applicant__intro {
+            font-size: 0.78rem;
+            color: #6b7280;
+            line-height: 1.55;
+            max-height: 84px;
+            overflow-y: auto;
+            background: #fff;
+            padding: 8px 10px;
+            border-radius: 8px;
+            white-space: pre-line;
+            margin-bottom: 10px;
+        }
+        .asr-applicant__match {
+            width: 100%;
+            padding: 9px 14px;
+            border-radius: 9px;
+            border: 1.5px solid #1565c0;
+            background: #1565c0;
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .asr-applicant__match:hover:not(:disabled) { background: #0d47a1; border-color: #0d47a1; }
+        .asr-applicant__match:disabled { opacity: 0.55; cursor: not-allowed; }
+        .asr-empty-mini {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.85rem;
+            padding: 28px 10px;
+        }
+
+        .asr-card__see-apps {
+            margin-top: 4px;
+            padding: 9px 12px;
+            border-radius: 9px;
+            border: 1.5px solid #1565c0;
+            background: #fff;
+            color: #1565c0;
+            font-size: 0.83rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .asr-card__see-apps:hover { background: #1565c0; color: #fff; }
+        .asr-card__matched-badge {
+            font-size: 0.78rem;
+            color: #047857;
+            font-weight: 600;
+            margin-top: 4px;
+            text-align: center;
+            padding: 8px;
+            background: #ecfdf5;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .asr-page { padding: 20px 14px 60px; }
+            .asr-grid { grid-template-columns: 1fr; }
+            .asr-filters { width: 100%; overflow-x: auto; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="asr-topbar">
+        <a href="admin-dashboard.html" class="asr-back" aria-label="대시보드로 돌아가기">← Admin</a>
+        <div class="asr-title">🎪 통역사 구인공고 검토</div>
+    </header>
+
+    <main class="asr-page">
+        <div class="asr-filters" role="tablist">
+            <button class="asr-filter is-active" data-filter="pending" type="button">
+                검토 대기 <span class="asr-filter__count" id="cntPending">0</span>
+            </button>
+            <button class="asr-filter" data-filter="approved" type="button">
+                승인 완료 <span class="asr-filter__count" id="cntApproved">0</span>
+            </button>
+            <button class="asr-filter" data-filter="rejected" type="button">
+                거부 <span class="asr-filter__count" id="cntRejected">0</span>
+            </button>
+        </div>
+
+        <div class="asr-grid" id="asrGrid">
+            <div class="asr-empty">불러오는 중...</div>
+        </div>
+    </main>
+
+    <!-- 지원자 풀 모달 -->
+    <div class="asr-modal" id="appsModal" aria-hidden="true">
+        <div class="asr-modal__bg" id="appsModalBg"></div>
+        <div class="asr-modal__sheet" role="dialog" aria-labelledby="appsModalTitle">
+            <button class="asr-modal__close" type="button" id="appsModalClose" aria-label="닫기">×</button>
+            <header class="asr-modal__head">
+                <h3 id="appsModalTitle">지원자 풀</h3>
+                <p id="appsModalSub">공고 정보</p>
+            </header>
+            <div class="asr-applicants" id="appsList">
+                <div class="asr-empty-mini">불러오는 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        // Admin 권한 체크 후 페이지 진입
+        var currentFilter = 'pending';
+        var dataMap = { pending: [], approved: [], rejected: [] };
+
+        async function getToken() {
+            if (!window.sbClient) return null;
+            var res = await window.sbClient.auth.getSession();
+            return res.data && res.data.session ? res.data.session.access_token : null;
+        }
+
+        async function loadList(filter) {
+            var grid = document.getElementById('asrGrid');
+            grid.innerHTML = '<div class="asr-empty">불러오는 중...</div>';
+            var token = await getToken();
+            if (!token) { grid.innerHTML = '<div class="asr-empty">로그인이 필요합니다.</div>'; return; }
+
+            try {
+                var r = await fetch('/api/admin-app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ action: 'showcaseReviewList', filter: filter })
+                });
+                var json = await r.json();
+                if (!r.ok || !json.success) {
+                    grid.innerHTML = '<div class="asr-empty">조회 실패: ' + (json.error || r.status) + '</div>';
+                    return;
+                }
+                dataMap[filter] = json.data || [];
+                document.getElementById('cnt' + filter[0].toUpperCase() + filter.slice(1)).textContent = dataMap[filter].length;
+                render();
+            } catch (e) {
+                console.error(e);
+                grid.innerHTML = '<div class="asr-empty">네트워크 오류</div>';
+            }
+        }
+
+        function fmtDate(s) {
+            if (!s) return '-';
+            return String(s).replace(/T.*$/, '').replace(/-/g, '.');
+        }
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function buildCard(r) {
+            var statusBadge = '';
+            if (r.review_status === 'pending') statusBadge = '<span class="asr-status asr-status--pending">검토 대기</span>';
+            else if (r.review_status === 'approved') statusBadge = '<span class="asr-status asr-status--approved">승인됨</span>';
+            else statusBadge = '<span class="asr-status asr-status--rejected">거부됨</span>';
+
+            var actions = '';
+            if (r.review_status === 'pending') {
+                actions = '<div class="asr-card__actions">' +
+                    '<button class="asr-btn asr-btn--approve" data-action="approve" data-id="' + escapeHtml(r.id) + '">승인</button>' +
+                    '<button class="asr-btn asr-btn--reject" data-action="reject" data-id="' + escapeHtml(r.id) + '">거부</button>' +
+                '</div>';
+            } else if (r.review_status === 'approved' && !r.contract_id) {
+                actions = '<button class="asr-card__see-apps" data-action="see-apps" data-id="' + escapeHtml(r.id) + '" data-title="' + escapeHtml(r.exhibition_name || '') + '">👥 지원자 보기</button>';
+            } else if (r.review_status === 'approved' && r.contract_id) {
+                actions = '<div class="asr-card__matched-badge">✓ 매칭 완료</div>';
+            }
+
+            var rejectNote = (r.review_status === 'rejected' && r.review_note)
+                ? '<div class="asr-card__note">거부 사유: ' + escapeHtml(r.review_note) + '</div>'
+                : '';
+
+            var msgBlock = r.message
+                ? '<div class="asr-card__message">' + escapeHtml(r.message) + '</div>'
+                : '';
+
+            return '<div class="asr-card">' +
+                '<div class="asr-card__head">' +
+                    statusBadge +
+                    '<span class="asr-card__date">등록 ' + fmtDate(r.created_at) + '</span>' +
+                '</div>' +
+                '<h3 class="asr-card__title">' + escapeHtml(r.exhibition_name || '(전시회명 없음)') + '</h3>' +
+                '<dl class="asr-card__rows">' +
+                    '<dt>회사</dt><dd>' + escapeHtml(r.company || '-') + ' · ' + escapeHtml(r.contact_name || '-') + '</dd>' +
+                    '<dt>연락처</dt><dd>' + escapeHtml(r.phone || '-') + ' · ' + escapeHtml(r.email || '-') + '</dd>' +
+                    '<dt>개최지</dt><dd>' + escapeHtml(r.location || '-') + (r.venue ? ' · ' + escapeHtml(r.venue) : '') + '</dd>' +
+                    '<dt>기간</dt><dd>' + fmtDate(r.start_date) + ' ~ ' + fmtDate(r.end_date) + '</dd>' +
+                    '<dt>언어 · 인원</dt><dd>' + escapeHtml(r.language_pair || '-') + ' · ' + (r.headcount || 0) + '명</dd>' +
+                    '<dt>익명 라벨</dt><dd>' + escapeHtml(r.showcase_label || '-') + '</dd>' +
+                '</dl>' +
+                '<div class="asr-card__meta">' +
+                    '<span class="asr-card__chip">' + escapeHtml(r.showcase_country_code || '?') + '</span>' +
+                    '<span class="asr-card__chip">' + escapeHtml(r.showcase_industry || '?') + '</span>' +
+                    '<span>' + (r.company_name_disclosure ? '🔓 실명 공개 동의' : '🔒 익명') + '</span>' +
+                '</div>' +
+                msgBlock +
+                rejectNote +
+                actions +
+            '</div>';
+        }
+
+        function render() {
+            var grid = document.getElementById('asrGrid');
+            var list = dataMap[currentFilter] || [];
+            if (list.length === 0) {
+                var msg = currentFilter === 'pending' ? '검토 대기 중인 공고가 없습니다.'
+                        : currentFilter === 'approved' ? '승인된 공고가 없습니다.'
+                        : '거부된 공고가 없습니다.';
+                grid.innerHTML = '<div class="asr-empty">' + msg + '</div>';
+                return;
+            }
+            grid.innerHTML = list.map(buildCard).join('');
+        }
+
+        async function actOn(id, action) {
+            var token = await getToken();
+            if (!token) { alert('로그인이 필요합니다.'); return; }
+
+            var body = { id: id };
+            if (action === 'showcaseReject') {
+                var note = prompt('거부 사유를 입력해주세요. (이 사유는 고객사에게 알림으로 전달됩니다)');
+                if (!note || !note.trim()) return;
+                body.note = note.trim();
+            }
+            body.action = action;
+
+            try {
+                var r = await fetch('/api/admin-app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify(body)
+                });
+                var json = await r.json();
+                if (!r.ok || !json.success) {
+                    alert('처리 실패: ' + (json.error || r.status));
+                    return;
+                }
+                // 현재 필터 + 인접 필터 갱신
+                await Promise.all([loadList('pending'), loadList('approved'), loadList('rejected')]);
+            } catch (e) {
+                console.error(e);
+                alert('네트워크 오류');
+            }
+        }
+
+        document.querySelectorAll('.asr-filter').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.asr-filter').forEach(function (b) { b.classList.remove('is-active'); });
+                btn.classList.add('is-active');
+                currentFilter = btn.getAttribute('data-filter');
+                render();
+            });
+        });
+
+        document.getElementById('asrGrid').addEventListener('click', function (e) {
+            var btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            var id = btn.getAttribute('data-id');
+            var act = btn.getAttribute('data-action');
+            if (act === 'approve') actOn(id, 'showcaseApprove');
+            else if (act === 'reject') actOn(id, 'showcaseReject');
+            else if (act === 'see-apps') openApplicantsModal(id, btn.getAttribute('data-title') || '');
+        });
+
+        // ══════════════ 지원자 모달 (Phase 4E) ══════════════
+        var currentPostingId = null;
+
+        function openApplicantsModal(postingId, title) {
+            currentPostingId = postingId;
+            document.getElementById('appsModalTitle').textContent = '지원자 풀 — ' + (title || '');
+            document.getElementById('appsModalSub').textContent = '아래 지원자 중 한 명을 매칭 확정하면 자동으로 계약이 생성되고 다른 지원자에게 알림이 갑니다.';
+            document.getElementById('appsList').innerHTML = '<div class="asr-empty-mini">불러오는 중...</div>';
+            document.getElementById('appsModal').classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            loadApplicants(postingId);
+        }
+        function closeApplicantsModal() {
+            document.getElementById('appsModal').classList.remove('is-open');
+            document.body.style.overflow = '';
+            currentPostingId = null;
+        }
+        document.getElementById('appsModalClose').addEventListener('click', closeApplicantsModal);
+        document.getElementById('appsModalBg').addEventListener('click', closeApplicantsModal);
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && document.getElementById('appsModal').classList.contains('is-open')) {
+                closeApplicantsModal();
+            }
+        });
+
+        async function loadApplicants(postingId) {
+            var token = await getToken();
+            if (!token) return;
+            try {
+                var r = await fetch('/api/admin-app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ action: 'showcaseApplicantsList', postingId: postingId })
+                });
+                var json = await r.json();
+                if (!r.ok || !json.success) {
+                    document.getElementById('appsList').innerHTML = '<div class="asr-empty-mini">조회 실패: ' + (json.error || r.status) + '</div>';
+                    return;
+                }
+                renderApplicants(json.data || []);
+            } catch (e) {
+                console.error(e);
+                document.getElementById('appsList').innerHTML = '<div class="asr-empty-mini">네트워크 오류</div>';
+            }
+        }
+
+        function renderApplicants(list) {
+            var el = document.getElementById('appsList');
+            if (list.length === 0) {
+                el.innerHTML = '<div class="asr-empty-mini">아직 지원자가 없습니다.</div>';
+                return;
+            }
+            el.innerHTML = list.map(function (a) {
+                var statusClass = '';
+                var statusLabel = '대기';
+                if (a.status === 'matched') { statusClass = 'asr-applicant--matched'; statusLabel = '✓ 매칭 확정'; }
+                else if (a.status === 'declined') { statusClass = 'asr-applicant--declined'; statusLabel = '거절됨'; }
+                else if (a.status === 'forwarded') { statusLabel = '제안 중'; }
+
+                var matchBtn = '';
+                if (a.status === 'pending' || a.status === 'forwarded') {
+                    matchBtn = '<button class="asr-applicant__match" data-interpreter-id="' + escapeHtml(a.interpreter_id) + '" data-name="' + escapeHtml(a.display_name || a.name) + '" data-rate="' + (a.base_rate || '') + '">매칭 확정</button>';
+                }
+
+                var langs = Array.isArray(a.languages) ? a.languages.join(', ') : '';
+                var specs = Array.isArray(a.specialties) ? a.specialties.join(', ') : '';
+                var rateLabel = a.base_rate ? (a.base_rate.toLocaleString() + '원/일') : '미설정';
+
+                return '<div class="asr-applicant ' + statusClass + '">' +
+                    '<div class="asr-applicant__top">' +
+                        '<span class="asr-applicant__name">' + escapeHtml(a.display_name || a.name || '통역사') + '</span>' +
+                        '<span class="asr-applicant__status">' + statusLabel + '</span>' +
+                    '</div>' +
+                    '<dl class="asr-applicant__rows">' +
+                        '<dt>언어</dt><dd>' + escapeHtml(langs || '-') + '</dd>' +
+                        '<dt>전문</dt><dd>' + escapeHtml(specs || '-') + '</dd>' +
+                        '<dt>경력</dt><dd>' + (a.experience_years || 0) + '년</dd>' +
+                        '<dt>기본 단가</dt><dd>' + escapeHtml(rateLabel) + '</dd>' +
+                        '<dt>지원일</dt><dd>' + fmtDate(a.applied_at) + '</dd>' +
+                    '</dl>' +
+                    (a.intro ? '<div class="asr-applicant__intro">' + escapeHtml(a.intro) + '</div>' : '') +
+                    matchBtn +
+                '</div>';
+            }).join('');
+        }
+
+        document.getElementById('appsList').addEventListener('click', async function (e) {
+            var btn = e.target.closest('.asr-applicant__match');
+            if (!btn) return;
+            var interpreterId = btn.getAttribute('data-interpreter-id');
+            var name = btn.getAttribute('data-name') || '통역사';
+            var baseRate = parseInt(btn.getAttribute('data-rate'), 10) || 0;
+
+            if (!confirm(name + '님을 매칭 확정하시겠습니까?\n계약이 생성되고 다른 지원자는 자동으로 거절 처리됩니다.')) return;
+
+            var rateInput = prompt('통역사 일당 (원). 비우면 기본 단가 적용.', baseRate || 250000);
+            if (rateInput === null) return;
+            var dailyRate = parseInt(rateInput, 10) || baseRate || 250000;
+
+            var token = await getToken();
+            if (!token) { alert('로그인이 필요합니다.'); return; }
+            btn.disabled = true;
+            btn.textContent = '매칭 확정 중...';
+            try {
+                var r = await fetch('/api/admin-app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({
+                        action: 'showcaseAssign',
+                        postingId: currentPostingId,
+                        interpreterId: interpreterId,
+                        dailyRate: dailyRate
+                    })
+                });
+                var json = await r.json();
+                if (!r.ok || !json.success) {
+                    alert('매칭 실패: ' + (json.error || r.status));
+                    btn.disabled = false;
+                    btn.textContent = '매칭 확정';
+                    return;
+                }
+                alert('매칭이 확정되었습니다. 계약 ID: ' + json.contractId);
+                closeApplicantsModal();
+                await Promise.all([loadList('pending'), loadList('approved'), loadList('rejected')]);
+            } catch (e) {
+                console.error(e);
+                alert('네트워크 오류');
+                btn.disabled = false;
+                btn.textContent = '매칭 확정';
+            }
+        });
+
+        // 페이지 진입 — admin 권한 강제
+        (async function init() {
+            if (!window.ContentourAuth) {
+                document.getElementById('asrGrid').innerHTML = '<div class="asr-empty">인증 모듈 로드 실패</div>';
+                return;
+            }
+            var profile = await window.ContentourAuth.requireAuth(['admin']);
+            if (!profile) return; // requireAuth가 리다이렉트 처리
+            await Promise.all([loadList('pending'), loadList('approved'), loadList('rejected')]);
+        })();
+    </script>
+</body>
+
+</html>

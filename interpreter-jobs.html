@@ -335,6 +335,32 @@
             line-height: 1.6;
         }
 
+        /* ── 카드 지원 버튼 ── */
+        .ij-card__apply {
+            margin-top: 8px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1.5px solid var(--blue);
+            background: var(--blue);
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+            width: 100%;
+        }
+        .ij-card__apply:hover:not(:disabled) {
+            background: #0d47a1;
+            border-color: #0d47a1;
+        }
+        .ij-card__apply:disabled {
+            background: #f3f4f6;
+            color: #9ca3af;
+            border-color: rgba(0,0,0,0.08);
+            cursor: default;
+        }
+
         /* ── 빈/로딩/에러 상태 ── */
         .ij-empty {
             grid-column: 1 / -1;
@@ -904,6 +930,15 @@
         var loading = true;
         var loadError = false;
 
+        // 본 세션에서 지원한 공고 id (Phase 4D — 새로고침해도 같은 세션이면 유지)
+        var appliedSet = new Set();
+        try {
+            for (var __i = 0; __i < sessionStorage.length; __i++) {
+                var __k = sessionStorage.key(__i);
+                if (__k && __k.indexOf('ij-applied-') === 0) appliedSet.add(__k.slice(11));
+            }
+        } catch (e) { /* sessionStorage 비활성 */ }
+
         function fmtDate(s) {
             // '2026-06-12' → '2026.06.12'
             if (!s) return '';
@@ -935,6 +970,13 @@
             var metaSuffix = req.isAnonymous ? '익명 등재' : '실명 공개';
             var metaLine = industry ? (escapeHtml(industry) + ' · ' + metaSuffix) : metaSuffix;
 
+            // Phase 4D — direct_posting + recruiting 카드에 "지원하기" 버튼 노출
+            var applyHtml = '';
+            if (isRecruit && req.sourceType === 'direct_posting' && req.id) {
+                var done = appliedSet.has(req.id);
+                applyHtml = '<button type="button" class="ij-card__apply" data-apply-id="' + escapeHtml(req.id) + '"' + (done ? ' disabled' : '') + '>' + (done ? '✓ 지원 완료' : '지원하기') + '</button>';
+            }
+
             return '' +
                 '<div class="ij-card" data-region="' + escapeHtml(req.countryCode) + '">' +
                     '<div class="ij-card__head">' +
@@ -956,6 +998,7 @@
                         '<span>🌐</span><span>' + escapeHtml(languages.join(' · ')) + ' · ' + (req.needed || 0) + '명</span>' +
                         ddayHtml +
                     '</div>' +
+                    applyHtml +
                 '</div>';
         }
 
@@ -1017,27 +1060,35 @@
             counterNo.textContent = recruiting.reduce(function (sum, r) { return sum + (r.needed || 0); }, 0);
         }
 
-        function fetchShowcase() {
+        async function fetchShowcase() {
             loading = true;
             loadError = false;
             renderGrid();
-            fetch('/api/showcase', { cache: 'no-store' })
-                .then(function (r) {
-                    if (!r.ok) throw new Error('HTTP ' + r.status);
-                    return r.json();
-                })
-                .then(function (data) {
-                    showcaseData = Array.isArray(data) ? data : [];
-                    loading = false;
-                    renderGrid();
-                })
-                .catch(function (e) {
-                    console.error('Showcase load failed:', e);
-                    showcaseData = [];
-                    loading = false;
-                    loadError = true;
-                    renderGrid();
-                });
+
+            // Phase 4F — 로그인 통역사면 토큰 첨부 (회사명 노출 분기를 위해)
+            var headers = {};
+            try {
+                if (window.sbClient) {
+                    var s = await window.sbClient.auth.getSession();
+                    var t = s.data && s.data.session ? s.data.session.access_token : null;
+                    if (t) headers['Authorization'] = 'Bearer ' + t;
+                }
+            } catch (e) { /* anon으로 진행 */ }
+
+            try {
+                var r = await fetch('/api/showcase', { cache: 'no-store', headers: headers });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                var data = await r.json();
+                showcaseData = Array.isArray(data) ? data : [];
+                loading = false;
+                renderGrid();
+            } catch (e) {
+                console.error('Showcase load failed:', e);
+                showcaseData = [];
+                loading = false;
+                loadError = true;
+                renderGrid();
+            }
         }
 
         function activateChip(region) {
@@ -1220,6 +1271,73 @@
                 currentProfile = null;
             }
         })();
+
+        // ══════════════ 카드 "지원하기" (Phase 4D) ══════════════
+        async function handleApply(postingId, btn) {
+            if (!postingId || btn.disabled) return;
+            if (!currentProfile) {
+                if (confirm('로그인하면 이 공고에 지원할 수 있습니다.\n로그인 페이지로 이동할까요?')) {
+                    location.href = 'client-auth.html';
+                }
+                return;
+            }
+            if (currentProfile.role !== 'interpreter') {
+                if (window.showToast) window.showToast('통역사 계정만 지원할 수 있습니다.', 'error');
+                return;
+            }
+            if (!confirm('이 공고에 지원하시겠습니까?\n콘텐츄어 관리자가 검토 후 매칭을 제안드립니다.\n\n⚠️ 고객사에 직접 연락 시 통역사 풀에서 영구 제명됩니다.')) return;
+
+            var token = null;
+            try {
+                var s = await window.sbClient.auth.getSession();
+                token = s.data && s.data.session ? s.data.session.access_token : null;
+            } catch (e) { /* fall through */ }
+            if (!token) {
+                if (window.showToast) window.showToast('로그인이 만료되었습니다. 다시 로그인해주세요.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            var originalText = btn.textContent;
+            btn.textContent = '지원 중...';
+            try {
+                var r = await fetch('/api/submit-showcase-apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ posting_id: postingId })
+                });
+                var json = await r.json().catch(function () { return {}; });
+                if (!r.ok) {
+                    if (window.showToast) window.showToast(json.error || '지원 실패. 잠시 후 다시 시도해주세요.', 'error');
+                    // 409(중복)는 이미 지원한 상태로 처리
+                    if (r.status === 409) {
+                        appliedSet.add(postingId);
+                        try { sessionStorage.setItem('ij-applied-' + postingId, '1'); } catch (e) {}
+                        btn.textContent = '✓ 지원 완료';
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    }
+                    return;
+                }
+                appliedSet.add(postingId);
+                try { sessionStorage.setItem('ij-applied-' + postingId, '1'); } catch (e) {}
+                btn.textContent = '✓ 지원 완료';
+                if (window.showToast) window.showToast('지원이 접수되었습니다.\n관리자 검토 후 매칭 제안을 드립니다.', 'success');
+            } catch (err) {
+                console.error('Apply failed:', err);
+                if (window.showToast) window.showToast('네트워크 오류. 잠시 후 다시 시도해주세요.', 'error');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        document.getElementById('ijGrid').addEventListener('click', function (e) {
+            var btn = e.target.closest('.ij-card__apply');
+            if (!btn) return;
+            var id = btn.getAttribute('data-apply-id');
+            handleApply(id, btn);
+        });
     </script>
 </body>
 

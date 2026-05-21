@@ -3,10 +3,11 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-    'https://jgeqbdrfpekzuumaklvx.supabase.co',
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpnZXFiZHJmcGVrenV1bWFrbHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzgwMzQsImV4cCI6MjA5MDQxNDAzNH0.C2y3UiPtHIF2s4nPvbGycN927HOG4YpO86FfgZAelUw';
+
+const supabase = createClient(SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const sbAuth = createClient(SUPABASE_URL, ANON_KEY);
 
 // ────────────────────────── cases ──────────────────────────
 async function handleCases(req, res) {
@@ -108,7 +109,10 @@ async function handleReviews(req, res) {
 //   2) direct_posting → review_status='approved'                                       (Phase 4)
 // 매칭 상태: contract_id IS NULL → recruiting, 아니면 matched.
 
-const SHOWCASE_COLUMNS = 'id, source_type, exhibition_name, start_date, end_date, language_pair, headcount, contract_id, showcase_label, showcase_industry, showcase_country_code, showcase_published_at, reviewed_at, interest_count';
+const SHOWCASE_COLUMNS = 'id, source_type, exhibition_name, start_date, end_date, language_pair, headcount, contract_id, showcase_label, showcase_industry, showcase_country_code, showcase_published_at, reviewed_at, interest_count, company, company_name_disclosure';
+
+// Phase 4H — 매칭 후 카드 자동 hidden 기준일. 변경 시 한 줄만 수정.
+const SHOWCASE_HIDE_AFTER_DAYS = 14;
 
 function parseLanguages(pair) {
     if (!pair) return [];
@@ -125,13 +129,20 @@ function calcDaysLeft(startDate) {
     return diff >= 0 ? diff : null;
 }
 
-function rowToCard(r) {
+// Phase 4F — viewer 역할별로 label 결정
+//  · 비로그인 / 통역사 미동의: 익명 라벨 (admin이 만든 showcase_label)
+//  · 로그인 통역사 + company_name_disclosure=true: 실제 회사명 노출
+// 연락처·이메일·메시지는 어떤 경우에도 응답에 포함되지 않음.
+function rowToCard(r, viewerIsInterpreter) {
     const isMatched = !!r.contract_id;
+    const showRealName = viewerIsInterpreter && r.company_name_disclosure && r.company;
     const card = {
+        id: r.id,
+        sourceType: r.source_type || 'admin_inquiry',
         status: isMatched ? 'matched' : 'recruiting',
-        label: r.showcase_label || '한국 기업',
+        label: showRealName ? r.company : (r.showcase_label || '한국 기업'),
         industry: r.showcase_industry || '',
-        isAnonymous: true,
+        isAnonymous: !showRealName,
         countryCode: r.showcase_country_code || '',
         exhibition: r.exhibition_name || '',
         startDate: r.start_date || '',
@@ -153,6 +164,20 @@ async function handleShowcase(req, res) {
     try {
         const region = req.query.region ? String(req.query.region).toUpperCase().slice(0, 2) : '';
         const regionValid = region && /^[A-Z]{2}$/.test(region);
+
+        // Phase 4F — viewer 판단 (optional auth header)
+        let viewerIsInterpreter = false;
+        const authHeader = req.headers.authorization || '';
+        const token = authHeader.replace('Bearer ', '');
+        if (token) {
+            try {
+                const { data: { user } } = await sbAuth.auth.getUser(token);
+                if (user) {
+                    const { data: profile } = await supabase.from('01_회원').select('role').eq('id', user.id).single();
+                    if (profile && profile.role === 'interpreter') viewerIsInterpreter = true;
+                }
+            } catch (e) { /* anon 처리 */ }
+        }
 
         // admin_inquiry 쿼리: showcase_consent + showcase_published_at
         let qInquiry = supabase
@@ -179,8 +204,25 @@ async function handleShowcase(req, res) {
         if (inq.error) throw inq.error;
         if (drc.error) throw drc.error;
 
+        // Phase 4H — 매칭된 direct_posting 카드 중 매칭 후 N일이 경과한 row는 hidden
+        //  매칭 시각: 70_구인공고지원에서 status='matched' row의 updated_at
+        const hideSet = new Set();
+        const matchedDirectIds = (drc.data || []).filter(r => r.contract_id).map(r => r.id);
+        if (matchedDirectIds.length > 0) {
+            const cutoff = new Date(Date.now() - SHOWCASE_HIDE_AFTER_DAYS * 86400000);
+            const { data: matchedRows } = await supabase
+                .from('70_구인공고지원')
+                .select('posting_id, updated_at')
+                .eq('status', 'matched')
+                .in('posting_id', matchedDirectIds);
+            (matchedRows || []).forEach(m => {
+                if (m.updated_at && new Date(m.updated_at) < cutoff) hideSet.add(m.posting_id);
+            });
+        }
+
         // 정렬 키: admin_inquiry는 showcase_published_at, direct_posting은 reviewed_at
         const combined = [...(inq.data || []), ...(drc.data || [])]
+            .filter(r => !hideSet.has(r.id))
             .map(r => ({
                 row: r,
                 sortKey: r.source_type === 'direct_posting' ? r.reviewed_at : r.showcase_published_at
@@ -188,9 +230,14 @@ async function handleShowcase(req, res) {
             .filter(x => x.sortKey)
             .sort((a, b) => new Date(b.sortKey) - new Date(a.sortKey))
             .slice(0, 60)
-            .map(x => rowToCard(x.row));
+            .map(x => rowToCard(x.row, viewerIsInterpreter));
 
-        res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
+        // viewer별 응답이 달라지므로 통역사 로그인은 비캐시, 그 외는 짧은 공개 캐시
+        if (viewerIsInterpreter) {
+            res.setHeader('Cache-Control', 'no-store');
+        } else {
+            res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
+        }
         return res.status(200).json(combined);
     } catch (e) {
         console.error('Showcase query error:', e);

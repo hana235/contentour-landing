@@ -297,6 +297,258 @@ module.exports = async function handler(req, res) {
             if (error) throw error;
             return res.status(200).json({ success: true });
 
+        } else if (action === 'showcaseReviewList') {
+            // Phase 4C — direct_posting 검토 대기·검토 완료 목록
+            const { filter } = req.body; // 'pending' (default) | 'approved' | 'rejected' | 'all'
+            let q = supabase
+                .from('46_ITQ견적문의')
+                .select('id, posted_by_user_id, company, contact_name, email, phone, exhibition_name, location, venue, start_date, end_date, language_pair, headcount, message, showcase_label, showcase_industry, showcase_country_code, company_name_disclosure, review_status, review_note, reviewed_at, reviewed_by, created_at, contract_id')
+                .eq('source_type', 'direct_posting')
+                .order('created_at', { ascending: false })
+                .limit(200);
+            if (!filter || filter === 'pending') q = q.eq('review_status', 'pending');
+            else if (filter === 'approved') q = q.eq('review_status', 'approved');
+            else if (filter === 'rejected') q = q.eq('review_status', 'rejected');
+            const { data, error } = await q;
+            if (error) throw error;
+            return res.status(200).json({ success: true, data: data || [] });
+
+        } else if (action === 'showcaseApprove') {
+            // Phase 4C — 공고 승인. label/industry/country_code 수정도 함께 가능.
+            const { id: pid, patch } = req.body;
+            if (!pid) return res.status(400).json({ error: 'id 필수' });
+            const update = {
+                review_status: 'approved',
+                review_note: null,
+                reviewed_at: new Date().toISOString(),
+                reviewed_by: admin.id,
+                showcase_published_at: new Date().toISOString()
+            };
+            if (patch && typeof patch === 'object') {
+                if (typeof patch.showcase_label === 'string') update.showcase_label = patch.showcase_label.slice(0, 100);
+                if (typeof patch.showcase_industry === 'string') update.showcase_industry = patch.showcase_industry.slice(0, 100);
+                if (typeof patch.showcase_country_code === 'string' && /^[A-Z]{2}$/.test(patch.showcase_country_code)) {
+                    update.showcase_country_code = patch.showcase_country_code;
+                }
+                if (typeof patch.company_name_disclosure === 'boolean') update.company_name_disclosure = patch.company_name_disclosure;
+            }
+            const { data, error } = await supabase
+                .from('46_ITQ견적문의')
+                .update(update)
+                .eq('id', pid)
+                .eq('source_type', 'direct_posting')
+                .select('id, posted_by_user_id, exhibition_name')
+                .single();
+            if (error) throw error;
+
+            // 고객사에게 알림
+            if (data && data.posted_by_user_id) {
+                try {
+                    await supabase.from('24_알림').insert({
+                        user_id: data.posted_by_user_id,
+                        notification_type: 'service',
+                        title: '✅ 통역사 모집 공고 게재 승인',
+                        message: '"' + (data.exhibition_name || '공고') + '" 공고가 승인되어 통역사 구인 현황에 게재되었습니다.',
+                        link: 'interpreter-jobs.html',
+                        is_read: false
+                    });
+                } catch (e) { console.warn('승인 알림 실패:', e); }
+            }
+            return res.status(200).json({ success: true, data });
+
+        } else if (action === 'showcaseApplicantsList') {
+            // Phase 4E — 공고 지원자 풀 조회
+            const { postingId } = req.body;
+            if (!postingId) return res.status(400).json({ error: 'postingId 필수' });
+
+            const { data: apps, error: aErr } = await supabase
+                .from('70_구인공고지원')
+                .select('id, interpreter_id, status, applied_at, admin_note, contract_id')
+                .eq('posting_id', postingId)
+                .order('applied_at', { ascending: false });
+            if (aErr) throw aErr;
+            if (!apps || apps.length === 0) return res.status(200).json({ success: true, data: [] });
+
+            const ids = apps.map(a => a.interpreter_id);
+            const [usersRes, profsRes] = await Promise.all([
+                supabase.from('01_회원').select('id, name, email').in('id', ids),
+                supabase.from('40_통역사프로필').select('user_id, display_name, languages, specialties, experience_years, base_rate, intro').in('user_id', ids)
+            ]);
+            const userMap = {}; (usersRes.data || []).forEach(u => { userMap[u.id] = u; });
+            const profMap = {}; (profsRes.data || []).forEach(p => { profMap[p.user_id] = p; });
+
+            const result = apps.map(a => {
+                const u = userMap[a.interpreter_id] || {};
+                const p = profMap[a.interpreter_id] || {};
+                return {
+                    id: a.id,
+                    interpreter_id: a.interpreter_id,
+                    status: a.status,
+                    applied_at: a.applied_at,
+                    admin_note: a.admin_note,
+                    contract_id: a.contract_id,
+                    name: u.name || '',
+                    email: u.email || '',
+                    display_name: p.display_name || '',
+                    languages: p.languages || [],
+                    specialties: p.specialties || [],
+                    experience_years: p.experience_years || 0,
+                    base_rate: p.base_rate || null,
+                    intro: p.intro || ''
+                };
+            });
+            return res.status(200).json({ success: true, data: result });
+
+        } else if (action === 'showcaseAssign') {
+            // Phase 4E — 매칭 확정: 42_통역계약 INSERT + 70_구인공고지원 상태 갱신 + 알림
+            const { postingId, interpreterId, dailyRate, memo } = req.body;
+            if (!postingId || !interpreterId) return res.status(400).json({ error: 'postingId, interpreterId 필수' });
+
+            const { data: posting, error: pErr } = await supabase
+                .from('46_ITQ견적문의')
+                .select('*')
+                .eq('id', postingId)
+                .single();
+            if (pErr || !posting) return res.status(404).json({ error: '공고를 찾을 수 없습니다.' });
+            if (posting.contract_id) return res.status(409).json({ error: '이미 매칭된 공고입니다.' });
+            if (posting.source_type !== 'direct_posting' || posting.review_status !== 'approved') {
+                return res.status(400).json({ error: '매칭할 수 없는 공고입니다.' });
+            }
+
+            const { data: appRow } = await supabase
+                .from('70_구인공고지원')
+                .select('id')
+                .eq('posting_id', postingId)
+                .eq('interpreter_id', interpreterId)
+                .single();
+            if (!appRow) return res.status(400).json({ error: '해당 통역사가 지원자 목록에 없습니다.' });
+
+            const { data: interpUser } = await supabase.from('01_회원').select('name, email').eq('id', interpreterId).single();
+            const { data: interpProf } = await supabase.from('40_통역사프로필').select('display_name, base_rate').eq('user_id', interpreterId).single();
+            const interpDisplay = (interpProf && interpProf.display_name) || (interpUser && interpUser.name) || '통역사';
+
+            let days = 1;
+            if (posting.start_date && posting.end_date) {
+                const diffMs = new Date(posting.end_date) - new Date(posting.start_date);
+                days = Math.max(1, Math.round(diffMs / 86400000) + 1);
+            }
+            const rate = Number(dailyRate) || (interpProf && interpProf.base_rate) || 250000;
+            const totalAmount = rate * days;
+            const customerId = posting.posted_by_user_id || posting.user_id || null;
+
+            const { data: newContract, error: cErr } = await supabase.from('42_통역계약').insert({
+                order_id: postingId,
+                customer_id: customerId,
+                interpreter_id: interpreterId,
+                exhibition_name: posting.exhibition_name || '',
+                client_company: posting.company || '',
+                venue: posting.venue || posting.location || '',
+                start_date: posting.start_date,
+                end_date: posting.end_date,
+                working_days: days,
+                language_pair: posting.language_pair || '',
+                service_type: 'OTHER',
+                daily_rate: rate,
+                total_amount: totalAmount,
+                tax_amount: Math.round(totalAmount * 0.1),
+                net_amount: totalAmount,
+                status: 'pending'
+            }).select('id').single();
+            if (cErr) {
+                console.error('계약 생성 실패:', cErr);
+                return res.status(500).json({ error: '계약 생성 실패: ' + cErr.message });
+            }
+
+            await supabase.from('46_ITQ견적문의').update({
+                contract_id: newContract.id,
+                status: '계약진행',
+                admin_note: JSON.stringify({ interpreter: interpDisplay, interpreterId, memo: memo || '' })
+            }).eq('id', postingId);
+
+            await supabase.from('70_구인공고지원')
+                .update({ status: 'matched', contract_id: newContract.id })
+                .eq('posting_id', postingId)
+                .eq('interpreter_id', interpreterId);
+
+            await supabase.from('70_구인공고지원')
+                .update({ status: 'declined' })
+                .eq('posting_id', postingId)
+                .neq('interpreter_id', interpreterId)
+                .in('status', ['pending', 'forwarded']);
+
+            // 알림 (best-effort)
+            try {
+                const notifs = [];
+                notifs.push({
+                    user_id: interpreterId,
+                    notification_type: 'assignment',
+                    title: '🎉 구인공고 매칭 확정',
+                    message: '"' + (posting.exhibition_name || '공고') + '" 매칭이 확정되었습니다. 계약 탭에서 확인해주세요.',
+                    is_read: false
+                });
+                if (customerId) {
+                    notifs.push({
+                        user_id: customerId,
+                        notification_type: 'assignment',
+                        title: '🤝 통역사 매칭 확정',
+                        message: '"' + (posting.exhibition_name || '공고') + '"에 ' + interpDisplay + ' 통역사가 배정되었습니다. 계약·결제 탭을 확인해주세요.',
+                        is_read: false
+                    });
+                }
+                const { data: declined } = await supabase
+                    .from('70_구인공고지원')
+                    .select('interpreter_id')
+                    .eq('posting_id', postingId)
+                    .eq('status', 'declined');
+                (declined || []).forEach(d => {
+                    notifs.push({
+                        user_id: d.interpreter_id,
+                        notification_type: 'service',
+                        title: '안내: 구인공고 매칭 완료',
+                        message: '"' + (posting.exhibition_name || '공고') + '" 공고의 매칭이 완료되었습니다. 다음 기회에 다시 만나뵙길 바랍니다.',
+                        is_read: false
+                    });
+                });
+                if (notifs.length > 0) await supabase.from('24_알림').insert(notifs);
+            } catch (e) { console.warn('매칭 알림 실패:', e); }
+
+            return res.status(200).json({ success: true, contractId: newContract.id });
+
+        } else if (action === 'showcaseReject') {
+            // Phase 4C — 공고 거부. review_note 필수.
+            const { id: pid, note } = req.body;
+            if (!pid) return res.status(400).json({ error: 'id 필수' });
+            const trimmed = String(note || '').trim().slice(0, 1000);
+            if (!trimmed) return res.status(400).json({ error: '거부 사유(note) 필수' });
+            const { data, error } = await supabase
+                .from('46_ITQ견적문의')
+                .update({
+                    review_status: 'rejected',
+                    review_note: trimmed,
+                    reviewed_at: new Date().toISOString(),
+                    reviewed_by: admin.id,
+                    showcase_published_at: null
+                })
+                .eq('id', pid)
+                .eq('source_type', 'direct_posting')
+                .select('id, posted_by_user_id, exhibition_name')
+                .single();
+            if (error) throw error;
+
+            // 고객사에게 알림
+            if (data && data.posted_by_user_id) {
+                try {
+                    await supabase.from('24_알림').insert({
+                        user_id: data.posted_by_user_id,
+                        notification_type: 'service',
+                        title: '🚫 통역사 모집 공고 게재 거부',
+                        message: '"' + (data.exhibition_name || '공고') + '" 공고가 게재 거부되었습니다. 사유: ' + trimmed,
+                        is_read: false
+                    });
+                } catch (e) { console.warn('거부 알림 실패:', e); }
+            }
+            return res.status(200).json({ success: true, data });
+
         } else {
             return res.status(400).json({ error: 'Unknown action' });
         }
