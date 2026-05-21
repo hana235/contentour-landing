@@ -335,6 +335,26 @@
             line-height: 1.6;
         }
 
+        /* ── 빈/로딩/에러 상태 ── */
+        .ij-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            background: #fff;
+            border: 1px dashed rgba(0, 0, 0, 0.12);
+            border-radius: 14px;
+            padding: 48px 20px;
+            color: var(--gray-400);
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+        .ij-empty__sub {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.82rem;
+            color: var(--gray-300);
+        }
+        .ij-empty__error { color: #c62828; }
+
         /* ── 모바일 ── */
         @media (max-width: 768px) {
             .ij-page { padding: 32px 16px 60px; }
@@ -553,70 +573,24 @@
     <script src="supabase-config.js"></script>
     <script src="script.js"></script>
     <script>
-        // ══════════════ Mock 데이터 (Phase 1) ══════════════
-        // Phase 3에서 Supabase 쿼리로 교체 예정
-        var sampleRequests = [
-            {
-                id: 'IR-2026-0143', status: 'recruiting', label: '한국 IT 중견기업',
-                industry: 'IT', isAnonymous: true, countryCode: 'JP',
-                exhibition: '도쿄 IT 박람회', startDate: '2026-06-12', endDate: '2026-06-15',
-                languages: ['영어', '일본어'], needed: 3, interestCount: 12
-            },
-            {
-                id: 'IR-2026-0142', status: 'recruiting', label: '의료기기 제조사',
-                industry: '의료기기', isAnonymous: true, countryCode: 'DE',
-                exhibition: 'MEDICA 2026', startDate: '2026-11-17', endDate: '2026-11-20',
-                languages: ['영어', '독일어'], needed: 4, interestCount: 28
-            },
-            {
-                id: 'IR-2026-0141', status: 'matched', label: '뷰티 브랜드 A',
-                industry: '뷰티·화장품', isAnonymous: true, countryCode: 'US',
-                exhibition: 'Cosmoprof North America', startDate: '2026-07-23', endDate: '2026-07-25',
-                languages: ['영어'], needed: 2, interestCount: 19, daysLeft: 3
-            },
-            {
-                id: 'IR-2026-0140', status: 'recruiting', label: '자동차 부품 수출 기업',
-                industry: '자동차 부품', isAnonymous: true, countryCode: 'CN',
-                exhibition: 'Auto Shanghai 2026', startDate: '2026-04-23', endDate: '2026-04-30',
-                languages: ['중국어'], needed: 5, interestCount: 22
-            },
-            {
-                id: 'IR-2026-0139', status: 'recruiting', label: '식품 가공 중소기업',
-                industry: '식품·F&B', isAnonymous: true, countryCode: 'VN',
-                exhibition: 'Vietnam Food Expo', startDate: '2026-09-14', endDate: '2026-09-17',
-                languages: ['베트남어', '영어'], needed: 2, interestCount: 7
-            },
-            {
-                id: 'IR-2026-0138', status: 'recruiting', label: '건축자재 수출 기업',
-                industry: '건축·자재', isAnonymous: true, countryCode: 'AE',
-                exhibition: 'The Big 5 Dubai', startDate: '2026-12-04', endDate: '2026-12-07',
-                languages: ['영어', '아랍어'], needed: 3, interestCount: 14
-            },
-            {
-                id: 'IR-2026-0137', status: 'matched', label: '반도체 장비 기업',
-                industry: '반도체', isAnonymous: true, countryCode: 'JP',
-                exhibition: 'SEMICON Japan', startDate: '2026-12-16', endDate: '2026-12-18',
-                languages: ['영어', '일본어'], needed: 4, interestCount: 31, daysLeft: 8
-            },
-            {
-                id: 'IR-2026-0136', status: 'recruiting', label: '친환경 에너지 스타트업',
-                industry: '에너지·환경', isAnonymous: true, countryCode: 'DE',
-                exhibition: 'Hannover Messe', startDate: '2026-04-21', endDate: '2026-04-25',
-                languages: ['영어', '독일어'], needed: 4, interestCount: 24
-            }
-        ];
-
+        // ══════════════ 상태 ══════════════
+        // /api/showcase에서 화이트리스트 컬럼만 받아옴 (Phase 3, 2026-05-21)
+        var showcaseData = [];
         var INITIAL_COUNT = 6;
         var expanded = false;
-
-        // 국가 코드 → 한글명 매핑 (필터칩과 데이터 매칭용)
-        var COUNTRY_LABEL = {
-            JP: '일본', CN: '중국', DE: '독일', US: '미국', AE: 'UAE', VN: '베트남'
-        };
+        var loading = true;
+        var loadError = false;
 
         function fmtDate(s) {
-            // 2026-06-12 → 2026.06.12
-            return s.replace(/-/g, '.');
+            // '2026-06-12' → '2026.06.12'
+            if (!s) return '';
+            return String(s).replace(/-/g, '.');
+        }
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
         }
 
         function buildCard(req) {
@@ -625,29 +599,38 @@
                 ? '<span class="ij-badge ij-badge--recruit">모집중</span>'
                 : '<span class="ij-badge ij-badge--matched">매칭완료</span>';
 
-            var ddayHtml = (!isRecruit && req.daysLeft)
+            var ddayHtml = (!isRecruit && typeof req.daysLeft === 'number')
                 ? '<span class="ij-card__dday">D-' + req.daysLeft + '</span>'
                 : '';
 
+            var endShort = (req.endDate && req.endDate.length >= 10)
+                ? fmtDate(req.endDate.slice(5))
+                : fmtDate(req.endDate);
+
+            var languages = Array.isArray(req.languages) ? req.languages : [];
+            var industry = req.industry || '';
+            var metaSuffix = req.isAnonymous ? '익명 등재' : '실명 공개';
+            var metaLine = industry ? (escapeHtml(industry) + ' · ' + metaSuffix) : metaSuffix;
+
             return '' +
-                '<div class="ij-card" data-region="' + req.countryCode + '">' +
+                '<div class="ij-card" data-region="' + escapeHtml(req.countryCode) + '">' +
                     '<div class="ij-card__head">' +
                         badgeHtml +
-                        '<span class="ij-card__interest">👁 ' + req.interestCount + '</span>' +
+                        '<span class="ij-card__interest">👁 ' + (req.interestCount || 0) + '</span>' +
                     '</div>' +
                     '<div>' +
-                        '<h3 class="ij-card__company">' + req.label + '</h3>' +
-                        '<div class="ij-card__meta">' + req.industry + ' · ' + (req.isAnonymous ? '익명 등재' : '실명 공개') + '</div>' +
+                        '<h3 class="ij-card__company">' + escapeHtml(req.label) + '</h3>' +
+                        '<div class="ij-card__meta">' + metaLine + '</div>' +
                     '</div>' +
                     '<div class="ij-card__expo">' +
-                        '<span class="ij-card__cc">' + req.countryCode + '</span>' +
-                        '<span>' + req.exhibition + '</span>' +
+                        '<span class="ij-card__cc">' + escapeHtml(req.countryCode) + '</span>' +
+                        '<span>' + escapeHtml(req.exhibition) + '</span>' +
                     '</div>' +
                     '<div class="ij-card__row">' +
-                        '<span>📅</span><span>' + fmtDate(req.startDate) + ' ~ ' + fmtDate(req.endDate.slice(5)) + '</span>' +
+                        '<span>📅</span><span>' + fmtDate(req.startDate) + ' ~ ' + endShort + '</span>' +
                     '</div>' +
                     '<div class="ij-card__row">' +
-                        '<span>🌐</span><span>' + req.languages.join(' · ') + ' · ' + req.needed + '명</span>' +
+                        '<span>🌐</span><span>' + escapeHtml(languages.join(' · ')) + ' · ' + (req.needed || 0) + '명</span>' +
                         ddayHtml +
                     '</div>' +
                 '</div>';
@@ -659,17 +642,45 @@
         }
 
         function renderGrid() {
+            var grid = document.getElementById('ijGrid');
+            var moreWrap = document.getElementById('ijMoreWrap');
+            var counterCo = document.getElementById('counterCompanies');
+            var counterNo = document.getElementById('counterNeeded');
+
+            if (loading) {
+                grid.innerHTML = '<div class="ij-empty">불러오는 중...</div>';
+                moreWrap.style.display = 'none';
+                counterCo.textContent = '–';
+                counterNo.textContent = '–';
+                return;
+            }
+            if (loadError) {
+                grid.innerHTML = '<div class="ij-empty ij-empty__error">데이터를 불러오지 못했습니다.<span class="ij-empty__sub">잠시 후 새로고침해주세요.</span></div>';
+                moreWrap.style.display = 'none';
+                counterCo.textContent = '0';
+                counterNo.textContent = '0';
+                return;
+            }
+
             var region = getActiveRegion();
             var list = region === 'all'
-                ? sampleRequests
-                : sampleRequests.filter(function (r) { return r.countryCode === region; });
+                ? showcaseData
+                : showcaseData.filter(function (r) { return r.countryCode === region; });
+
+            if (list.length === 0) {
+                var msg = region === 'all'
+                    ? '현재 게재된 통역 모집 현황이 없습니다.'
+                    : '해당 지역에 게재된 통역 모집 현황이 없습니다.';
+                grid.innerHTML = '<div class="ij-empty">' + msg + '<span class="ij-empty__sub">곧 다양한 기업의 모집 현황이 공개됩니다.</span></div>';
+                moreWrap.style.display = 'none';
+                counterCo.textContent = '0';
+                counterNo.textContent = '0';
+                return;
+            }
 
             var visible = expanded ? list : list.slice(0, INITIAL_COUNT);
-            var grid = document.getElementById('ijGrid');
             grid.innerHTML = visible.map(buildCard).join('');
 
-            // 더 보기 버튼 표시
-            var moreWrap = document.getElementById('ijMoreWrap');
             var moreBtn = document.getElementById('ijMoreBtn');
             if (!expanded && list.length > INITIAL_COUNT) {
                 moreWrap.style.display = '';
@@ -678,12 +689,32 @@
                 moreWrap.style.display = 'none';
             }
 
-            // 카운터 업데이트 (현재 필터 기준)
             var recruiting = list.filter(function (r) { return r.status === 'recruiting'; });
-            var totalCompanies = recruiting.length;
-            var totalNeeded = recruiting.reduce(function (sum, r) { return sum + r.needed; }, 0);
-            document.getElementById('counterCompanies').textContent = totalCompanies;
-            document.getElementById('counterNeeded').textContent = totalNeeded;
+            counterCo.textContent = recruiting.length;
+            counterNo.textContent = recruiting.reduce(function (sum, r) { return sum + (r.needed || 0); }, 0);
+        }
+
+        function fetchShowcase() {
+            loading = true;
+            loadError = false;
+            renderGrid();
+            fetch('/api/showcase', { cache: 'no-store' })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.json();
+                })
+                .then(function (data) {
+                    showcaseData = Array.isArray(data) ? data : [];
+                    loading = false;
+                    renderGrid();
+                })
+                .catch(function (e) {
+                    console.error('Showcase load failed:', e);
+                    showcaseData = [];
+                    loading = false;
+                    loadError = true;
+                    renderGrid();
+                });
         }
 
         function activateChip(region) {
@@ -743,6 +774,7 @@
             renderGrid();
         }
         syncFromUrl();
+        fetchShowcase();
     </script>
 </body>
 
