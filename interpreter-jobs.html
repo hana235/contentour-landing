@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>통역사 구인 현황 - 콘텐츄어 | 해외전시회 통역 실시간 수요</title>
+    <meta name="description" content="지금 한국 기업이 해외전시회 통역사를 찾고 있습니다. 콘텐츄어 견적 의뢰 기반 실시간 통역 수요 현황판. 산업·지역·언어를 확인하고 통역사 풀에 등록하세요.">
+    <!-- 출시 전 모드: noindex (robots.txt와 정합). 출시 시 'index, follow'로 복구 -->
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="통역사 구인 현황 - 콘텐츄어">
+    <meta property="og:description" content="지금 한국 기업이 해외전시회 통역사를 찾고 있습니다. 실시간 수요 현황판.">
+    <meta property="og:url" content="https://contentour-landing.vercel.app/interpreter-jobs">
+    <meta property="og:image" content="https://contentour-landing.vercel.app/assets/og-image.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" href="design-tokens.css">
+    <link rel="stylesheet" href="styles.css?v=1.1">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ══════════════ interpreter-jobs 페이지 전용 ══════════════ */
+        .ij-page {
+            background: #f9fafb;
+            min-height: 100vh;
+            padding: 56px 20px 80px;
+            font-family: 'Montserrat', 'Noto Sans KR', sans-serif;
+        }
+        .ij-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* ── Hero ── */
+        .ij-hero {
+            text-align: center;
+            padding: 24px 0 36px;
+        }
+        .ij-live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            margin-bottom: 20px;
+        }
+        .ij-live-dot {
+            width: 6px;
+            height: 6px;
+            background: #dc2626;
+            border-radius: 50%;
+            animation: ij-pulse 1.6s ease-in-out infinite;
+        }
+        @keyframes ij-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+        .ij-hero h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1.45;
+            color: var(--text);
+            margin-bottom: 14px;
+            letter-spacing: -0.3px;
+        }
+        .ij-hero h1 .ij-accent {
+            color: var(--blue);
+            font-weight: 800;
+        }
+        .ij-hero__sub {
+            font-size: 0.88rem;
+            color: var(--gray-600);
+            line-height: 1.7;
+            margin-bottom: 28px;
+        }
+        .ij-counter {
+            background: #fff;
+            border: 0.5px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 22px 28px;
+            max-width: 520px;
+            margin: 0 auto 24px;
+            text-align: center;
+        }
+        .ij-counter__row {
+            font-size: 0.95rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+        .ij-counter__big {
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: var(--blue);
+            margin: 0 4px;
+            line-height: 1;
+            vertical-align: middle;
+        }
+        .ij-counter__mid {
+            font-weight: 800;
+            color: var(--text);
+        }
+        .ij-hero__cta {
+            display: inline-block;
+            background: var(--gradient-blue);
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .ij-hero__cta:hover { opacity: 0.92; transform: translateY(-1px); }
+
+        /* ── 필터 칩 ── */
+        .ij-filter {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 8px 0 28px;
+            flex-wrap: wrap;
+            overflow-x: auto;
+            padding: 0 4px;
+            scrollbar-width: none;
+        }
+        .ij-filter::-webkit-scrollbar { display: none; }
+        .ij-chip {
+            padding: 7px 14px;
+            border-radius: 999px;
+            border: 0.5px solid rgba(0,0,0,0.12);
+            background: #fff;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .ij-chip:hover { border-color: var(--text); }
+        .ij-chip.is-active {
+            background: var(--text);
+            color: #fff;
+            border-color: var(--text);
+        }
+
+        /* ── 카드 그리드 ── */
+        .ij-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .ij-card {
+            background: #fff;
+            border: 0.5px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .ij-card__head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ij-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .ij-badge--recruit {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .ij-badge--recruit::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            background: #dc2626;
+            border-radius: 50%;
+            animation: ij-pulse 1.6s ease-in-out infinite;
+        }
+        .ij-badge--matched {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        .ij-badge--matched::before {
+            content: '✓';
+            font-weight: 800;
+        }
+        .ij-card__interest {
+            font-size: 0.78rem;
+            color: var(--gray-400);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ij-card__company {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+        }
+        .ij-card__meta {
+            font-size: 0.74rem;
+            color: var(--gray-400);
+            margin-top: 2px;
+        }
+        .ij-card__expo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.86rem;
+            color: var(--text);
+            font-weight: 500;
+        }
+        .ij-card__cc {
+            display: inline-block;
+            background: var(--gray-100);
+            color: var(--gray-600);
+            font-size: 0.66rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.4px;
+        }
+        .ij-card__row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+        .ij-card__dday {
+            margin-left: auto;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #16a34a;
+            background: #dcfce7;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        /* ── 더 보기 ── */
+        .ij-more-wrap {
+            text-align: center;
+            margin-top: 28px;
+        }
+        .ij-more-btn {
+            background: #fff;
+            border: 1px solid var(--blue);
+            color: var(--blue);
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .ij-more-btn:hover {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        /* ── 기업용 CTA 박스 ── */
+        .ij-corp-cta {
+            background: #fff;
+            border: 0.5px solid rgba(0,0,0,0.08);
+            border-radius: 16px;
+            padding: 40px 28px;
+            text-align: center;
+            margin-top: 40px;
+        }
+        .ij-corp-cta__label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--gray-400);
+            letter-spacing: 1.2px;
+            margin-bottom: 12px;
+        }
+        .ij-corp-cta__title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+        .ij-corp-cta__desc {
+            font-size: 0.86rem;
+            color: var(--gray-600);
+            line-height: 1.7;
+            margin-bottom: 22px;
+        }
+        .ij-corp-cta__btn {
+            display: inline-block;
+            background: #fff;
+            border: 1.5px solid var(--blue);
+            color: var(--blue);
+            padding: 11px 26px;
+            border-radius: 10px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .ij-corp-cta__btn:hover {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        /* ── 신뢰 푸터 ── */
+        .ij-trust {
+            text-align: center;
+            font-size: 0.74rem;
+            color: var(--gray-400);
+            margin-top: 36px;
+            line-height: 1.6;
+        }
+
+        /* ── 모바일 ── */
+        @media (max-width: 768px) {
+            .ij-page { padding: 32px 16px 60px; }
+            .ij-hero h1 { font-size: 1.45rem; }
+            .ij-hero__sub { font-size: 0.84rem; }
+            .ij-counter { padding: 18px 20px; }
+            .ij-counter__big { font-size: 2.1rem; }
+            .ij-grid { grid-template-columns: 1fr; }
+            .ij-filter { justify-content: flex-start; }
+            .ij-corp-cta { padding: 28px 20px; }
+            .ij-corp-cta__title { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Password Protection -->
+    <div id="pwGate" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0a1628,#1a2a4a);display:flex;align-items:center;justify-content:center;font-family:'Montserrat','Noto Sans KR',sans-serif;">
+        <div style="background:#fff;border-radius:20px;padding:48px 40px;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="width:56px;height:56px;margin:0 auto 20px;background:linear-gradient(135deg,#1565c0,#0d47a1);border-radius:14px;display:flex;align-items:center;justify-content:center;">
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M12 2C9.24 2 7 4.24 7 7v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.65 0 3 1.35 3 3v3H9V7c0-1.65 1.35-3 3-3zm0 10c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z" fill="#fff"/></svg>
+            </div>
+            <h2 style="font-size:1.2rem;font-weight:800;color:#1a2a4a;margin-bottom:6px;">CONTENTOUR</h2>
+            <p style="font-size:0.82rem;color:#8a95a8;margin-bottom:24px;">접근이 제한된 페이지입니다. 비밀번호를 입력하세요.</p>
+            <form id="pwForm" onsubmit="event.preventDefault();checkPw();" autocomplete="off">
+                <label for="pwInput" class="sr-only">비밀번호</label>
+                <input id="pwInput" name="password" type="password" aria-label="비밀번호" placeholder="비밀번호 입력" style="width:100%;padding:14px 16px;border:2px solid #e0e5ec;border-radius:12px;font-size:0.92rem;outline:none;box-sizing:border-box;font-family:inherit;transition:border 0.2s;" onfocus="this.style.borderColor='#1565c0'" onblur="this.style.borderColor='#e0e5ec'">
+                <div id="pwError" style="color:#c62828;font-size:0.78rem;margin-top:8px;height:20px;"></div>
+                <button type="submit" style="width:100%;padding:14px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:12px;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">확인</button>
+            </form>
+        </div>
+    </div>
+    <script src="pw-gate.js"></script>
+
+    <!-- Navigation Header -->
+    <header class="nav">
+        <div class="nav__inner">
+            <a class="nav__logo" href="index.html">
+                <img src="assets/logo.png" alt="CONTENTOUR Logo" class="logo-img">
+            </a>
+
+            <nav class="nav__menu" id="navMenu" aria-label="메인 메뉴">
+                <a class="is-active" href="support.html">
+                    <span class="nav__menu-icon">🤝</span>
+                    <div class="nav__menu-text">
+                        <span class="nav__menu-title">통역지원</span>
+                        <span class="nav__menu-desc">서비스 이용 안내</span>
+                    </div>
+                </a>
+                <a href="service.html">
+                    <span class="nav__menu-icon">🏢</span>
+                    <div class="nav__menu-text">
+                        <span class="nav__menu-title">서비스 안내</span>
+                        <span class="nav__menu-desc">솔루션 및 프로세스 안내</span>
+                    </div>
+                </a>
+                <a href="performance.html">
+                    <span class="nav__menu-icon">📊</span>
+                    <div class="nav__menu-text">
+                        <span class="nav__menu-title">성과사례</span>
+                        <span class="nav__menu-desc">실적 및 고객사례</span>
+                    </div>
+                </a>
+                <a href="client-auth.html" class="nav-client">
+                    <span class="nav__menu-icon">🏢</span>
+                    <div class="nav__menu-text">
+                        <span class="nav__menu-title">Login</span>
+                        <span class="nav__menu-desc">Client Portal</span>
+                    </div>
+                </a>
+            </nav>
+
+            <div class="nav-cta">
+                <a href="index.html#contact" class="btn btn-primary btn-nav">견적 문의</a>
+            </div>
+
+            <button class="nav__toggle" type="button" aria-controls="navMenu" aria-expanded="false" id="mobileMenuToggle">
+                <span class="sr-only">메뉴 열기</span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </div>
+    </header>
+
+    <main class="ij-page">
+        <div class="ij-container">
+
+            <!-- Hero -->
+            <section class="ij-hero">
+                <div class="ij-live-badge">
+                    <span class="ij-live-dot"></span>
+                    <span>LIVE · 실시간 업데이트</span>
+                </div>
+                <h1>
+                    지금 한국 기업이<br>
+                    <span class="ij-accent">해외전시회 통역사</span>를 찾고 있습니다
+                </h1>
+                <p class="ij-hero__sub">
+                    콘텐츄어 견적 의뢰 기반 실시간 현황판입니다.<br>
+                    산업·지역·언어를 확인하고 통역사 풀에 등록해 매칭받으세요.
+                </p>
+
+                <div class="ij-counter">
+                    <div class="ij-counter__row">
+                        현재 <span class="ij-counter__big" id="counterCompanies">23</span>개 기업
+                        <span style="color:var(--gray-200);margin:0 8px;">·</span>
+                        통역사 <span class="ij-counter__mid" id="counterNeeded">37</span>명 모집 중
+                    </div>
+                </div>
+
+                <a href="interpreter-apply.html" class="ij-hero__cta">통역사로 지원하기</a>
+            </section>
+
+            <!-- 필터 칩 -->
+            <div class="ij-filter" id="ijFilter">
+                <button class="ij-chip is-active" data-region="all">전체</button>
+                <button class="ij-chip" data-region="JP">일본</button>
+                <button class="ij-chip" data-region="CN">중국</button>
+                <button class="ij-chip" data-region="DE">독일</button>
+                <button class="ij-chip" data-region="US">미국</button>
+                <button class="ij-chip" data-region="AE">UAE</button>
+                <button class="ij-chip" data-region="VN">베트남</button>
+            </div>
+
+            <!-- 카드 그리드 -->
+            <div class="ij-grid" id="ijGrid"></div>
+
+            <!-- 더 보기 -->
+            <div class="ij-more-wrap" id="ijMoreWrap">
+                <button class="ij-more-btn" id="ijMoreBtn">전체 8건 보기</button>
+            </div>
+
+            <!-- 기업용 CTA 박스 -->
+            <section class="ij-corp-cta">
+                <div class="ij-corp-cta__label">FOR COMPANIES</div>
+                <h2 class="ij-corp-cta__title">우리 기업도 통역사 매칭받기</h2>
+                <p class="ij-corp-cta__desc">
+                    견적 의뢰 시 '통역사 구인 현황 게재 동의' 체크 한 번으로<br>
+                    검증된 콘텐츄어 통역사 풀에서 자동 매칭됩니다.
+                </p>
+                <a href="index.html#contact" class="ij-corp-cta__btn">견적 의뢰하기</a>
+            </section>
+
+            <!-- 신뢰 푸터 -->
+            <p class="ij-trust">
+                🛡 3개 부처 수출바우처 수행기관 · 🏆 특허받은 비즈매칭 플랫폼 · 🏛 콘텐츄어 운영
+            </p>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-professional">
+        <div class="footer-container-pro">
+            <div class="footer-logo-box">
+                <img src="assets/footer_logo.png" alt="CONTENTOUR Logo" class="footer-logo">
+            </div>
+            <div class="footer-info">
+                <div class="footer-info__row">
+                    <span><b>상호명</b> 주식회사 콘텐츄어</span>
+                    <span class="divider">|</span>
+                    <span><b>주소</b> 서울시 구로구 디지털로26길 43, 대륭포스트타워 8차 L동 2층 204호</span>
+                    <span class="divider">|</span>
+                    <span><b>대표이사</b> 이수경</span>
+                </div>
+                <div class="footer-info__row">
+                    <span><b>메일</b> info@contentour.co.kr</span>
+                    <span class="divider">|</span>
+                    <span><b>전화</b> 02-868-1522</span>
+                    <span class="divider">|</span>
+                    <span><b>팩스</b> 02-869-3082</span>
+                </div>
+                <div class="footer-info__row">
+                    <span><b>사업자등록번호</b> 119-86-68157</span>
+                    <span class="divider">|</span>
+                    <span><b>통신판매업신고번호</b> 제 2017-서울 구로-0321호</span>
+                </div>
+                <div class="footer-info__row">
+                    <span><b>개인정보보호책임자</b> 이수경 대표 (info@contentour.co.kr)</span>
+                </div>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:20px;flex-wrap:wrap;">
+                <a href="terms.html#sec-common" class="footer-terms-link">서비스 이용약관</a>
+                <a href="terms.html#sec-customer" class="footer-terms-link">고객사 이용약관</a>
+                <a href="terms.html#sec-interpreter" class="footer-terms-link">통역사 이용약관</a>
+                <a href="terms.html#sec-operation" class="footer-terms-link">서비스 운영정책</a>
+                <a href="terms.html#sec-privacy" class="footer-terms-link">개인정보처리방침</a>
+            </div>
+            <div class="footer-bottom-pro" style="margin-top:20px;">
+                <p>© 2026 CONTENTOUR Co., Ltd. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // ══════════════ Mock 데이터 (Phase 1) ══════════════
+        // Phase 3에서 Supabase 쿼리로 교체 예정
+        var sampleRequests = [
+            {
+                id: 'IR-2026-0143', status: 'recruiting', label: '한국 IT 중견기업',
+                industry: 'IT', isAnonymous: true, countryCode: 'JP',
+                exhibition: '도쿄 IT 박람회', startDate: '2026-06-12', endDate: '2026-06-15',
+                languages: ['영어', '일본어'], needed: 3, interestCount: 12
+            },
+            {
+                id: 'IR-2026-0142', status: 'recruiting', label: '의료기기 제조사',
+                industry: '의료기기', isAnonymous: true, countryCode: 'DE',
+                exhibition: 'MEDICA 2026', startDate: '2026-11-17', endDate: '2026-11-20',
+                languages: ['영어', '독일어'], needed: 4, interestCount: 28
+            },
+            {
+                id: 'IR-2026-0141', status: 'matched', label: '뷰티 브랜드 A',
+                industry: '뷰티·화장품', isAnonymous: true, countryCode: 'US',
+                exhibition: 'Cosmoprof North America', startDate: '2026-07-23', endDate: '2026-07-25',
+                languages: ['영어'], needed: 2, interestCount: 19, daysLeft: 3
+            },
+            {
+                id: 'IR-2026-0140', status: 'recruiting', label: '자동차 부품 수출 기업',
+                industry: '자동차 부품', isAnonymous: true, countryCode: 'CN',
+                exhibition: 'Auto Shanghai 2026', startDate: '2026-04-23', endDate: '2026-04-30',
+                languages: ['중국어'], needed: 5, interestCount: 22
+            },
+            {
+                id: 'IR-2026-0139', status: 'recruiting', label: '식품 가공 중소기업',
+                industry: '식품·F&B', isAnonymous: true, countryCode: 'VN',
+                exhibition: 'Vietnam Food Expo', startDate: '2026-09-14', endDate: '2026-09-17',
+                languages: ['베트남어', '영어'], needed: 2, interestCount: 7
+            },
+            {
+                id: 'IR-2026-0138', status: 'recruiting', label: '건축자재 수출 기업',
+                industry: '건축·자재', isAnonymous: true, countryCode: 'AE',
+                exhibition: 'The Big 5 Dubai', startDate: '2026-12-04', endDate: '2026-12-07',
+                languages: ['영어', '아랍어'], needed: 3, interestCount: 14
+            },
+            {
+                id: 'IR-2026-0137', status: 'matched', label: '반도체 장비 기업',
+                industry: '반도체', isAnonymous: true, countryCode: 'JP',
+                exhibition: 'SEMICON Japan', startDate: '2026-12-16', endDate: '2026-12-18',
+                languages: ['영어', '일본어'], needed: 4, interestCount: 31, daysLeft: 8
+            },
+            {
+                id: 'IR-2026-0136', status: 'recruiting', label: '친환경 에너지 스타트업',
+                industry: '에너지·환경', isAnonymous: true, countryCode: 'DE',
+                exhibition: 'Hannover Messe', startDate: '2026-04-21', endDate: '2026-04-25',
+                languages: ['영어', '독일어'], needed: 4, interestCount: 24
+            }
+        ];
+
+        var INITIAL_COUNT = 6;
+        var expanded = false;
+
+        // 국가 코드 → 한글명 매핑 (필터칩과 데이터 매칭용)
+        var COUNTRY_LABEL = {
+            JP: '일본', CN: '중국', DE: '독일', US: '미국', AE: 'UAE', VN: '베트남'
+        };
+
+        function fmtDate(s) {
+            // 2026-06-12 → 2026.06.12
+            return s.replace(/-/g, '.');
+        }
+
+        function buildCard(req) {
+            var isRecruit = req.status === 'recruiting';
+            var badgeHtml = isRecruit
+                ? '<span class="ij-badge ij-badge--recruit">모집중</span>'
+                : '<span class="ij-badge ij-badge--matched">매칭완료</span>';
+
+            var ddayHtml = (!isRecruit && req.daysLeft)
+                ? '<span class="ij-card__dday">D-' + req.daysLeft + '</span>'
+                : '';
+
+            return '' +
+                '<div class="ij-card" data-region="' + req.countryCode + '">' +
+                    '<div class="ij-card__head">' +
+                        badgeHtml +
+                        '<span class="ij-card__interest">👁 ' + req.interestCount + '</span>' +
+                    '</div>' +
+                    '<div>' +
+                        '<h3 class="ij-card__company">' + req.label + '</h3>' +
+                        '<div class="ij-card__meta">' + req.industry + ' · ' + (req.isAnonymous ? '익명 등재' : '실명 공개') + '</div>' +
+                    '</div>' +
+                    '<div class="ij-card__expo">' +
+                        '<span class="ij-card__cc">' + req.countryCode + '</span>' +
+                        '<span>' + req.exhibition + '</span>' +
+                    '</div>' +
+                    '<div class="ij-card__row">' +
+                        '<span>📅</span><span>' + fmtDate(req.startDate) + ' ~ ' + fmtDate(req.endDate.slice(5)) + '</span>' +
+                    '</div>' +
+                    '<div class="ij-card__row">' +
+                        '<span>🌐</span><span>' + req.languages.join(' · ') + ' · ' + req.needed + '명</span>' +
+                        ddayHtml +
+                    '</div>' +
+                '</div>';
+        }
+
+        function getActiveRegion() {
+            var active = document.querySelector('.ij-chip.is-active');
+            return active ? active.getAttribute('data-region') : 'all';
+        }
+
+        function renderGrid() {
+            var region = getActiveRegion();
+            var list = region === 'all'
+                ? sampleRequests
+                : sampleRequests.filter(function (r) { return r.countryCode === region; });
+
+            var visible = expanded ? list : list.slice(0, INITIAL_COUNT);
+            var grid = document.getElementById('ijGrid');
+            grid.innerHTML = visible.map(buildCard).join('');
+
+            // 더 보기 버튼 표시
+            var moreWrap = document.getElementById('ijMoreWrap');
+            var moreBtn = document.getElementById('ijMoreBtn');
+            if (!expanded && list.length > INITIAL_COUNT) {
+                moreWrap.style.display = '';
+                moreBtn.textContent = '전체 ' + list.length + '건 보기';
+            } else {
+                moreWrap.style.display = 'none';
+            }
+
+            // 카운터 업데이트 (현재 필터 기준)
+            var recruiting = list.filter(function (r) { return r.status === 'recruiting'; });
+            var totalCompanies = recruiting.length;
+            var totalNeeded = recruiting.reduce(function (sum, r) { return sum + r.needed; }, 0);
+            document.getElementById('counterCompanies').textContent = totalCompanies;
+            document.getElementById('counterNeeded').textContent = totalNeeded;
+        }
+
+        // 필터 칩 클릭 (Phase 1에서는 일단 동작하게 — URL 동기화는 Phase 2)
+        document.getElementById('ijFilter').addEventListener('click', function (e) {
+            var btn = e.target.closest('.ij-chip');
+            if (!btn) return;
+            document.querySelectorAll('.ij-chip').forEach(function (c) { c.classList.remove('is-active'); });
+            btn.classList.add('is-active');
+            expanded = false;
+            renderGrid();
+        });
+
+        // 더 보기
+        document.getElementById('ijMoreBtn').addEventListener('click', function () {
+            expanded = true;
+            renderGrid();
+        });
+
+        // 초기 렌더
+        renderGrid();
+    </script>
+</body>
+
+</html>
