@@ -16,9 +16,9 @@
 --     (admin만 가능, 일반 사용자는 service_role API를 통해서만 다운로드)
 -- ══════════════════════════════════════════════════════════
 
--- Storage.objects는 기본적으로 RLS 활성화 상태 (Supabase 기본).
--- 명시적으로 재확인:
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Storage.objects는 Supabase 기본으로 RLS가 이미 활성화돼 있음.
+-- ALTER TABLE은 supabase_storage_admin 권한이므로 SQL Editor에서 실행하지 않음.
+-- CREATE POLICY는 일반 SQL Editor에서 정상 동작.
 
 -- ── SELECT: 본인 폴더 OR admin ──
 DROP POLICY IF EXISTS "interp_docs_select_own_or_admin" ON storage.objects;
