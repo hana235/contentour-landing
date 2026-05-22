@@ -94,12 +94,17 @@ window.showToast = window.showToast || function(message, type) {
         if (!root) {
             root = document.createElement('div');
             root.id = '__toastRoot';
+            // 보조 기술이 토스트 메시지를 즉시 읽도록 aria-live 영역으로 표시
+            root.setAttribute('aria-live', 'assertive');
+            root.setAttribute('aria-atomic', 'true');
             root.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;';
             document.body.appendChild(root);
         }
         var bg = type === 'error' ? '#c62828' : (type === 'success' ? '#2e7d32' : '#333');
         var t = document.createElement('div');
         t.textContent = message;
+        // 에러는 alert, 그 외는 status 역할 (스크린리더가 중요도 구분)
+        t.setAttribute('role', type === 'error' ? 'alert' : 'status');
         t.style.cssText = 'background:' + bg + ';color:#fff;padding:12px 18px;border-radius:10px;font-size:0.9rem;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.18);max-width:90vw;white-space:pre-line;text-align:center;opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;font-family:"Noto Sans KR",sans-serif;';
         root.appendChild(t);
         requestAnimationFrame(function() { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
@@ -305,6 +310,32 @@ window.showToast = window.showToast || function(message, type) {
             sessionStorage.removeItem('adminUsername');
             sessionStorage.removeItem('demoMode');
             sessionStorage.removeItem('demoToken');
+
+            // 다른 계정으로 재로그인 시 이전 사용자 데이터가 새 화면에 노출되지 않도록
+            // 사용자 데이터성 캐시 키만 제거 (사이드바 접힘 등 UX 환경설정은 유지)
+            try {
+                var prefixesToClear = [
+                    'contentour_interpreter_journals',
+                    'contentour_journal_submit',
+                    'contentour_chat_msg',
+                    'contentour_chat_typing',
+                    'contentour_quote_response',
+                    'contentour_loyalty_data',
+                    'contentour_custom_templates_'
+                ];
+                var keysToRemove = [];
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (!k) continue;
+                    for (var j = 0; j < prefixesToClear.length; j++) {
+                        if (k === prefixesToClear[j] || k.indexOf(prefixesToClear[j]) === 0) {
+                            keysToRemove.push(k);
+                            break;
+                        }
+                    }
+                }
+                keysToRemove.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+            } catch (e) { /* localStorage 비활성 환경은 무시 */ }
         },
 
         // 역할별 대시보드 URL 반환

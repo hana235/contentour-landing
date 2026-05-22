@@ -5,6 +5,7 @@
     { "source": "/api/submit-application", "destination": "/api/submit?_route=submit-application" },
     { "source": "/api/submit-showcase-posting", "destination": "/api/submit?_route=submit-showcase-posting" },
     { "source": "/api/submit-showcase-apply", "destination": "/api/submit?_route=submit-showcase-apply" },
+    { "source": "/api/cancel-inquiry", "destination": "/api/submit?_route=cancel-inquiry" },
     { "source": "/api/upload-application-file", "destination": "/api/submit?_route=upload-application-file" },
     { "source": "/api/notify-admins", "destination": "/api/submit?_route=notify-admins" },
     { "source": "/api/verify-payment", "destination": "/api/payment?_route=verify-payment" },

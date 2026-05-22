@@ -575,6 +575,61 @@ async function handleShowcaseApply(req, res) {
     }
 }
 
+// ────────────────────────── cancel-inquiry ──────────────────────────
+// 고객사가 본인이 등록한 견적 문의를 취소 (status='접수' / '검토중'만 허용)
+// '견적발송' 이후 단계는 별도 흐름(견적 거절 / 계약 취소) 사용.
+async function handleCancelInquiry(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ error: '로그인이 필요합니다.' });
+
+    const { data: { user }, error: authErr } = await sbAuth.auth.getUser(token);
+    if (authErr || !user) return res.status(401).json({ error: '인증 실패' });
+
+    const inquiryId = req.body && req.body.inquiry_id ? String(req.body.inquiry_id).trim() : '';
+    if (!inquiryId) return res.status(400).json({ error: 'inquiry_id 필수' });
+
+    // 본인 소유 + 취소 가능 상태 확인
+    const { data: inq, error: qErr } = await sb
+        .from('46_ITQ견적문의')
+        .select('id, user_id, status, exhibition_name')
+        .eq('id', inquiryId)
+        .single();
+    if (qErr || !inq) return res.status(404).json({ error: '문의를 찾을 수 없습니다.' });
+    if (inq.user_id !== user.id) return res.status(403).json({ error: '본인 문의만 취소할 수 있습니다.' });
+    if (inq.status !== '접수' && inq.status !== '검토중') {
+        return res.status(409).json({ error: '이미 진행 중인 문의는 직접 취소할 수 없습니다. 관리자에게 문의해주세요.' });
+    }
+
+    const { error: updErr } = await sb
+        .from('46_ITQ견적문의')
+        .update({ status: '취소됨' })
+        .eq('id', inquiryId);
+    if (updErr) {
+        console.error('Inquiry cancel error:', updErr);
+        return res.status(500).json({ error: '취소 처리 실패. 잠시 후 다시 시도해주세요.' });
+    }
+
+    // admin 알림 (best-effort)
+    try {
+        const { data: admins } = await sb.from('01_회원').select('id').eq('role', 'admin');
+        if (admins && admins.length > 0) {
+            const rows = admins.map(a => ({
+                user_id: a.id,
+                notification_type: 'service',
+                title: '🗑 견적 문의 취소',
+                message: '"' + (inq.exhibition_name || '문의') + '" 견적 문의가 고객사 요청으로 취소되었습니다.',
+                is_read: false
+            }));
+            await sb.from('24_알림').insert(rows);
+        }
+    } catch (e) { console.warn('취소 알림 실패:', e); }
+
+    return res.status(200).json({ ok: true });
+}
+
 // ────────────────────────── 디스패처 ──────────────────────────
 module.exports = async function handler(req, res) {
     if (!SERVICE_KEY) return res.status(500).json({ error: '서버 설정 오류(SERVICE_KEY 누락).' });
@@ -585,6 +640,7 @@ module.exports = async function handler(req, res) {
         case 'submit-application': return handleApplication(req, res);
         case 'submit-showcase-posting': return handleShowcasePosting(req, res);
         case 'submit-showcase-apply': return handleShowcaseApply(req, res);
+        case 'cancel-inquiry': return handleCancelInquiry(req, res);
         case 'upload-application-file': return handleUploadFile(req, res);
         case 'notify-admins': return handleNotifyAdmins(req, res);
         default: return res.status(404).json({ error: 'Unknown route: ' + route });

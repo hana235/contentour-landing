@@ -1311,7 +1311,7 @@
     </div>
   </div>
 
-  <div class="toast" id="toast">&#9989; 문의가 성공적으로 접수되었습니다!</div>
+  <div class="toast" id="toast" role="status" aria-live="polite">&#9989; 문의가 성공적으로 접수되었습니다!</div>
 
   <!-- 리뷰 작성 모달 -->
   <div class="modal-overlay" id="reviewModalOverlay" onclick="if(event.target===this)closeReviewModal()" style="z-index:250;">
@@ -1782,6 +1782,15 @@
             }
         } catch(e) {
             console.warn('[Home] 대시보드 로드 실패:', e);
+            // 로딩 중... 텍스트가 영구히 남지 않도록 안내로 교체
+            var upFallback = document.getElementById('homeUpcoming');
+            if (upFallback && upFallback.textContent.indexOf('로딩') >= 0) {
+                upFallback.innerHTML = '<div style="color:#9daec8;padding:10px 0;">일정 정보를 불러오지 못했습니다. 페이지를 새로고침해주세요.</div>';
+            }
+            var notiFallback = document.getElementById('homeNotifs');
+            if (notiFallback && notiFallback.textContent.indexOf('로딩') >= 0) {
+                notiFallback.innerHTML = '<div style="color:#9daec8;padding:10px 0;">알림 정보를 불러오지 못했습니다.</div>';
+            }
         }
     }
 
@@ -2314,11 +2323,11 @@
             if (activeJournalId && typeof activeJournalId === 'string' && activeJournalId.includes('-')) {
               // 기존 일지 업데이트
               var { error: updErr } = await window.sbClient.from('44_상담일지').update(journalRecord).eq('id', activeJournalId);
-              if (updErr) { console.error('상담일지 업데이트 실패:', updErr); showJToast('&#9888;&#65039; DB 저장 실패: ' + updErr.message); }
+              if (updErr) { console.error('상담일지 업데이트 실패:', updErr); showJToast('&#9888;&#65039; 저장 실패. 입력 내용은 유지됩니다. 잠시 후 저장 버튼을 다시 눌러주세요.'); }
             } else {
               // 새 일지 생성
               var { data: newJ, error: insErr } = await window.sbClient.from('44_상담일지').insert(journalRecord).select('id').single();
-              if (insErr) { console.error('상담일지 INSERT 실패:', insErr); showJToast('&#9888;&#65039; DB 저장 실패: ' + insErr.message); }
+              if (insErr) { console.error('상담일지 INSERT 실패:', insErr); showJToast('&#9888;&#65039; 저장 실패. 입력 내용은 유지됩니다. 잠시 후 저장 버튼을 다시 눌러주세요.'); }
               else if (newJ) activeJournalId = newJ.id;
             }
 
@@ -2347,7 +2356,7 @@
               }
             }
           }
-        } catch(e) { console.error('상담일지 DB 저장 실패:', e); showJToast('&#9888;&#65039; DB 저장 중 오류 발생'); }
+        } catch(e) { console.error('상담일지 DB 저장 실패:', e); showJToast('&#9888;&#65039; 저장 중 네트워크 오류가 발생했습니다. 잠시 후 저장 버튼을 다시 눌러주세요.'); }
       }
 
       // 로컬 목록에 추가/업데이트
@@ -4445,8 +4454,58 @@
         '</div>';
       }
 
+      // 접수/검토중 단계에서만 직접 취소 가능 — 견적발송 이후 단계는 관리자 문의
+      if (d.status === '접수' || d.status === '검토중') {
+        html += '<div style="margin-top:20px;padding-top:16px;border-top:1px solid #eef2f7;display:flex;justify-content:flex-end;">' +
+          '<button type="button" id="inquiryCancelBtn" data-inquiry-id="' + d.id + '" style="padding:10px 20px;background:#fff;color:#c62828;border:1.5px solid #e57373;border-radius:10px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:inherit;">문의 취소</button>' +
+        '</div>';
+      }
+
       document.getElementById('modalBody').innerHTML = html;
       document.getElementById('modalOverlay').classList.add('open');
+
+      // 취소 버튼 핸들러
+      var cancelBtn = document.getElementById('inquiryCancelBtn');
+      if (cancelBtn) cancelBtn.addEventListener('click', handleInquiryCancel);
+    }
+
+    async function handleInquiryCancel(e) {
+      var btn = e.currentTarget;
+      var inquiryId = btn.getAttribute('data-inquiry-id');
+      if (!inquiryId) return;
+      if (!confirm('이 견적 문의를 취소하시겠습니까?\n취소 후에는 복구할 수 없습니다.')) return;
+
+      btn.disabled = true;
+      var originalText = btn.textContent;
+      btn.textContent = '취소 중...';
+      try {
+        var s = await window.sbClient.auth.getSession();
+        var token = s && s.data && s.data.session ? s.data.session.access_token : null;
+        if (!token) {
+          alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+          btn.disabled = false; btn.textContent = originalText;
+          return;
+        }
+        var r = await fetch('/api/cancel-inquiry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ inquiry_id: inquiryId })
+        });
+        var json = await r.json().catch(function() { return {}; });
+        if (!r.ok) {
+          alert(json.error || '취소 처리 실패. 잠시 후 다시 시도해주세요.');
+          btn.disabled = false; btn.textContent = originalText;
+          return;
+        }
+        closeModalDirect();
+        if (window.showToast) window.showToast('견적 문의가 취소되었습니다.', 'success');
+        else alert('견적 문의가 취소되었습니다.');
+        if (typeof loadMyInquiries === 'function') loadMyInquiries();
+      } catch (err) {
+        console.error('Inquiry cancel failed:', err);
+        alert('네트워크 오류. 잠시 후 다시 시도해주세요.');
+        btn.disabled = false; btn.textContent = originalText;
+      }
     }
 
     // 페이지 로드 시 DB 문의 로드
@@ -7052,6 +7111,88 @@
       });
     });
   </script>
+
+  <script>
+    // ══════════════ 전역 모달 접근성 헬퍼 ══════════════
+    // 1) 모든 모달(.open 토글 패턴)에 Tab 포커스 트랩
+    // 2) 모달 열기 직전 트리거 요소를 기억 → 닫힐 때 포커스 반환
+    // 3) ESC 키로 최상위 열린 모달 닫기 시도
+    (function () {
+      var MODAL_SELECTOR = '.modal-overlay, .contract-modal-overlay, .payment-modal-overlay, .sc-modal';
+      var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      var lastTrigger = null;
+
+      // 사용자가 마지막으로 클릭한 트리거 요소를 기억 (모달 닫힘 시 여기로 포커스 반환)
+      document.addEventListener('mousedown', function (e) {
+        var t = e.target.closest('button, [role="button"], a, .inquiry-card, .contract-card, .quote-notif-card');
+        if (t && !t.closest(MODAL_SELECTOR)) lastTrigger = t;
+      }, true);
+
+      function getOpenModals() {
+        return Array.prototype.filter.call(
+          document.querySelectorAll(MODAL_SELECTOR),
+          function (el) { return el.classList.contains('open') || el.classList.contains('is-open'); }
+        );
+      }
+
+      function focusFirstIn(modal) {
+        var nodes = modal.querySelectorAll(FOCUSABLE);
+        for (var i = 0; i < nodes.length; i++) {
+          if (nodes[i].offsetParent !== null) { try { nodes[i].focus(); } catch (e) {} return; }
+        }
+      }
+
+      // 모달 열림/닫힘 감지 (.open / .is-open 클래스 토글)
+      var mo = new MutationObserver(function (records) {
+        records.forEach(function (r) {
+          if (r.attributeName !== 'class') return;
+          var el = r.target;
+          if (!el.matches || !el.matches(MODAL_SELECTOR)) return;
+          var nowOpen = el.classList.contains('open') || el.classList.contains('is-open');
+          var wasOpen = !!el.__cdWasOpen;
+          if (nowOpen && !wasOpen) {
+            el.__cdPrevFocus = lastTrigger || document.activeElement;
+            setTimeout(function () { focusFirstIn(el); }, 30);
+            el.__cdWasOpen = true;
+          } else if (!nowOpen && wasOpen) {
+            var prev = el.__cdPrevFocus;
+            if (prev && typeof prev.focus === 'function') {
+              try { prev.focus(); } catch (e) {}
+            }
+            el.__cdPrevFocus = null;
+            el.__cdWasOpen = false;
+          }
+        });
+      });
+      document.querySelectorAll(MODAL_SELECTOR).forEach(function (el) {
+        mo.observe(el, { attributes: true, attributeFilter: ['class'] });
+        if (el.classList.contains('open') || el.classList.contains('is-open')) el.__cdWasOpen = true;
+      });
+
+      // Tab/Shift+Tab 포커스 트랩 + Esc 닫기 시도
+      document.addEventListener('keydown', function (e) {
+        var open = getOpenModals();
+        if (open.length === 0) return;
+        var modal = open[open.length - 1]; // 최상위(가장 늦게 열린) 모달
+        if (e.key === 'Tab') {
+          var nodes = Array.prototype.filter.call(
+            modal.querySelectorAll(FOCUSABLE),
+            function (el) { return el.offsetParent !== null; }
+          );
+          if (nodes.length === 0) return;
+          var first = nodes[0], last = nodes[nodes.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+        // ESC: 모달이 자체 ESC 핸들러를 갖지 않은 경우의 폴백 — close 버튼 클릭
+        if (e.key === 'Escape') {
+          var closeBtn = modal.querySelector('.modal__close, .sc-modal__close, [aria-label="닫기"]');
+          if (closeBtn) { e.preventDefault(); closeBtn.click(); }
+        }
+      });
+    })();
+  </script>
+
   <script src="script.js"></script>
 </body>
 </html>
