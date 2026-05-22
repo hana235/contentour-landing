@@ -351,6 +351,16 @@
             border-color: rgba(0,0,0,0.08);
             cursor: default;
         }
+        /* 비로그인 상태 — 라벨로 안내, 클릭 시 로그인 페이지로 */
+        .ij-card__apply--guest {
+            background: #fff;
+            color: var(--blue);
+            border-color: rgba(25, 118, 210, 0.35);
+        }
+        .ij-card__apply--guest:hover {
+            background: rgba(25, 118, 210, 0.06);
+            border-color: var(--blue);
+        }
 
         /* ── 빈/로딩/에러 상태 ── */
         .ij-empty {
@@ -371,6 +381,21 @@
             color: var(--gray-300);
         }
         .ij-empty__error { color: #c62828; }
+        .ij-empty__retry {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 9px 18px;
+            border-radius: 8px;
+            border: 1.5px solid var(--blue);
+            background: var(--blue);
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s;
+        }
+        .ij-empty__retry:hover { background: #0d47a1; border-color: #0d47a1; }
 
         /* ── FOR COMPANIES 박스 액션 ── */
         .ij-corp-cta__actions {
@@ -915,6 +940,8 @@
         var expanded = false;
         var loading = true;
         var loadError = false;
+        // 뷰어 역할 ('interpreter' | 'customer' | 'admin' | null=비로그인) — 카드 지원 버튼 라벨 결정용
+        var viewerRole = null;
 
         // 본 세션에서 지원한 공고 id (Phase 4D — 새로고침해도 같은 세션이면 유지)
         var appliedSet = new Set();
@@ -957,10 +984,18 @@
             var metaLine = industry ? (escapeHtml(industry) + ' · ' + metaSuffix) : metaSuffix;
 
             // Phase 4D — direct_posting + recruiting 카드에 "지원하기" 버튼 노출
+            // 뷰어 역할별 라벨 분기:
+            //  · interpreter → "지원하기" / "✓ 지원 완료"
+            //  · 비로그인 → "🔒 로그인 후 지원" (클릭 시 로그인 페이지로)
+            //  · customer/admin → 버튼 숨김 (지원 불가 역할)
             var applyHtml = '';
             if (isRecruit && req.sourceType === 'direct_posting' && req.id) {
-                var done = appliedSet.has(req.id);
-                applyHtml = '<button type="button" class="ij-card__apply" data-apply-id="' + escapeHtml(req.id) + '"' + (done ? ' disabled' : '') + '>' + (done ? '✓ 지원 완료' : '지원하기') + '</button>';
+                if (viewerRole === 'interpreter') {
+                    var done = appliedSet.has(req.id);
+                    applyHtml = '<button type="button" class="ij-card__apply" data-apply-id="' + escapeHtml(req.id) + '"' + (done ? ' disabled' : '') + '>' + (done ? '✓ 지원 완료' : '지원하기') + '</button>';
+                } else if (!viewerRole) {
+                    applyHtml = '<button type="button" class="ij-card__apply ij-card__apply--guest" data-apply-id="' + escapeHtml(req.id) + '">🔒 로그인 후 지원</button>';
+                }
             }
 
             return '' +
@@ -1007,10 +1042,12 @@
                 return;
             }
             if (loadError) {
-                grid.innerHTML = '<div class="ij-empty ij-empty__error">데이터를 불러오지 못했습니다.<span class="ij-empty__sub">잠시 후 새로고침해주세요.</span></div>';
+                grid.innerHTML = '<div class="ij-empty ij-empty__error">데이터를 불러오지 못했습니다.<span class="ij-empty__sub">네트워크 상태를 확인하고 다시 시도해주세요.</span><button type="button" class="ij-empty__retry" id="ijRetryBtn">다시 시도</button></div>';
                 moreWrap.style.display = 'none';
                 counterCo.textContent = '0';
                 counterNo.textContent = '0';
+                var retryBtn = document.getElementById('ijRetryBtn');
+                if (retryBtn) retryBtn.addEventListener('click', function () { fetchShowcase(); });
                 return;
             }
 
@@ -1060,6 +1097,19 @@
                     if (t) headers['Authorization'] = 'Bearer ' + t;
                 }
             } catch (e) { /* anon으로 진행 */ }
+
+            // 뷰어 역할 미리 조회 — 지원 버튼 라벨 분기에 사용
+            try {
+                if (window.ContentourAuth) {
+                    var u = await window.ContentourAuth.getCurrentUser();
+                    if (u) {
+                        var p = await window.ContentourAuth.getUserProfile();
+                        viewerRole = (p && p.role) ? p.role : null;
+                    } else {
+                        viewerRole = null;
+                    }
+                }
+            } catch (e) { viewerRole = null; }
 
             try {
                 var r = await fetch('/api/showcase', { cache: 'no-store', headers: headers });
@@ -1146,6 +1196,15 @@
             postingModal.classList.add('is-open');
             postingModal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
+            // 과거 날짜 등록 방지 — 오늘 이전은 선택 불가
+            try {
+                var __now = new Date();
+                var __todayStr = __now.getFullYear() + '-' + String(__now.getMonth() + 1).padStart(2, '0') + '-' + String(__now.getDate()).padStart(2, '0');
+                var __s = document.getElementById('pf-start');
+                var __e = document.getElementById('pf-end');
+                if (__s) __s.min = __todayStr;
+                if (__e) __e.min = __todayStr;
+            } catch (e) { /* min 미지원 브라우저는 BE 검증으로 차단 */ }
             // 첫 입력으로 포커스
             setTimeout(function () {
                 var first = document.getElementById('pf-exhibition');

@@ -366,6 +366,12 @@ async function handleShowcasePosting(req, res) {
     if (start_date > end_date) {
         return res.status(400).json({ error: '종료일은 시작일 이후로 입력해주세요.' });
     }
+    // 과거 날짜 공고 차단 (오늘 포함 미래만 허용)
+    var __today = new Date();
+    var __todayStr = __today.getFullYear() + '-' + String(__today.getMonth() + 1).padStart(2, '0') + '-' + String(__today.getDate()).padStart(2, '0');
+    if (end_date < __todayStr) {
+        return res.status(400).json({ error: '종료일이 이미 지난 공고는 등록할 수 없습니다.' });
+    }
     if (!/^[A-Z]{2}$/.test(showcase_country_code)) {
         return res.status(400).json({ error: '국가 코드 형식이 올바르지 않습니다.' });
     }
@@ -407,22 +413,35 @@ async function handleShowcasePosting(req, res) {
             return res.status(500).json({ error: '저장 실패. 잠시 후 다시 시도해주세요.' });
         }
 
-        // admin 알림 (실패해도 본 응답엔 영향 없음)
+        // admin 알림 + 등록 고객사 본인 확인 알림 (실패해도 본 응답엔 영향 없음)
         try {
+            const companyDisplay = profile.company_name || profile.name || '고객사';
+            const rows = [];
+
             const { data: admins } = await sb.from('01_회원').select('id').eq('role', 'admin');
             if (admins && admins.length > 0) {
-                const companyDisplay = profile.company_name || profile.name || '고객사';
-                const rows = admins.map(a => ({
+                admins.forEach(a => rows.push({
                     user_id: a.id,
                     notification_type: 'service',
                     title: '📋 직접 등록 공고 검토 요청',
                     message: companyDisplay + '이 "' + exhibition_name + '" 통역사 모집 공고를 등록했습니다. 검토 대기 중입니다.',
+                    link: 'admin-showcase-review.html',
                     is_read: false
                 }));
-                await sb.from('24_알림').insert(rows);
             }
+
+            // 등록 고객사 본인 — "등록 완료 + 검토 대기" 안내
+            rows.push({
+                user_id: user.id,
+                notification_type: 'service',
+                title: '✅ 통역사 구인 공고 등록 완료',
+                message: '"' + exhibition_name + '" 공고가 접수되었습니다. 콘텐츄어 관리자 검토 후 게재됩니다 (영업일 기준 1~2일).',
+                is_read: false
+            });
+
+            if (rows.length > 0) await sb.from('24_알림').insert(rows);
         } catch (notifErr) {
-            console.warn('admin 알림 실패 (무시):', notifErr);
+            console.warn('공고 등록 알림 실패 (무시):', notifErr);
         }
 
         return res.status(200).json({ ok: true, postingId: data.id });
@@ -478,6 +497,9 @@ async function handleShowcaseApply(req, res) {
     }
     if (posting.contract_id) {
         return res.status(409).json({ error: '이미 매칭 완료된 공고입니다.' });
+    }
+    if (posting.posted_by_user_id && posting.posted_by_user_id === user.id) {
+        return res.status(403).json({ error: '본인이 등록한 공고에는 지원할 수 없습니다.' });
     }
 
     // INSERT — UNIQUE 위반은 409
