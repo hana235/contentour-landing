@@ -403,19 +403,31 @@ async function handleShowcasePosting(req, res) {
         showcase_label = '한국 ' + showcase_industry + ' 기업';
     }
 
+    // 46_ITQ견적문의는 견적의뢰·통역사 모집 공고 둘 다 INSERT.
+    // NOT NULL 제약이 다양하게 걸려 있을 수 있어, 누락 시 INSERT 실패 → 신규 고객사 진입 막힘.
+    // payload의 nullable 필드는 의미 있는 기본값(빈 문자열·기본 enum)으로 안전하게 채움.
     var payload = {
         source_type: 'direct_posting',
         review_status: 'pending',
         posted_by_user_id: user.id,
         user_id: user.id,
         company: profile.company_name || profile.name || '직접 등록 고객사',
-        contact_name: profile.name || '',
-        email: user.email || null,
-        phone: profile.phone || null,
-        exhibition_name, location, venue, start_date, end_date,
-        language_pair, headcount, message,
-        // 통역사 모집 공고는 견적의뢰 폼의 service_type을 받지 않음 — DB NOT NULL 제약 충족용 기본값
+        contact_name: profile.name || user.email || '직접 등록 고객사',
+        email: user.email || '',
+        phone: profile.phone || '',
+        exhibition_name,
+        location,
+        venue: venue || '',
+        start_date,
+        end_date,
+        language_pair,
+        headcount,
+        message: message || '',
+        // 통역사 모집 공고는 견적의뢰 폼의 service_type/working_hours/keywords를 받지 않으므로
+        // DB NOT NULL 제약 충족용 안전 기본값 명시 (handleInquiry payload와 페어리티 맞춤)
         service_type: 'OTHER',
+        working_hours: '',
+        keywords: '',
         showcase_consent: true,
         showcase_industry,
         showcase_country_code,
