@@ -3,7 +3,14 @@
    모든 페이지에서 이 파일을 먼저 로드하세요.
    ══════════════════════════════════════════════ */
 
+/* ── 전역 폰트 (Inter + Pretendard) ── */
+/* 이 파일이 가장 먼저 로드되므로 모든 페이지에 자동 적용 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
 :root {
+    /* ── 폰트 패밀리 ── */
+    --font-sans: 'Inter', 'Pretendard', 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
     /* ── 브랜드 색상 ── */
     --navy: #0a2a5e;
     --navy-deep: #061a3e;
@@ -35,6 +42,17 @@
     --gradient-navy: linear-gradient(135deg, #0a2a5e, #1565c0);
     --gradient-blue: linear-gradient(135deg, #1565c0, #0d47a1);
     --gradient-success: linear-gradient(135deg, #2e7d32, #43a047);
+}
+
+/* ══════════════ 전역 폰트 강제 적용 ══════════════ */
+/* 기존 페이지·CSS의 font-family(Montserrat/Noto Sans KR 등)를 일괄 교체 */
+html, body, button, input, select, textarea, option,
+h1, h2, h3, h4, h5, h6, p, a, span, div, li, td, th,
+label, legend, fieldset, blockquote, pre, code, em, strong, small {
+    font-family: var(--font-sans) !important;
+}
+body {
+    letter-spacing: -0.01em;
 }
 
 /* ══════════════ 공통 컴포넌트 ══════════════ */
