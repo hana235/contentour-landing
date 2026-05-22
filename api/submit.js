@@ -513,7 +513,24 @@ async function handleShowcaseApply(req, res) {
             });
         if (insErr) {
             if (/duplicate|unique/i.test(insErr.message || '')) {
-                return res.status(409).json({ error: '이미 지원하신 공고입니다.' });
+                // 기존 지원 상태에 따라 메시지 분기 (pending / matched / declined)
+                let dupMsg = '이미 지원하신 공고입니다.';
+                try {
+                    const { data: prev } = await sb
+                        .from('70_구인공고지원')
+                        .select('status')
+                        .eq('posting_id', postingId)
+                        .eq('interpreter_id', user.id)
+                        .single();
+                    if (prev && prev.status === 'declined') {
+                        dupMsg = '이 공고는 이미 매칭이 다른 통역사에게 확정되어 재지원할 수 없습니다.';
+                    } else if (prev && prev.status === 'matched') {
+                        dupMsg = '이미 이 공고에 매칭 확정된 상태입니다.';
+                    } else {
+                        dupMsg = '이미 지원하신 공고입니다. 관리자 검토 중입니다.';
+                    }
+                } catch (e) { /* fallback msg 사용 */ }
+                return res.status(409).json({ error: dupMsg });
             }
             throw insErr;
         }

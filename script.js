@@ -558,13 +558,20 @@ function initExpoAutocomplete() {
 
         var dropdown = document.createElement('div');
         dropdown.style.cssText = 'position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid #1565c0;border-top:none;border-radius:0 0 12px 12px;max-height:240px;overflow-y:auto;z-index:9999;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.12);';
+        dropdown.setAttribute('role', 'listbox');
         wrapper.appendChild(dropdown);
+        // 입력 input이 combobox 역할이면 aria-expanded 동기화
+        function setExpanded(open) {
+            if (input.hasAttribute('role') && input.getAttribute('role') === 'combobox') {
+                input.setAttribute('aria-expanded', open ? 'true' : 'false');
+            }
+        }
 
         function renderDropdown(matches) {
-            if (matches.length === 0) { dropdown.style.display = 'none'; return; }
+            if (matches.length === 0) { dropdown.style.display = 'none'; setExpanded(false); return; }
             dropdown.innerHTML = matches.map(function(m) {
                 var dateInfo = (m.s && m.e) ? ' · ' + m.s.slice(5) + ' ~ ' + m.e.slice(5) : '';
-            return '<div class="expo-ac-item" style="padding:10px 14px;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #f0f0f0;transition:background 0.15s;" ' +
+            return '<div class="expo-ac-item" role="option" style="padding:10px 14px;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #f0f0f0;transition:background 0.15s;" ' +
                     'onmouseover="this.style.background=\'#f0f7ff\'" onmouseout="this.style.background=\'#fff\'" ' +
                     'data-name="' + m.name + '" data-country="' + m.country + '" data-city="' + m.city + '"' +
                     (m.v ? ' data-venue="' + m.v + '"' : '') +
@@ -575,6 +582,7 @@ function initExpoAutocomplete() {
                 '</div>';
             }).join('');
             dropdown.style.display = 'block';
+            setExpanded(true);
 
             dropdown.querySelectorAll('.expo-ac-item').forEach(function(item) {
                 item.addEventListener('mousedown', function(e) {
@@ -609,13 +617,14 @@ function initExpoAutocomplete() {
                     }
                     // 선택 후 콜백
                     if (f.onSelect) f.onSelect(this.dataset);
+                    setExpanded(false);
                 });
             });
         }
 
         input.addEventListener('input', function() {
             var q = this.value.trim().toLowerCase();
-            if (q.length < 1) { dropdown.style.display = 'none'; return; }
+            if (q.length < 1) { dropdown.style.display = 'none'; setExpanded(false); return; }
             var words = q.split(/\s+/).filter(function(w) { return w.length > 0; });
             var matches = expoList.filter(function(e) {
                 var text = (e.name + ' ' + e.country + ' ' + e.city + ' ' + e.field).toLowerCase();
@@ -629,7 +638,7 @@ function initExpoAutocomplete() {
         });
 
         input.addEventListener('blur', function() {
-            setTimeout(function() { dropdown.style.display = 'none'; }, 150);
+            setTimeout(function() { dropdown.style.display = 'none'; setExpanded(false); }, 150);
         });
     }
 

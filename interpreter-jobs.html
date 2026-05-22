@@ -13,10 +13,39 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 
     <meta property="og:type" content="website">
-    <meta property="og:title" content="통역사 구인 현황 - 콘텐츄어">
-    <meta property="og:description" content="지금 한국 기업이 해외전시회 통역사를 찾고 있습니다. 실시간 수요 현황판.">
-    <meta property="og:url" content="https://contentour-landing.vercel.app/interpreter-jobs">
+    <meta property="og:title" id="ogTitle" content="통역사 구인 현황 - 콘텐츄어">
+    <meta property="og:description" id="ogDesc" content="지금 한국 기업이 해외전시회 통역사를 찾고 있습니다. 실시간 수요 현황판.">
+    <meta property="og:url" id="ogUrl" content="https://contentour-landing.vercel.app/interpreter-jobs">
     <meta property="og:image" content="https://contentour-landing.vercel.app/assets/og-image.png">
+
+    <script>
+        // region 쿼리에 따라 og:url, og:title, document.title을 동적으로 업데이트
+        (function () {
+            try {
+                var REGION_LABEL = {
+                    JP: '일본', CN: '중국', US: '미국', DE: '독일', VN: '베트남',
+                    AE: 'UAE', FR: '프랑스', GB: '영국', IT: '이탈리아', ES: '스페인',
+                    TH: '태국', ID: '인도네시아', IN: '인도', SG: '싱가포르',
+                    TR: '튀르키예', BR: '브라질', MX: '멕시코'
+                };
+                var raw = new URLSearchParams(location.search).get('region');
+                var code = raw ? raw.toUpperCase() : '';
+                var label = REGION_LABEL[code];
+                var ogUrlEl = document.getElementById('ogUrl');
+                if (ogUrlEl) ogUrlEl.setAttribute('content', location.origin + location.pathname + (code && label ? '?region=' + code.toLowerCase() : ''));
+                if (label) {
+                    var t = label + ' 전시회 통역사 구인 현황 - 콘텐츄어';
+                    document.title = t + ' | 해외전시회 통역 실시간 수요';
+                    var ogTitle = document.getElementById('ogTitle');
+                    if (ogTitle) ogTitle.setAttribute('content', t);
+                    var ogDesc = document.getElementById('ogDesc');
+                    if (ogDesc) ogDesc.setAttribute('content', '지금 한국 기업이 ' + label + ' 전시회 통역사를 찾고 있습니다. 실시간 수요 현황판.');
+                    var descMeta = document.querySelector('meta[name="description"]');
+                    if (descMeta) descMeta.setAttribute('content', '지금 한국 기업이 ' + label + ' 전시회 통역사를 찾고 있습니다. 콘텐츄어 ' + label + ' 통역 수요 현황판.');
+                }
+            } catch (e) { /* 메타 업데이트 실패는 무시 */ }
+        })();
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -776,13 +805,13 @@
             <form id="postingForm" class="ij-modal__form" autocomplete="off">
 
                 <div class="ij-modal__field ij-modal__field--full">
-                    <label for="pf-exhibition">전시회명 <span class="req">*</span></label>
-                    <input id="pf-exhibition" name="exhibition_name" required maxlength="300" placeholder="예: CES 2026" />
+                    <label for="pf-exhibition">전시회명 <span class="req" aria-hidden="true">*</span></label>
+                    <input id="pf-exhibition" name="exhibition_name" required aria-required="true" maxlength="300" placeholder="예: CES 2026" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" />
                 </div>
 
                 <div class="ij-modal__field">
-                    <label for="pf-country">국가 <span class="req">*</span></label>
-                    <select id="pf-country" name="showcase_country_code" required>
+                    <label for="pf-country">국가 <span class="req" aria-hidden="true">*</span></label>
+                    <select id="pf-country" name="showcase_country_code" required aria-required="true">
                         <option value="">선택</option>
                         <option value="JP">일본</option>
                         <option value="CN">중국</option>
@@ -806,23 +835,23 @@
                 </div>
 
                 <div class="ij-modal__field">
-                    <label for="pf-location">개최지(도시) <span class="req">*</span></label>
-                    <input id="pf-location" name="location" required maxlength="200" placeholder="예: 라스베이거스" />
+                    <label for="pf-location">개최지(도시) <span class="req" aria-hidden="true">*</span></label>
+                    <input id="pf-location" name="location" required aria-required="true" maxlength="200" placeholder="예: 라스베이거스" />
                 </div>
 
                 <div class="ij-modal__field">
-                    <label for="pf-start">시작일 <span class="req">*</span></label>
-                    <input id="pf-start" name="start_date" type="date" required />
+                    <label for="pf-start">시작일 <span class="req" aria-hidden="true">*</span></label>
+                    <input id="pf-start" name="start_date" type="date" required aria-required="true" />
                 </div>
 
                 <div class="ij-modal__field">
-                    <label for="pf-end">종료일 <span class="req">*</span></label>
-                    <input id="pf-end" name="end_date" type="date" required />
+                    <label for="pf-end">종료일 <span class="req" aria-hidden="true">*</span></label>
+                    <input id="pf-end" name="end_date" type="date" required aria-required="true" />
                 </div>
 
                 <div class="ij-modal__field">
-                    <label for="pf-industry">산업 <span class="req">*</span></label>
-                    <select id="pf-industry" name="showcase_industry" required>
+                    <label for="pf-industry">산업 <span class="req" aria-hidden="true">*</span></label>
+                    <select id="pf-industry" name="showcase_industry" required aria-required="true">
                         <option value="">선택</option>
                         <option>IT</option>
                         <option>의료기기</option>
@@ -841,13 +870,13 @@
                 </div>
 
                 <div class="ij-modal__field">
-                    <label for="pf-headcount">필요 인원 <span class="req">*</span></label>
-                    <input id="pf-headcount" name="headcount" type="number" min="1" max="99" required placeholder="예: 2" />
+                    <label for="pf-headcount">필요 인원 <span class="req" aria-hidden="true">*</span></label>
+                    <input id="pf-headcount" name="headcount" type="number" min="1" max="99" required aria-required="true" placeholder="예: 2" />
                 </div>
 
                 <div class="ij-modal__field ij-modal__field--full">
-                    <label for="pf-languages">필요 언어 <span class="req">*</span></label>
-                    <input id="pf-languages" name="language_pair" required maxlength="200" placeholder="예: 영어, 일본어" />
+                    <label for="pf-languages">필요 언어 <span class="req" aria-hidden="true">*</span></label>
+                    <input id="pf-languages" name="language_pair" required aria-required="true" maxlength="200" placeholder="예: 영어, 일본어" />
                 </div>
 
                 <div class="ij-modal__field ij-modal__field--full">
@@ -937,7 +966,8 @@
         // /api/showcase에서 화이트리스트 컬럼만 받아옴 (Phase 3, 2026-05-21)
         var showcaseData = [];
         var INITIAL_COUNT = 6;
-        var expanded = false;
+        var PAGE_STEP = 6; // "더 보기" 한 번에 추가 노출되는 카드 수
+        var visibleCount = INITIAL_COUNT;
         var loading = true;
         var loadError = false;
         // 뷰어 역할 ('interpreter' | 'customer' | 'admin' | null=비로그인) — 카드 지원 버튼 라벨 결정용
@@ -1067,13 +1097,15 @@
                 return;
             }
 
-            var visible = expanded ? list : list.slice(0, INITIAL_COUNT);
+            var visible = list.slice(0, visibleCount);
             grid.innerHTML = visible.map(buildCard).join('');
 
             var moreBtn = document.getElementById('ijMoreBtn');
-            if (!expanded && list.length > INITIAL_COUNT) {
+            var remaining = list.length - visibleCount;
+            if (remaining > 0) {
                 moreWrap.style.display = '';
-                moreBtn.textContent = '전체 ' + list.length + '건 보기';
+                var nextChunk = Math.min(PAGE_STEP, remaining);
+                moreBtn.textContent = '더 보기 (+' + nextChunk + '건, 남은 ' + remaining + '건)';
             } else {
                 moreWrap.style.display = 'none';
             }
@@ -1152,13 +1184,13 @@
             var region = btn.getAttribute('data-region');
             activateChip(region);
             updateUrl(region);
-            expanded = false;
+            visibleCount = INITIAL_COUNT;
             renderGrid();
         });
 
-        // 더 보기
+        // 더 보기 — PAGE_STEP만큼 추가 노출
         document.getElementById('ijMoreBtn').addEventListener('click', function () {
-            expanded = true;
+            visibleCount += PAGE_STEP;
             renderGrid();
         });
 
@@ -1180,7 +1212,7 @@
                 url.searchParams.delete('region');
                 history.replaceState(null, '', url);
             }
-            expanded = false;
+            visibleCount = INITIAL_COUNT;
             renderGrid();
         }
         syncFromUrl();
@@ -1192,7 +1224,11 @@
         var postingForm = document.getElementById('postingForm');
         var postingSubmitBtn = document.getElementById('postingSubmitBtn');
 
+        // 모달 열기 직전 포커스를 가졌던 요소 — 닫을 때 포커스 반환
+        var postingModalLastFocus = null;
+
         function openPostingModal() {
+            postingModalLastFocus = document.activeElement;
             postingModal.classList.add('is-open');
             postingModal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
@@ -1216,7 +1252,37 @@
             postingModal.classList.remove('is-open');
             postingModal.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
+            // 포커스를 모달 열기 전 요소로 반환 (접근성)
+            if (postingModalLastFocus && typeof postingModalLastFocus.focus === 'function') {
+                try { postingModalLastFocus.focus(); } catch (e) { /* 무시 */ }
+            }
+            postingModalLastFocus = null;
         }
+
+        // 포커스 트랩 — 모달 열린 동안 Tab/Shift+Tab 순환을 모달 내부로 제한
+        function getFocusableInModal() {
+            if (!postingModal.classList.contains('is-open')) return [];
+            var nodes = postingModal.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            );
+            return Array.prototype.filter.call(nodes, function (el) {
+                return el.offsetParent !== null || el === document.activeElement;
+            });
+        }
+        postingModal.addEventListener('keydown', function (e) {
+            if (e.key !== 'Tab') return;
+            var focusable = getFocusableInModal();
+            if (focusable.length === 0) return;
+            var first = focusable[0];
+            var last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        });
 
         async function handleOpenPostingClick() {
             if (!window.ContentourAuth) {
