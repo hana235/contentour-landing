@@ -414,6 +414,8 @@ async function handleShowcasePosting(req, res) {
         phone: profile.phone || null,
         exhibition_name, location, venue, start_date, end_date,
         language_pair, headcount, message,
+        // 통역사 모집 공고는 견적의뢰 폼의 service_type을 받지 않음 — DB NOT NULL 제약 충족용 기본값
+        service_type: 'OTHER',
         showcase_consent: true,
         showcase_industry,
         showcase_country_code,
@@ -431,10 +433,7 @@ async function handleShowcasePosting(req, res) {
             .single();
         if (error) {
             console.error('직접 등록 공고 저장 실패:', error);
-            // [디버깅 모드] 정확한 DB 에러를 클라이언트에 노출 — 원인 파악 후 원복 예정
-            return res.status(500).json({
-                error: '저장 실패: ' + (error.message || '알 수 없는 오류') + (error.hint ? ' (힌트: ' + error.hint + ')' : '') + (error.code ? ' [코드 ' + error.code + ']' : '')
-            });
+            return res.status(500).json({ error: '저장 실패. 잠시 후 다시 시도해주세요.' });
         }
 
         // admin 알림 + 등록 고객사 본인 확인 알림 (실패해도 본 응답엔 영향 없음)
