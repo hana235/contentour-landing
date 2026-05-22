@@ -665,6 +665,176 @@ async function handleCancelInquiry(req, res) {
     return res.status(200).json({ ok: true });
 }
 
+// ────────────────────────── update-showcase-posting ──────────────────────────
+// 고객사 본인이 등록한 공고를 수정. review_status='pending' 상태에서만 허용.
+// admin 검토가 시작된(approved/rejected) 공고는 수정 불가 — 새 공고를 등록하거나 admin에게 문의.
+async function handleUpdateShowcasePosting(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ error: '로그인이 필요합니다.' });
+
+    const { data: { user }, error: authErr } = await sbAuth.auth.getUser(token);
+    if (authErr || !user) return res.status(401).json({ error: '인증 실패' });
+
+    const postingId = req.body && req.body.posting_id ? String(req.body.posting_id).trim() : '';
+    if (!postingId) return res.status(400).json({ error: 'posting_id 필수' });
+
+    // 본인 소유 + pending 상태 확인
+    const { data: existing, error: qErr } = await sb
+        .from('46_ITQ견적문의')
+        .select('id, posted_by_user_id, source_type, review_status, exhibition_name')
+        .eq('id', postingId)
+        .single();
+    if (qErr || !existing) return res.status(404).json({ error: '공고를 찾을 수 없습니다.' });
+    if (existing.posted_by_user_id !== user.id) return res.status(403).json({ error: '본인이 등록한 공고만 수정할 수 있습니다.' });
+    if (existing.source_type !== 'direct_posting') return res.status(400).json({ error: '직접 등록 공고만 수정 가능합니다.' });
+    if (existing.review_status !== 'pending') {
+        return res.status(409).json({ error: '관리자 검토가 시작된 공고는 수정할 수 없습니다. 관리자에게 문의해주세요.' });
+    }
+
+    var b = req.body || {};
+    var exhibition_name        = s(b.exhibition_name, 300);
+    var location               = s(b.location, 200);
+    var venue                  = s(b.venue, 200);
+    var start_date             = s(b.start_date, 20);
+    var end_date               = s(b.end_date, 20);
+    var language_pair          = s(b.language_pair, 200);
+    var showcase_industry      = s(b.showcase_industry, 100);
+    var showcase_country_code  = s(b.showcase_country_code, 2);
+    var showcase_label         = s(b.showcase_label, 100);
+    var message                = s(b.message, 5000);
+    var company_name_disclosure = b.company_name_disclosure === true;
+    var headcount = parseInt(b.headcount);
+    if (!Number.isFinite(headcount) || headcount < 1) headcount = 1;
+    if (headcount > 99) headcount = 99;
+
+    if (!exhibition_name || !location || !start_date || !end_date || !language_pair || !showcase_industry || !showcase_country_code) {
+        return res.status(400).json({ error: '필수 항목이 누락되었습니다.' });
+    }
+    if (start_date > end_date) {
+        return res.status(400).json({ error: '종료일은 시작일 이후로 입력해주세요.' });
+    }
+    var __today = new Date();
+    var __todayStr = __today.getFullYear() + '-' + String(__today.getMonth() + 1).padStart(2, '0') + '-' + String(__today.getDate()).padStart(2, '0');
+    if (end_date < __todayStr) {
+        return res.status(400).json({ error: '종료일이 이미 지난 공고는 등록할 수 없습니다.' });
+    }
+    if (!/^[A-Z]{2}$/.test(showcase_country_code)) {
+        return res.status(400).json({ error: '국가 코드 형식이 올바르지 않습니다.' });
+    }
+    if (!showcase_label) {
+        showcase_label = '한국 ' + showcase_industry + ' 기업';
+    }
+
+    const updates = {
+        exhibition_name,
+        location,
+        venue: venue || '',
+        start_date,
+        end_date,
+        language_pair,
+        headcount,
+        message: message || '',
+        showcase_industry,
+        showcase_country_code,
+        showcase_label,
+        company_name_disclosure,
+        updated_at: new Date().toISOString()
+    };
+
+    const { error: updErr } = await sb.from('46_ITQ견적문의').update(updates).eq('id', postingId);
+    if (updErr) {
+        console.error('공고 수정 실패:', updErr);
+        return res.status(500).json({ error: '수정 실패. 잠시 후 다시 시도해주세요.' });
+    }
+
+    return res.status(200).json({ ok: true });
+}
+
+// ────────────────────────── cancel-showcase-posting ──────────────────────────
+// 고객사 본인이 등록한 공고 취소.
+//   - review_status='pending' → 그냥 review_status='cancelled' (admin 검토 큐에서 제거)
+//   - review_status='approved' (게재 중) → review_status='cancelled' + showcase_published_at=null (목록에서 제거)
+//   - 매칭 완료된 공고는 취소 불가 (계약 취소 흐름으로 안내)
+async function handleCancelShowcasePosting(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ error: '로그인이 필요합니다.' });
+
+    const { data: { user }, error: authErr } = await sbAuth.auth.getUser(token);
+    if (authErr || !user) return res.status(401).json({ error: '인증 실패' });
+
+    const postingId = req.body && req.body.posting_id ? String(req.body.posting_id).trim() : '';
+    if (!postingId) return res.status(400).json({ error: 'posting_id 필수' });
+
+    const { data: existing, error: qErr } = await sb
+        .from('46_ITQ견적문의')
+        .select('id, posted_by_user_id, source_type, review_status, contract_id, exhibition_name')
+        .eq('id', postingId)
+        .single();
+    if (qErr || !existing) return res.status(404).json({ error: '공고를 찾을 수 없습니다.' });
+    if (existing.posted_by_user_id !== user.id) return res.status(403).json({ error: '본인이 등록한 공고만 취소할 수 있습니다.' });
+    if (existing.source_type !== 'direct_posting') return res.status(400).json({ error: '직접 등록 공고만 취소 가능합니다.' });
+    if (existing.contract_id) {
+        return res.status(409).json({ error: '매칭이 확정된 공고는 직접 취소할 수 없습니다. 계약 취소 흐름을 이용해주세요.' });
+    }
+    if (existing.review_status === 'cancelled') {
+        return res.status(409).json({ error: '이미 취소된 공고입니다.' });
+    }
+
+    const wasApproved = existing.review_status === 'approved';
+    const { error: updErr } = await sb.from('46_ITQ견적문의').update({
+        review_status: 'cancelled',
+        showcase_published_at: null,
+        updated_at: new Date().toISOString()
+    }).eq('id', postingId);
+    if (updErr) {
+        console.error('공고 취소 실패:', updErr);
+        return res.status(500).json({ error: '취소 처리 실패. 잠시 후 다시 시도해주세요.' });
+    }
+
+    // 게재 중이던 공고가 취소되면 대기 중 지원자들에게 알림 + admin 알림
+    try {
+        if (wasApproved) {
+            const { data: pending } = await sb.from('70_구인공고지원')
+                .select('interpreter_id')
+                .eq('posting_id', postingId)
+                .eq('status', 'pending');
+            const rows = [];
+            (pending || []).forEach(p => {
+                rows.push({
+                    user_id: p.interpreter_id,
+                    notification_type: 'service',
+                    title: '안내: 지원 공고 취소',
+                    message: '"' + (existing.exhibition_name || '공고') + '" 공고가 고객사 요청으로 취소되었습니다.',
+                    is_read: false
+                });
+            });
+            // 대기 중 지원자 status도 declined로 정리
+            if (pending && pending.length > 0) {
+                await sb.from('70_구인공고지원').update({ status: 'declined' }).eq('posting_id', postingId).eq('status', 'pending');
+            }
+            const { data: admins } = await sb.from('01_회원').select('id').eq('role', 'admin');
+            (admins || []).forEach(a => {
+                rows.push({
+                    user_id: a.id,
+                    notification_type: 'service',
+                    title: '🗑 통역사 모집 공고 취소',
+                    message: '게재 중이던 "' + (existing.exhibition_name || '공고') + '" 공고가 고객사 요청으로 취소되었습니다.',
+                    is_read: false
+                });
+            });
+            if (rows.length > 0) await sb.from('24_알림').insert(rows);
+        }
+    } catch (e) { console.warn('공고 취소 알림 실패:', e); }
+
+    return res.status(200).json({ ok: true });
+}
+
 // ────────────────────────── 디스패처 ──────────────────────────
 module.exports = async function handler(req, res) {
     if (!SERVICE_KEY) return res.status(500).json({ error: '서버 설정 오류(SERVICE_KEY 누락).' });
@@ -675,6 +845,8 @@ module.exports = async function handler(req, res) {
         case 'submit-application': return handleApplication(req, res);
         case 'submit-showcase-posting': return handleShowcasePosting(req, res);
         case 'submit-showcase-apply': return handleShowcaseApply(req, res);
+        case 'update-showcase-posting': return handleUpdateShowcasePosting(req, res);
+        case 'cancel-showcase-posting': return handleCancelShowcasePosting(req, res);
         case 'cancel-inquiry': return handleCancelInquiry(req, res);
         case 'upload-application-file': return handleUploadFile(req, res);
         case 'notify-admins': return handleNotifyAdmins(req, res);

@@ -501,6 +501,12 @@
             .sc-card__rej { background:#fee2e2; border-left:3px solid #dc2626; padding:8px 12px; font-size:0.78rem; color:#991b1b; border-radius:6px; }
             .sc-card__applicants { background:#f3f4f6; padding:8px 12px; border-radius:8px; font-size:0.8rem; color:#1a2a4a; font-weight:600; text-align:center; }
             .sc-card__date { font-size:0.72rem; color:#9ca3af; }
+            .sc-card__actions { display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid #f1f5f9; }
+            .sc-card__btn { flex:1; padding:8px 12px; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer; font-family:inherit; transition:background 0.15s, color 0.15s; border:1.5px solid transparent; }
+            .sc-card__btn--edit { background:#fff; color:#1565c0; border-color:#dbeafe; }
+            .sc-card__btn--edit:hover { background:#eff6ff; border-color:#1565c0; }
+            .sc-card__btn--delete { background:#fff; color:#c62828; border-color:#fecaca; }
+            .sc-card__btn--delete:hover { background:#fef2f2; border-color:#c62828; }
             .sc-empty { background:#fff; border:1px dashed rgba(0,0,0,0.12); border-radius:14px; padding:48px 20px; text-align:center; color:#9ca3af; font-size:0.92rem; }
 
             /* 등록 모달 — interpreter-jobs.html과 동일 패턴, prefix sc- */
@@ -7007,6 +7013,26 @@
           ? '<div class="sc-card__applicants">👥 지원자 ' + (r._applicants_count || 0) + '명' + (r._matched_count > 0 ? ' · 매칭 ' + r._matched_count : '') + '</div>'
           : '';
 
+        // 상태별 액션 버튼
+        // - pending: 수정 + 삭제
+        // - approved (게재 중, 매칭 전): 게재 취소만
+        // - matched: 액션 없음 (계약 흐름으로)
+        // - rejected: 액션 없음 (새 공고로 재등록)
+        // - cancelled: 액션 없음
+        var actionsHtml = '';
+        if (r.contract_id) {
+            // 매칭 완료 — 액션 없음
+        } else if (r.review_status === 'pending') {
+            actionsHtml = '<div class="sc-card__actions">' +
+                '<button type="button" class="sc-card__btn sc-card__btn--edit" data-action="edit" data-posting-id="' + __scEscape(r.id) + '">✏️ 수정</button>' +
+                '<button type="button" class="sc-card__btn sc-card__btn--delete" data-action="cancel" data-posting-id="' + __scEscape(r.id) + '">🗑 삭제</button>' +
+            '</div>';
+        } else if (r.review_status === 'approved') {
+            actionsHtml = '<div class="sc-card__actions">' +
+                '<button type="button" class="sc-card__btn sc-card__btn--delete" data-action="cancel" data-posting-id="' + __scEscape(r.id) + '">🗑 게재 취소</button>' +
+            '</div>';
+        }
+
         return '<div class="sc-card">' +
           '<div class="sc-card__top">' + statusBadge + '<span class="sc-card__date">등록 ' + __scFmtDate(r.created_at) + '</span></div>' +
           '<h3 class="sc-card__title">' + __scEscape(r.exhibition_name || '(전시회명 없음)') + '</h3>' +
@@ -7021,13 +7047,81 @@
             '<dt>언어 · 인원</dt><dd>' + __scEscape(r.language_pair || '-') + ' · ' + (r.headcount || 0) + '명</dd>' +
             '<dt>익명 라벨</dt><dd>' + __scEscape(r.showcase_label || '-') + '</dd>' +
           '</dl>' +
-          rejBlock + applicantsBlock +
+          rejBlock + applicantsBlock + actionsHtml +
         '</div>';
       }).join('');
+
+      // 액션 버튼 핸들러 (이벤트 위임)
+      grid.querySelectorAll('[data-action]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var action = btn.getAttribute('data-action');
+          var pid = btn.getAttribute('data-posting-id');
+          if (action === 'cancel') handleCancelShowcasePosting(pid, list);
+          else if (action === 'edit') handleEditShowcasePosting(pid, list);
+        });
+      });
     }
 
-    // 모달 제어
-    function openShowcaseModal() {
+    // 본인 공고 취소 (pending → 삭제, approved → 게재 취소)
+    async function handleCancelShowcasePosting(postingId, list) {
+      var rec = (list || []).find(function (r) { return r.id === postingId; });
+      var wasApproved = rec && rec.review_status === 'approved';
+      var confirmMsg = wasApproved
+        ? '게재 중인 공고를 취소하시겠습니까?\n대기 중인 지원자들에게도 안내가 발송됩니다.'
+        : '검토 대기 중인 공고를 삭제하시겠습니까?\n취소 후에는 복구할 수 없습니다.';
+      if (!confirm(confirmMsg)) return;
+      try {
+        var token = await __scGetToken();
+        if (!token) { if (window.showToast) window.showToast('로그인이 만료되었습니다.', 'error'); return; }
+        var r = await fetch('/api/cancel-showcase-posting', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ posting_id: postingId })
+        });
+        var json = await r.json().catch(function () { return {}; });
+        if (!r.ok) {
+          if (window.showToast) window.showToast(json.error || '취소 처리 실패', 'error');
+          return;
+        }
+        if (window.showToast) window.showToast(wasApproved ? '공고 게재가 취소되었습니다.' : '공고가 삭제되었습니다.', 'success');
+        loadMyShowcasePostings();
+      } catch (e) {
+        console.error('cancel-showcase-posting failed:', e);
+        if (window.showToast) window.showToast('네트워크 오류. 잠시 후 다시 시도해주세요.', 'error');
+      }
+    }
+
+    // 모달 제어 (등록 + 수정 공용)
+    var _editingShowcaseId = null;
+    function openShowcaseModal(editingRecord) {
+      _editingShowcaseId = editingRecord && editingRecord.id ? editingRecord.id : null;
+      var titleEl = document.getElementById('scModalTitle');
+      var submitBtn = document.getElementById('scSubmitBtn');
+      if (_editingShowcaseId) {
+        if (titleEl) titleEl.textContent = '통역사 모집 공고 수정';
+        if (submitBtn) submitBtn.textContent = '수정 완료';
+        // 폼 값 채우기
+        try {
+          var set = function (id, v) { var el = document.getElementById(id); if (el) el.value = v == null ? '' : v; };
+          set('sc-exhibition', editingRecord.exhibition_name);
+          set('sc-country', editingRecord.showcase_country_code);
+          set('sc-location', editingRecord.location);
+          set('sc-start', editingRecord.start_date);
+          set('sc-end', editingRecord.end_date);
+          set('sc-industry', editingRecord.showcase_industry);
+          set('sc-headcount', editingRecord.headcount || 1);
+          set('sc-languages', editingRecord.language_pair);
+          set('sc-venue', editingRecord.venue);
+          set('sc-label', editingRecord.showcase_label);
+          set('sc-message', editingRecord.message);
+          var disclose = document.getElementById('sc-disclose');
+          if (disclose) disclose.checked = !!editingRecord.company_name_disclosure;
+        } catch (e) { console.warn('수정 모드 폼 채우기 실패:', e); }
+      } else {
+        if (titleEl) titleEl.textContent = '통역사 모집 공고 올리기';
+        if (submitBtn) submitBtn.textContent = '제출';
+      }
       document.getElementById('scModal').classList.add('is-open');
       document.body.style.overflow = 'hidden';
       setTimeout(function () {
@@ -7038,10 +7132,28 @@
     function closeShowcaseModal() {
       document.getElementById('scModal').classList.remove('is-open');
       document.body.style.overflow = '';
+      _editingShowcaseId = null;
+      var form = document.getElementById('scForm');
+      if (form) form.reset();
+      var titleEl = document.getElementById('scModalTitle');
+      if (titleEl) titleEl.textContent = '통역사 모집 공고 올리기';
+      var submitBtn = document.getElementById('scSubmitBtn');
+      if (submitBtn) submitBtn.textContent = '제출';
+    }
+
+    // 본인 공고 수정 (검토 대기 중인 것만)
+    function handleEditShowcasePosting(postingId, list) {
+      var rec = (list || []).find(function (r) { return r.id === postingId; });
+      if (!rec) return;
+      if (rec.review_status !== 'pending') {
+        if (window.showToast) window.showToast('관리자 검토가 시작된 공고는 수정할 수 없습니다.', 'error');
+        return;
+      }
+      openShowcaseModal(rec);
     }
     document.addEventListener('DOMContentLoaded', function () {
       var newBtn = document.getElementById('newShowcaseBtn');
-      if (newBtn) newBtn.addEventListener('click', openShowcaseModal);
+      if (newBtn) newBtn.addEventListener('click', function () { openShowcaseModal(null); });
       var closeBtn = document.getElementById('scModalClose');
       if (closeBtn) closeBtn.addEventListener('click', closeShowcaseModal);
       var cancelBtn = document.getElementById('scCancelBtn');
@@ -7073,20 +7185,28 @@
           company_name_disclosure: fd.get('company_name_disclosure') === 'on',
           message: fd.get('message') || null
         };
+        // 수정 모드 분기: _editingShowcaseId가 있으면 update API 호출
+        var isEditing = !!_editingShowcaseId;
+        var apiUrl = isEditing ? '/api/update-showcase-posting' : '/api/submit-showcase-posting';
+        if (isEditing) payload.posting_id = _editingShowcaseId;
+
+        var originalText = submitBtn.textContent;
         submitBtn.disabled = true;
-        submitBtn.textContent = '제출 중...';
+        submitBtn.textContent = isEditing ? '수정 중...' : '제출 중...';
         try {
-          var r = await fetch('/api/submit-showcase-posting', {
+          var r = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify(payload)
           });
           var json = await r.json().catch(function () { return {}; });
           if (!r.ok) {
-            if (window.showToast) window.showToast(json.error || '등록 실패. 잠시 후 다시 시도해주세요.', 'error');
+            if (window.showToast) window.showToast(json.error || (isEditing ? '수정 실패. 잠시 후 다시 시도해주세요.' : '등록 실패. 잠시 후 다시 시도해주세요.'), 'error');
             return;
           }
-          if (window.showToast) window.showToast('공고가 등록되었습니다.\n관리자 검토 후 게재됩니다.', 'success');
+          if (window.showToast) {
+            window.showToast(isEditing ? '공고가 수정되었습니다.\n관리자 검토 후 게재됩니다.' : '공고가 등록되었습니다.\n관리자 검토 후 게재됩니다.', 'success');
+          }
           form.reset();
           closeShowcaseModal();
           loadMyShowcasePostings();
@@ -7095,7 +7215,7 @@
           if (window.showToast) window.showToast('네트워크 오류. 잠시 후 다시 시도해주세요.', 'error');
         } finally {
           submitBtn.disabled = false;
-          submitBtn.textContent = '제출';
+          submitBtn.textContent = originalText;
         }
       });
     });

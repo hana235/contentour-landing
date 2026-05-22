@@ -165,6 +165,37 @@
             scrollbar-width: none;
         }
         .ij-filter::-webkit-scrollbar { display: none; }
+        .ij-subfilter {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .ij-subfilter__field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: var(--gray-400);
+        }
+        .ij-subfilter__field span {
+            font-weight: 600;
+        }
+        .ij-subfilter__field select {
+            padding: 7px 10px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: #fff;
+            color: var(--gray-700);
+            cursor: pointer;
+        }
+        .ij-subfilter__field select:focus {
+            outline: 2px solid var(--blue);
+            border-color: var(--blue);
+        }
         .ij-chip {
             padding: 7px 14px;
             border-radius: 999px;
@@ -829,6 +860,37 @@
                 <button class="ij-chip" data-region="VN">베트남</button>
             </div>
 
+            <!-- 산업 · 정렬 필터 -->
+            <div class="ij-subfilter">
+                <label class="ij-subfilter__field">
+                    <span>산업</span>
+                    <select id="ijIndustryFilter">
+                        <option value="">전체</option>
+                        <option>IT</option>
+                        <option>의료기기</option>
+                        <option>뷰티·화장품</option>
+                        <option>자동차 부품</option>
+                        <option>식품·F&amp;B</option>
+                        <option>건축·자재</option>
+                        <option>반도체</option>
+                        <option>에너지·환경</option>
+                        <option>섬유·패션</option>
+                        <option>기계·로봇</option>
+                        <option>유아·완구</option>
+                        <option>스포츠·레저</option>
+                        <option>기타</option>
+                    </select>
+                </label>
+                <label class="ij-subfilter__field">
+                    <span>정렬</span>
+                    <select id="ijSortBy">
+                        <option value="latest">최신 등록순</option>
+                        <option value="urgent">파견 임박순</option>
+                        <option value="interest">관심 많은 순</option>
+                    </select>
+                </label>
+            </div>
+
             <!-- 카드 그리드 -->
             <div class="ij-grid" id="ijGrid"></div>
 
@@ -1163,14 +1225,31 @@
             }
 
             var region = getActiveRegion();
-            var list = region === 'all'
-                ? showcaseData
-                : showcaseData.filter(function (r) { return r.countryCode === region; });
+            var industryEl = document.getElementById('ijIndustryFilter');
+            var industry = industryEl ? industryEl.value : '';
+            var sortEl = document.getElementById('ijSortBy');
+            var sortBy = sortEl ? sortEl.value : 'latest';
+
+            var list = showcaseData.slice();
+            if (region !== 'all') list = list.filter(function (r) { return r.countryCode === region; });
+            if (industry) list = list.filter(function (r) { return (r.industry || '') === industry; });
+
+            // 정렬 (latest는 서버측 기본 순서 유지)
+            if (sortBy === 'urgent') {
+                list.sort(function (a, b) {
+                    var ad = a.startDate || '9999-99-99';
+                    var bd = b.startDate || '9999-99-99';
+                    return ad.localeCompare(bd);
+                });
+            } else if (sortBy === 'interest') {
+                list.sort(function (a, b) { return (b.interestCount || 0) - (a.interestCount || 0); });
+            }
 
             if (list.length === 0) {
-                var msg = region === 'all'
-                    ? '현재 게재된 통역 모집 현황이 없습니다.'
-                    : '해당 지역에 게재된 통역 모집 현황이 없습니다.';
+                var hasFilter = region !== 'all' || industry;
+                var msg = hasFilter
+                    ? '조건에 맞는 통역 모집 현황이 없습니다.'
+                    : '현재 게재된 통역 모집 현황이 없습니다.';
                 grid.innerHTML = '<div class="ij-empty">' + msg + '<span class="ij-empty__sub">곧 다양한 기업의 모집 현황이 공개됩니다.</span></div>';
                 moreWrap.style.display = 'none';
                 counterCo.textContent = '0';
@@ -1274,6 +1353,12 @@
             visibleCount += PAGE_STEP;
             renderGrid();
         });
+
+        // 산업·정렬 변경 — 1페이지로 리셋 + 재렌더
+        var __ijIndustryEl = document.getElementById('ijIndustryFilter');
+        if (__ijIndustryEl) __ijIndustryEl.addEventListener('change', function () { visibleCount = INITIAL_COUNT; renderGrid(); });
+        var __ijSortEl = document.getElementById('ijSortBy');
+        if (__ijSortEl) __ijSortEl.addEventListener('change', function () { visibleCount = INITIAL_COUNT; renderGrid(); });
 
         // 뒤로가기/앞으로가기 시에도 동기화
         window.addEventListener('popstate', function () {
