@@ -277,6 +277,96 @@
         .ij-tr__action-empty { color: var(--gray-300); font-size: 0.82rem; }
         .ij-empty-cell { padding: 0 !important; background: transparent; }
 
+        /* 행 펼침(확장) — 본 행 클릭 시 노출 */
+        .ij-tr[aria-expanded="true"] {
+            background: #eef5ff;
+        }
+        .ij-tr[aria-expanded="true"]:hover {
+            background: #e6efff;
+        }
+        .ij-tr-detail {
+            background: #f7f9fc;
+        }
+        .ij-tr-detail .ij-detail-cell {
+            padding: 18px 22px 22px;
+            border-bottom: 1px solid #e5eaf2;
+            background: #f7f9fc;
+        }
+        .ij-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px 24px;
+            margin-bottom: 16px;
+        }
+        .ij-detail-row {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 12px;
+            font-size: 0.86rem;
+            line-height: 1.6;
+        }
+        .ij-detail-row__label {
+            color: var(--gray-400);
+            font-weight: 600;
+        }
+        .ij-detail-row__value {
+            color: var(--gray-700);
+            word-break: break-word;
+        }
+        .ij-detail-memo {
+            background: #fff;
+            border: 1px solid #e5eaf2;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+        .ij-detail-memo__label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--gray-400);
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+        .ij-detail-memo__body {
+            font-size: 0.92rem;
+            line-height: 1.75;
+            color: var(--gray-700);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .ij-detail-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .ij-detail-actions .ij-card__apply {
+            margin-top: 0;
+            width: auto;
+            min-width: 140px;
+            padding: 10px 24px;
+            font-size: 0.88rem;
+        }
+        @media (max-width: 768px) {
+            .ij-tr-detail { display: none; }
+            .ij-tr-detail:not([hidden]) {
+                display: block;
+                margin: -8px 0 10px;
+                padding: 0;
+                background: #f7f9fc;
+                border-radius: 0 0 12px 12px;
+                border: 0.5px solid rgba(0,0,0,0.08);
+                border-top: none;
+            }
+            .ij-tr-detail .ij-detail-cell { display: block; padding: 14px 16px; border-bottom: none; }
+            .ij-detail-grid { grid-template-columns: 1fr; gap: 6px; }
+            .ij-detail-row { grid-template-columns: 80px 1fr; }
+            .ij-detail-actions .ij-card__apply { width: 100%; }
+            .ij-tr[aria-expanded="true"] {
+                border-radius: 12px 12px 0 0;
+                margin-bottom: 0;
+            }
+        }
+
         /* 본문 셀 — 말줄임 처리 */
         .ij-td--memo {
             max-width: 220px;
@@ -1291,12 +1381,48 @@
                 ? '<span class="ij-td__memo" title="' + escapeHtml(memoFull) + '">' + escapeHtml(memoPreview) + '</span>'
                 : '<span class="ij-tr__action-empty">—</span>';
 
-            // 전시회 셀에 개최지 sub 노출 (상세 모달 없이도 위치 파악 가능)
+            // 전시회 셀에 개최지 sub 노출
             var locText = [req.location, req.venue].filter(Boolean).join(' · ');
+
+            // 펼침 행 — 본 행 클릭 시 표시되는 상세 내용
+            // 매칭 완료 D-day, 모든 상세 정보, 메모 전체, 지원 버튼(큰 크기)
+            var detailAction = '';
+            if (isRecruit && req.sourceType === 'direct_posting' && req.id && !req.isOwn) {
+                if (viewerRole === 'interpreter') {
+                    var doneDetail = appliedSet.has(req.id);
+                    detailAction = '<button type="button" class="ij-card__apply" data-apply-id="' + escapeHtml(req.id) + '"' + (doneDetail ? ' disabled' : '') + '>' + (doneDetail ? '✓ 지원 완료' : '지원하기') + '</button>';
+                } else if (!viewerRole) {
+                    detailAction = '<button type="button" class="ij-card__apply ij-card__apply--guest" data-apply-id="' + escapeHtml(req.id) + '">🔒 로그인 후 지원</button>';
+                }
+            }
+            var detailRows = [
+                ['전시회', escapeHtml(req.exhibition) || '-'],
+                ['국가', escapeHtml(req.countryCode) || '-'],
+                ['개최지', escapeHtml(locText) || '-'],
+                ['기간', escapeHtml(fmtDate(req.startDate) + ' ~ ' + fmtDate(req.endDate))],
+                ['언어', escapeHtml(languages.join(' · ')) || '-'],
+                ['필요 인원', (req.needed || 0) + '명'],
+                ['관심', (req.interestCount || 0) + '회 조회됨']
+            ];
+            if (!isRecruit && typeof req.daysLeft === 'number') {
+                detailRows.push(['파견 시작', 'D-' + req.daysLeft]);
+            }
+            var detailRowsHtml = detailRows.map(function (r) {
+                return '<div class="ij-detail-row"><div class="ij-detail-row__label">' + r[0] + '</div><div class="ij-detail-row__value">' + r[1] + '</div></div>';
+            }).join('');
+            var memoBlock = memoFull
+                ? '<div class="ij-detail-memo">' +
+                    '<div class="ij-detail-memo__label">📝 고객사 메모</div>' +
+                    '<div class="ij-detail-memo__body">' + escapeHtml(memoFull) + '</div>' +
+                  '</div>'
+                : '';
+            var detailActionsHtml = detailAction
+                ? '<div class="ij-detail-actions">' + detailAction + '</div>'
+                : '';
 
             // data-label 속성으로 모바일 카드 폴백 시 컬럼 라벨 노출
             return '' +
-                '<tr class="ij-tr" data-region="' + escapeHtml(req.countryCode) + '" data-detail-id="' + escapeHtml(req.id || '') + '" tabindex="0" aria-label="공고 상세 보기: ' + escapeHtml(req.exhibition) + '">' +
+                '<tr class="ij-tr" data-region="' + escapeHtml(req.countryCode) + '" data-detail-id="' + escapeHtml(req.id || '') + '" tabindex="0" role="button" aria-expanded="false" aria-controls="ij-detail-' + escapeHtml(req.id || '') + '" aria-label="공고 상세 보기: ' + escapeHtml(req.exhibition) + '">' +
                     '<td class="ij-td ij-td--status" data-label="구분">' + statusBadge + ownBadge + '</td>' +
                     '<td class="ij-td ij-td--label" data-label="기업·산업">' +
                         '<div class="ij-td__label-main">' + escapeHtml(req.label) + '</div>' +
@@ -1314,6 +1440,13 @@
                     '<td class="ij-td ij-td--memo" data-label="본문">' + memoHtml + '</td>' +
                     '<td class="ij-td ij-td--interest" data-label="관심">👁 ' + (req.interestCount || 0) + '</td>' +
                     '<td class="ij-td ij-td--action" data-label="지원">' + applyHtml + '</td>' +
+                '</tr>' +
+                '<tr class="ij-tr-detail" id="ij-detail-' + escapeHtml(req.id || '') + '" data-detail-for="' + escapeHtml(req.id || '') + '" hidden>' +
+                    '<td colspan="9" class="ij-detail-cell">' +
+                        '<div class="ij-detail-grid">' + detailRowsHtml + '</div>' +
+                        memoBlock +
+                        detailActionsHtml +
+                    '</td>' +
                 '</tr>';
         }
 
@@ -1821,6 +1954,41 @@
             }
         }
 
+        // 행 펼침/접힘 — 모달 대신 인라인 확장
+        function toggleDetailRow(triggerRow) {
+            if (!triggerRow) return;
+            var id = triggerRow.getAttribute('data-detail-id');
+            if (!id) return;
+            var detailRow = document.querySelector('.ij-tr-detail[data-detail-for="' + id + '"]');
+            if (!detailRow) return;
+            var isOpen = !detailRow.hidden;
+            // 다른 펼침은 모두 닫기 (한 번에 하나만)
+            document.querySelectorAll('.ij-tr-detail').forEach(function (el) {
+                if (el !== detailRow) {
+                    el.hidden = true;
+                    var ownerId = el.getAttribute('data-detail-for');
+                    var trigger = document.querySelector('.ij-tr[data-detail-id="' + ownerId + '"]');
+                    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+                }
+            });
+            if (isOpen) {
+                detailRow.hidden = true;
+                triggerRow.setAttribute('aria-expanded', 'false');
+            } else {
+                detailRow.hidden = false;
+                triggerRow.setAttribute('aria-expanded', 'true');
+                // 펼친 행이 화면에 보이도록 스크롤
+                setTimeout(function () {
+                    try {
+                        var rect = detailRow.getBoundingClientRect();
+                        if (rect.bottom > window.innerHeight) {
+                            detailRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    } catch (e) { /* 무시 */ }
+                }, 50);
+            }
+        }
+
         document.getElementById('ijGrid').addEventListener('click', function (e) {
             // 지원 버튼은 별도 처리 (행 클릭으로 전파되지 않도록)
             var btn = e.target.closest('.ij-card__apply');
@@ -1830,20 +1998,19 @@
                 handleApply(id, btn);
                 return;
             }
-            // 행 클릭 → 상세 모달
+            // 펼침 영역 내부 클릭은 무시 (실수로 접히지 않게)
+            if (e.target.closest('.ij-tr-detail')) return;
+            // 본 행 클릭 → 인라인 확장 토글
             var row = e.target.closest('.ij-tr');
-            if (!row) return;
-            var detailId = row.getAttribute('data-detail-id');
-            if (detailId) openDetailModal(detailId);
+            if (!row || row.classList.contains('ij-tr-detail')) return;
+            toggleDetailRow(row);
         });
         document.getElementById('ijGrid').addEventListener('keydown', function (e) {
-            // 키보드 활성화 (Enter/Space)
             if (e.key !== 'Enter' && e.key !== ' ' && e.code !== 'Space') return;
             var row = e.target.closest('.ij-tr');
-            if (!row || e.target.closest('.ij-card__apply')) return;
+            if (!row || row.classList.contains('ij-tr-detail') || e.target.closest('.ij-card__apply')) return;
             e.preventDefault();
-            var detailId = row.getAttribute('data-detail-id');
-            if (detailId) openDetailModal(detailId);
+            toggleDetailRow(row);
         });
 
         // ══════════════ 공고 상세 모달 ══════════════
