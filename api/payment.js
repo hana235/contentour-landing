@@ -58,13 +58,44 @@ async function handleVerifyPayment(req, res, rawBody) {
     }
 
     try {
+        // 결제 컬럼 모두 조회 — 서버에서 expected amount 재계산 (클라이언트 expectedAmount 신뢰 X)
         const { data: contract, error: cErr } = await sb
             .from('42_통역계약')
-            .select('customer_id, interpreter_id, total_amount')
+            .select('customer_id, interpreter_id, total_amount, deposit_amount, balance_amount, deposit_status, balance_status')
             .eq('id', contractId).single();
         if (cErr || !contract) return res.status(404).json({ success: false, error: '계약을 찾을 수 없습니다.' });
         if (contract.customer_id !== user.id) {
             return res.status(403).json({ success: false, error: '본인 계약만 결제 가능합니다.' });
+        }
+
+        // ── 서버에서 paymentType별 정확한 금액 재계산 (클라이언트 메모리 변조 방어) ──
+        let serverExpected = null;
+        if (paymentType === 'full') {
+            serverExpected = Number(contract.total_amount) || 0;
+        } else if (paymentType === 'deposit') {
+            // A안 100% 선결제: deposit_amount가 비어있으면 total_amount 전액
+            serverExpected = Number(contract.deposit_amount || contract.total_amount) || 0;
+        } else if (paymentType === 'balance') {
+            serverExpected = Number(contract.balance_amount) || 0;
+        }
+        if (serverExpected <= 0) {
+            return res.status(400).json({ success: false, error: '계약에 결제할 금액이 없습니다.' });
+        }
+        // 클라이언트가 보낸 expectedAmount 검증 (서버 계산과 불일치 = 변조 의심)
+        if (expectedAmount !== serverExpected) {
+            console.error('[verify-payment] 클라이언트 expectedAmount 불일치 (변조 의심):', {
+                contractId, paymentType,
+                clientExpected: expectedAmount,
+                serverExpected
+            });
+            return res.status(400).json({ success: false, error: '계약 금액과 일치하지 않습니다.' });
+        }
+        // 중복 결제 차단 (이미 paid 상태에서 재결제 시도)
+        if ((paymentType === 'deposit' || paymentType === 'full') && contract.deposit_status === 'paid') {
+            return res.status(400).json({ success: false, error: '이미 선결제가 완료된 계약입니다.' });
+        }
+        if (paymentType === 'balance' && contract.balance_status === 'paid') {
+            return res.status(400).json({ success: false, error: '이미 잔금이 완료된 계약입니다.' });
         }
 
         const portoneRes = await fetch(
@@ -84,8 +115,12 @@ async function handleVerifyPayment(req, res, rawBody) {
             });
         }
         const actualAmount = payment.amount && payment.amount.total;
-        if (typeof actualAmount !== 'number' || actualAmount !== expectedAmount) {
-            console.error('금액 불일치:', { expected: expectedAmount, actual: actualAmount, paymentId });
+        // PortOne 실제 결제 금액도 서버 계약 금액과 일치해야 함 (이중 방어 — 클라이언트가 expected까지 조작해도 차단)
+        if (typeof actualAmount !== 'number' || actualAmount !== serverExpected) {
+            console.error('[verify-payment] PortOne actualAmount 불일치 (변조/저액결제 의심):', {
+                contractId, paymentType, paymentId,
+                actualAmount, serverExpected
+            });
             return res.status(400).json({ success: false, error: '결제 금액 불일치' });
         }
         if (payment.currency && payment.currency !== 'KRW') {
