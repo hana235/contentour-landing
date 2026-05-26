@@ -60,9 +60,18 @@ const InterpreterData = {
         }
     },
 
-    // 정산 재요청
+    // 정산 재요청 — RPC 우선(트랜잭션·소유권·상태 검증), 미적용 시 직접 UPDATE 폴백
     async reRequestSettlement(dbId) {
         if (!supabase || !dbId) return false;
+        try {
+            const { data, error } = await supabase.rpc('request_settlement_reapproval', {
+                p_settlement_id: dbId
+            });
+            if (!error) return data === true;
+            console.warn('[reRequestSettlement] RPC 미적용/실패, 직접 UPDATE 폴백:', error.message);
+        } catch (e) {
+            console.warn('[reRequestSettlement] RPC 예외, 폴백:', e && e.message);
+        }
         try {
             const { error } = await supabase
                 .from('43_정산내역')
