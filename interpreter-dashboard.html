@@ -7851,6 +7851,33 @@
                 }
             });
         })();
+
+        // 접근성: onclick 가진 div/span에 role="button" + tabindex + Enter/Space 키 핸들러
+        // (HTML 다수 위치 수정 대신 페이지 로드 시 JS로 일괄 처리)
+        (function enhanceClickableSemantics() {
+            var SELECTORS = '.pf-lang-tag, .assign-tag, .j-tag, .star-btn';
+            function enhance() {
+                document.querySelectorAll(SELECTORS).forEach(function(el) {
+                    if (el.tagName === 'BUTTON' || el.hasAttribute('role')) return;
+                    el.setAttribute('role', 'button');
+                    el.setAttribute('tabindex', '0');
+                    el.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            el.click();
+                        }
+                    });
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', enhance);
+            } else {
+                enhance();
+            }
+            // 동적 로드 콘텐츠 (프로필 로드 후 등) 대응
+            window.addEventListener('load', enhance);
+            setTimeout(enhance, 2000);
+        })();
     </script>
 
 </body>
