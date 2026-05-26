@@ -53,6 +53,9 @@ label, legend, fieldset, blockquote, pre, code, em, strong, small {
 }
 body {
     letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 /* ══════════════ 공통 컴포넌트 ══════════════ */
