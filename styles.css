@@ -313,7 +313,7 @@ body {
     white-space: nowrap;
 }
 .nav__dropdown-desc {
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     color: var(--gray-600, #3d4f6a);
     font-weight: 400;
     margin-top: 2px;
@@ -1859,10 +1859,10 @@ section {
 
 .blue-itq .field label {
     display: block;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 700;
     margin: 0 0 7px;
-    color: #4a5a75;
+    color: #1a2a4a;
     letter-spacing: 0.3px;
 }
 
@@ -1908,8 +1908,8 @@ section {
 
 .blue-itq .help {
     margin: 6px 0 0;
-    font-size: 0.72rem;
-    color: #9daec8;
+    font-size: 0.78rem;
+    color: #666;
 }
 
 .blue-itq .span-2 {
@@ -2330,8 +2330,8 @@ section {
 }
 
 .stat-label {
-    font-size: 0.85rem;
-    color: #90caf9;
+    font-size: 0.9rem;
+    color: #cfe8ff;
     font-weight: 500;
     letter-spacing: 0.5px;
 }
@@ -2427,8 +2427,8 @@ section {
 }
 
 .country-lang {
-    font-size: 0.75rem;
-    color: #888;
+    font-size: 0.8rem;
+    color: #666;
 }
 
 .country-card__badge {
@@ -2695,7 +2695,7 @@ section {
   gap: 8px;
 }
 .case-card__tag {
-  font-size: 0.7rem;
+  font-size: 0.74rem;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 20px;
@@ -2922,9 +2922,9 @@ section {
     color: #0d1b3e;
 }
 .ip-card__role {
-    font-size: 0.7rem;
+    font-size: 0.76rem;
     font-weight: 600;
-    color: #9daec8;
+    color: #6b7d99;
     margin-top: 2px;
 }
 .ip-card__tags {
@@ -3455,8 +3455,8 @@ section {
     color: var(--text);
 }
 .testi-card__company {
-    font-size: 0.72rem;
-    color: var(--gray-400);
+    font-size: 0.78rem;
+    color: #666;
 }
 .testi-card__footer {
     display: flex;
@@ -3548,7 +3548,7 @@ section {
     display: block;
 }
 .partner-logo-card__name {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     font-weight: 700;
     color: var(--gray-600);
     text-align: center;
@@ -3640,9 +3640,9 @@ section {
     margin-bottom: 8px;
 }
 .process-step__desc {
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     line-height: 1.65;
-    color: rgba(255,255,255,0.55);
+    color: rgba(255,255,255,0.78);
 }
 .process-arrow {
     font-size: 1.2rem;
@@ -3755,9 +3755,9 @@ section {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease, padding 0.3s ease;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
     line-height: 1.75;
-    color: var(--gray-600);
+    color: #2a3e5a;
     padding: 0 24px;
 }
 .faq-item.open .faq-item__a {
