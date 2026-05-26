@@ -919,7 +919,7 @@ input[type="password"]::-ms-clear { display: none; }
         }
 
         .btn-primary {
-            padding: 9px 18px;
+            padding: 11px 22px;
             background: var(--blue);
             color: #fff;
             border: none;
@@ -942,7 +942,7 @@ input[type="password"]::-ms-clear { display: none; }
         }
 
         .btn-ghost {
-            padding: 9px 16px;
+            padding: 11px 20px;
             background: var(--white);
             border: 1.5px solid var(--gray-200);
             border-radius: 9px;
