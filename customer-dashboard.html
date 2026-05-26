@@ -1299,6 +1299,19 @@
               </div>
             </div>
           </div>
+          <div class="loy-card" style="margin-top:20px;">
+            <div class="loy-card__head"><h3>&#127970; 사업자등록증</h3></div>
+            <div class="loy-card__body">
+              <div id="bizRegStatusArea" style="margin-bottom:14px;"></div>
+              <div class="form-grid">
+                <div class="field span-2"><label>사업자등록번호</label><input type="text" id="mypBizNumber" placeholder="123-45-67890"></div>
+                <div class="field span-2"><label>사업자등록증 파일 (PDF/이미지, 최대 5MB) — 재업로드 시 검수가 다시 시작됩니다</label><input type="file" id="mypBizFile" accept=".pdf,image/*"></div>
+              </div>
+              <div style="margin-top:18px;display:flex;justify-content:flex-end;">
+                <button class="btn-primary" id="mypBizSaveBtn" onclick="saveBizRegistration()">저장</button>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -1475,6 +1488,108 @@
       }
     }
 
+    // ── 사업자등록증: 마이페이지에서 현재 상태 표시 + 재업로드 ──
+    function applyBizRegistration(member) {
+      if (!member) return;
+      var bnInput = document.getElementById('mypBizNumber');
+      if (bnInput && member.business_number) bnInput.value = member.business_number;
+      var area = document.getElementById('bizRegStatusArea');
+      if (!area) return;
+      var st = member.business_registration_status || 'none';
+      var palette = { pending: '#f57c00', approved: '#2e7d32', rejected: '#c62828', none: '#8a95a8' };
+      var labels = { pending: '⏳ 검수 대기 중', approved: '✅ 승인 완료', rejected: '❌ 반려', none: '⚠️ 미제출' };
+      var color = palette[st] || '#8a95a8';
+      var label = labels[st] || st;
+      var html = '<div style="font-size:0.85rem;color:' + color + ';font-weight:700;">' + label + '</div>';
+      if (st === 'rejected' && member.business_registration_reject_reason) {
+        var safe = String(member.business_registration_reject_reason).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        html += '<div style="margin-top:4px;font-size:0.78rem;color:#c62828;">사유: ' + safe + '</div>';
+      }
+      if (member.business_registration_uploaded_at) {
+        var d = new Date(member.business_registration_uploaded_at).toLocaleDateString('ko-KR');
+        html += '<div style="margin-top:2px;font-size:0.72rem;color:#8a95a8;">최근 업로드: ' + d + '</div>';
+      }
+      area.innerHTML = html;
+    }
+
+    async function saveBizRegistration() {
+      if (!window.sbClient) return;
+      var btn = document.getElementById('mypBizSaveBtn');
+      var bnInput = document.getElementById('mypBizNumber');
+      var fileInput = document.getElementById('mypBizFile');
+      var brn = (bnInput && bnInput.value || '').trim();
+      var file = fileInput && fileInput.files && fileInput.files[0];
+
+      if (!brn && !file) {
+        showContractToast('⚠️ 사업자번호 또는 파일을 입력해주세요.');
+        return;
+      }
+
+      // 파일 검증 (크기 5MB, PDF/이미지)
+      if (file) {
+        var MAX = 5 * 1024 * 1024;
+        if (file.size > MAX) {
+          showContractToast('⚠️ 파일 크기는 5MB 이하여야 합니다.');
+          return;
+        }
+        if (!/^(application\/pdf|image\/(jpeg|jpg|png|gif|webp))$/i.test(file.type)) {
+          showContractToast('⚠️ PDF 또는 이미지 파일만 업로드 가능합니다.');
+          return;
+        }
+      }
+
+      btn.disabled = true;
+      btn.textContent = '저장 중...';
+
+      try {
+        var user = await ContentourAuth.getCurrentUser();
+        if (!user) throw new Error('로그인 정보를 찾을 수 없습니다.');
+
+        var updateFields = {};
+        if (brn) updateFields.business_number = brn;
+
+        if (file) {
+          var ts = Date.now();
+          var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          var path = user.id + '/' + ts + '_' + safeName;
+          var upRes = await window.sbClient.storage
+            .from('business-registrations')
+            .upload(path, file, { upsert: false, contentType: file.type });
+          if (upRes.error) throw upRes.error;
+
+          updateFields.business_registration_url = path;
+          updateFields.business_registration_status = 'pending';
+          updateFields.business_registration_uploaded_at = new Date().toISOString();
+          updateFields.business_registration_reject_reason = null;
+        }
+
+        if (Object.keys(updateFields).length > 0) {
+          updateFields.updated_at = new Date().toISOString();
+          var updRes = await window.sbClient
+            .from('01_회원')
+            .update(updateFields)
+            .eq('id', user.id);
+          if (updRes.error) throw updRes.error;
+        }
+
+        showContractToast('✅ 사업자등록증 정보가 저장되었습니다.' + (file ? ' 검수 시작 (1~2 영업일)' : ''));
+
+        // 최신 상태로 카드·배너 갱신
+        var fresh = await window.sbClient.from('01_회원').select('*').eq('id', user.id).single();
+        if (fresh.data) {
+          applyBizRegistration(fresh.data);
+          try { showBizVerifyBanner(fresh.data.business_registration_status, fresh.data.business_registration_reject_reason); } catch(e) {}
+        }
+        if (fileInput) fileInput.value = '';
+      } catch (e) {
+        console.error('사업자등록증 저장 실패:', e);
+        showContractToast('❌ 저장 실패: ' + (e.message || '오류가 발생했습니다.'));
+      }
+
+      btn.disabled = false;
+      btn.textContent = '저장';
+    }
+
     async function changeMyPassword() {
       var newPw = document.getElementById('myp-new-pw').value;
       var newPw2 = document.getElementById('myp-new-pw2').value;
@@ -1583,6 +1698,9 @@
 
             // 알림 설정 체크박스 반영 (notification_settings 컬럼이 있을 때만, 없으면 기본값 유지)
             try { applyNotifSettings(member && member.notification_settings); } catch(e) {}
+
+            // 사업자등록증 상태·번호 마이페이지에 반영
+            try { applyBizRegistration(member); } catch(e) {}
 
             // 사업자등록증 검수 상태 배너 표시
             try {
