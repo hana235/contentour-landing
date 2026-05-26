@@ -1432,6 +1432,15 @@
             });
         }
 
+        // ISO 2자 국가 코드 → 국기 이모지 (예: 'JP' → 🇯🇵). 잘못된 입력은 원본 반환.
+        function isoToFlag(iso) {
+            if (!iso || typeof iso !== 'string' || iso.length !== 2) return iso || '';
+            var up = iso.toUpperCase();
+            var c0 = up.charCodeAt(0), c1 = up.charCodeAt(1);
+            if (c0 < 65 || c0 > 90 || c1 < 65 || c1 > 90) return iso;
+            return String.fromCodePoint(0x1F1E6 + c0 - 65) + String.fromCodePoint(0x1F1E6 + c1 - 65);
+        }
+
         function buildRow(req) {
             var isRecruit = req.status === 'recruiting';
             var statusBadge = isRecruit
@@ -1475,7 +1484,7 @@
             }
             var detailRows = [
                 ['전시회', escapeHtml(req.exhibition) || '-'],
-                ['국가', escapeHtml(req.countryCode) || '-'],
+                ['국가', isoToFlag(req.countryCode) || '-'],
                 ['개최지', escapeHtml(locText) || '-'],
                 ['기간', escapeHtml(fmtDate(req.startDate) + ' ~ ' + fmtDate(req.endDate))],
                 ['언어', escapeHtml(languages.join(' · ')) || '-'],
@@ -1511,7 +1520,7 @@
                         (locText ? '<div class="ij-td__label-sub">📍 ' + escapeHtml(locText) + '</div>' : '') +
                     '</td>' +
                     '<td class="ij-td ij-td--country" data-label="국가">' +
-                        '<span class="ij-card__cc">' + escapeHtml(req.countryCode) + '</span>' +
+                        '<span class="ij-card__cc" title="' + escapeHtml(req.countryCode || '') + '" aria-label="' + escapeHtml(req.countryCode || '') + '">' + isoToFlag(req.countryCode) + '</span>' +
                     '</td>' +
                     '<td class="ij-td ij-td--date" data-label="기간">' + fmtDate(req.startDate) + ' ~ ' + fmtDate(req.endDate) + ddayHtml + '</td>' +
                     '<td class="ij-td ij-td--lang" data-label="언어 · 인원">' + escapeHtml(languages.join(' · ')) + ' · ' + (req.needed || 0) + '명</td>' +
@@ -2170,7 +2179,7 @@
             var locDisplay = [req.location, req.venue].filter(Boolean).join(' · ') || '-';
             var rows = [
                 ['전시회', escAttr(req.exhibition) || '-'],
-                ['국가', escAttr(req.countryCode) || '-'],
+                ['국가', isoToFlag(req.countryCode) || '-'],
                 ['개최지', escAttr(locDisplay)],
                 ['기간', escAttr(fmtDate(req.startDate) + ' ~ ' + fmtDate(req.endDate))],
                 ['언어', escAttr(languages.join(' · ')) || '-'],
