@@ -10,7 +10,7 @@
 
 :root {
     /* ── 폰트 패밀리 ── */
-    --font-sans: 'Inter', 'Pretendard', 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+    --font-sans: 'Inter', 'Pretendard', 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     /* ── 브랜드 색상 ── */
     --navy: #0a2a5e;
     --navy-deep: #061a3e;
