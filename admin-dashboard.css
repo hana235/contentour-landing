@@ -26,11 +26,11 @@
     --gray-50: #f8fafc;
     --gray-100: #f4f6fb;
     --gray-200: #e5eaf2;
-    --gray-400: #9daec8;
-    --gray-600: #4a5a75;
+    --gray-400: #6b7d99;
+    --gray-600: #2a3a55;
 
     /* ── 텍스트 ── */
-    --text: #0d1b3e;
+    --text: #0a0d1a;
 
     /* ── 상태 색상 ── */
     --error: #e53935;
