@@ -1,6 +1,6 @@
-﻿/* Footer Terms Links — 진한 배경 위 WCAG AA 대비 충족 (0.5 → 0.78) */
+﻿/* Footer Terms Links — 진한 배경 위 WCAG AA 대비 충족 (0.78 → 0.9) */
 .footer-terms-link {
-    color: rgba(255,255,255,0.78);
+    color: rgba(255,255,255,0.9);
     text-decoration: none;
     font-size: 0.78rem;
     transition: color 0.15s;
@@ -35,7 +35,7 @@
 
 /* Brand Footer Links */
 .brand-footer-link {
-    color: rgba(255,255,255,0.4);
+    color: rgba(255,255,255,0.72);
     text-decoration: none;
     font-size: 0.7rem;
     transition: color 0.15s;
@@ -249,7 +249,7 @@ body {
     width: 10px;
     height: 6px;
     color: currentColor;
-    opacity: 0.55;
+    opacity: 0.85;
     vertical-align: middle;
     transition: transform 0.2s, opacity 0.2s;
 }
@@ -1773,7 +1773,7 @@ section {
 .blue-itq__sub {
     margin: 0 0 32px;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.65);
+    color: rgba(255, 255, 255, 0.85);
     line-height: 1.8;
     max-width: 50ch;
     position: relative;

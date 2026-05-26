@@ -44,6 +44,16 @@ function initMobileMenu() {
                 document.body.style.overflow = '';
             });
         });
+
+        // ESC 키로 모바일 메뉴 닫기 (접근성)
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && navMenu.getAttribute('data-open') === 'true') {
+                navMenu.setAttribute('data-open', 'false');
+                mobileMenuToggle.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+                mobileMenuToggle.focus();
+            }
+        });
     }
 }
 
