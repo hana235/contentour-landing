@@ -230,6 +230,8 @@
             border-color: var(--blue);
         }
         .ij-chip {
+            /* emoji 폰트 우선: Inter가 regional indicator(국기 이모지) 글리프를 자체 렌더링하는 걸 막고 컬러 이모지 폰트로 강제 fallback */
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', 'Inter', 'Pretendard', system-ui, sans-serif !important;
             padding: 7px 14px;
             border-radius: 999px;
             border: 0.5px solid rgba(0,0,0,0.12);
@@ -613,6 +615,8 @@
             font-weight: 500;
         }
         .ij-card__cc {
+            /* emoji 폰트 우선 (국기 이모지 렌더링용) */
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', 'Inter', 'Pretendard', system-ui, sans-serif !important;
             display: inline-block;
             background: var(--gray-100);
             color: var(--gray-600);
