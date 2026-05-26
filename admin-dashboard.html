@@ -3243,16 +3243,16 @@
                     let actionHtml = '';
                     if (d.status === 'request') {
                         actionHtml = '<div class="stl-actions">' +
-                            '<button class="stl-action-btn approve" onclick="event.stopPropagation();openStlApproval(' + d.id + ')">승인</button>' +
-                            '<button class="stl-action-btn reject" onclick="event.stopPropagation();openStlApproval(' + d.id + ',true)">반려</button>' +
+                            '<button class="stl-action-btn approve" onclick="event.stopPropagation();openStlApproval(\'' + d.id + '\')">승인</button>' +
+                            '<button class="stl-action-btn reject" onclick="event.stopPropagation();openStlApproval(\'' + d.id + '\',true)">반려</button>' +
                         '</div>';
                     } else if (d.status === 'approved') {
-                        actionHtml = '<button class="stl-action-btn approve" onclick="event.stopPropagation();stlMarkPaid(' + d.id + ')" style="background:var(--success);">입금 처리</button>';
+                        actionHtml = '<button class="stl-action-btn approve" onclick="event.stopPropagation();stlMarkPaid(\'' + d.id + '\')" style="background:var(--success);">입금 처리</button>';
                     } else {
-                        actionHtml = '<button class="stl-action-btn detail" onclick="event.stopPropagation();openStlApproval(' + d.id + ')">상세</button>';
+                        actionHtml = '<button class="stl-action-btn detail" onclick="event.stopPropagation();openStlApproval(\'' + d.id + '\')">상세</button>';
                     }
 
-                    return '<tr onclick="openStlApproval(' + d.id + ')">' +
+                    return '<tr onclick="openStlApproval(\'' + d.id + '\')">' +
                         '<td><div class="t-interp"><div class="t-interp-avatar" style="background:' + d.interpColor + ';">' + initial + '</div><div><div style="font-weight:700;">' + d.interpreter + '</div></div></div></td>' +
                         '<td><div class="t-expo">' + d.expo + '</div><div class="t-sub">' + d.lang + '</div></td>' +
                         '<td>' + d.client + '</td>' +
@@ -3313,17 +3313,17 @@
                 // 액션 버튼
                 if (d.status === 'request') {
                     html += '<div class="stl-modal-actions">' +
-                        '<button class="stl-modal-btn approve" onclick="stlApprove(' + d.id + ')">✅ 승인</button>' +
+                        '<button class="stl-modal-btn approve" onclick="stlApprove(\'' + d.id + '\')">✅ 승인</button>' +
                         '<button class="stl-modal-btn reject" onclick="stlShowReject()">반려</button>' +
                     '</div>' +
                     '<div class="stl-reject-box' + (showReject ? ' show' : '') + '" id="stlRejectBox">' +
                         '<label>반려 사유를 입력해주세요</label>' +
                         '<textarea id="stlRejectReason" placeholder="예: 상담일지가 미제출 상태입니다. 제출 후 재요청 바랍니다."></textarea>' +
-                        '<button onclick="stlReject(' + d.id + ')">반려 확정</button>' +
+                        '<button onclick="stlReject(\'' + d.id + '\')">반려 확정</button>' +
                     '</div>';
                 } else if (d.status === 'approved') {
                     html += '<div class="stl-modal-actions">' +
-                        '<button class="stl-modal-btn paid" onclick="stlMarkPaid(' + d.id + ')">💵 입금 완료 처리</button>' +
+                        '<button class="stl-modal-btn paid" onclick="stlMarkPaid(\'' + d.id + '\')">💵 입금 완료 처리</button>' +
                     '</div>';
                 }
 
