@@ -207,15 +207,15 @@
             <div class="sb-label">업무 관리</div>
             <a class="sb-item" href="#direct-inquiries" onclick="switchView('direct-inquiries', event)">
                 <span class="sb-item__icon">📩</span> 견적 요청
-                <span class="sb-item__badge" id="diqNavBadge" style="display:none;">0</span>
+                <span class="sb-item__badge" id="diqNavBadge" style="display:none;" aria-label="새 직접 견적 알림" aria-live="polite">0</span>
             </a>
             <a class="sb-item" href="#assignments" onclick="switchView('assignments', event)">
                 <span class="sb-item__icon">📋</span> 배정 요청
-                <span class="sb-item__badge" id="assignNavBadge" style="display:none;">0</span>
+                <span class="sb-item__badge" id="assignNavBadge" style="display:none;" aria-label="새 배정 알림" aria-live="polite">0</span>
             </a>
             <a class="sb-item" href="#showcase-applications" onclick="switchView('showcase-applications', event)">
                 <span class="sb-item__icon">🎪</span> 내가 지원한 공고
-                <span class="sb-item__badge" id="showcaseAppsBadge" style="display:none;">0</span>
+                <span class="sb-item__badge" id="showcaseAppsBadge" style="display:none;" aria-label="구인공고 지원 알림" aria-live="polite">0</span>
             </a>
             <a class="sb-item" href="#schedule" onclick="switchView('schedule', event)">
                 <span class="sb-item__icon">📅</span> 내 스케줄
@@ -228,7 +228,7 @@
             </a>
             <a class="sb-item" href="#chat" onclick="switchView('chat', event)">
                 <span class="sb-item__icon">💬</span> 고객사 채팅
-                <span class="sb-item__badge" id="chatNavBadge" style="display:none;">0</span>
+                <span class="sb-item__badge" id="chatNavBadge" style="display:none;" aria-label="안 읽은 채팅" aria-live="polite">0</span>
             </a>
 
             <div class="sb-label">정산</div>
@@ -270,7 +270,7 @@
                         <button class="topbar__icon-btn" onclick="toggleNotifPanel(event)" style="position:relative;">
                             🔔
                             <span class="notif-dot" id="topbarNotifDot"></span>
-                            <span class="topbar__notif-badge" id="topbarNotifBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e53935;color:#fff;font-size:0.6rem;font-weight:800;min-width:18px;height:18px;border-radius:9px;align-items:center;justify-content:center;line-height:1;">0</span>
+                            <span class="topbar__notif-badge" id="topbarNotifBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e53935;color:#fff;font-size:0.6rem;font-weight:800;min-width:18px;height:18px;border-radius:9px;align-items:center;justify-content:center;line-height:1;" aria-label="안 읽은 알림" aria-live="polite">0</span>
                         </button>
                         <div class="notif-panel" id="notifPanel">
                             <div class="notif-panel__head">
@@ -351,7 +351,7 @@
                             <a class="card__head-link" onclick="switchView('assignments')">전체 보기 →</a>
                         </div>
                         <div class="card__body">
-                            <div class="loading-placeholder">로딩 중...</div>
+                            <div class="loading-placeholder" role="status" aria-live="polite">로딩 중...</div>
                         </div>
                     </div>
                     <div class="card">
@@ -360,7 +360,7 @@
                             <a class="card__head-link" onclick="switchView('schedule', event)">캘린더 보기 →</a>
                         </div>
                         <div class="card__body schedule-list">
-                            <div class="loading-placeholder">로딩 중...</div>
+                            <div class="loading-placeholder" role="status" aria-live="polite">로딩 중...</div>
                         </div>
                     </div>
                 </div>
@@ -374,7 +374,7 @@
                         </div>
                         <div class="card__body">
                             <div class="journal-item" style="justify-content:center;">
-                                <div class="loading-placeholder">로딩 중...</div>
+                                <div class="loading-placeholder" role="status" aria-live="polite">로딩 중...</div>
                             </div>
                         </div>
                     </div>
@@ -385,7 +385,7 @@
                         </div>
                         <div class="card__body">
                             <div class="settle-item" style="justify-content:center;">
-                                <div class="loading-placeholder">로딩 중...</div>
+                                <div class="loading-placeholder" role="status" aria-live="polite">로딩 중...</div>
                             </div>
                         </div>
                     </div>
@@ -416,7 +416,7 @@
                         <h3>최근 알림</h3>
                     </div>
                     <div class="card__body notice-list">
-                        <div class="loading-placeholder">로딩 중...</div>
+                        <div class="loading-placeholder" role="status" aria-live="polite">로딩 중...</div>
                     </div>
                 </div>
 
@@ -1690,8 +1690,8 @@
     </div>
 
     <!-- ══════════════ 계좌 등록 모달 ══════════════ -->
-    <div class="modal-overlay" id="bankModal" onclick="closeBankModal(event)">
-        <div class="modal" onclick="event.stopPropagation()" style="max-width:540px;">
+    <div class="modal-overlay" id="bankModal" onclick="closeBankModal(event)" role="presentation">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width:540px;" role="dialog" aria-modal="true" aria-label="출금 계좌 등록">
             <div class="modal__header">
                 <div>
                     <div class="modal__header-title">🏦 출금 계좌 등록</div>
@@ -1852,8 +1852,8 @@
     </div>
 
     <!-- ══════════════ 정산 상세 모달 ══════════════ -->
-    <div class="modal-overlay" id="stlModal" onclick="closeStlModal(event)">
-        <div class="modal" onclick="event.stopPropagation()" style="max-width:580px;">
+    <div class="modal-overlay" id="stlModal" onclick="closeStlModal(event)" role="presentation">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width:580px;" role="dialog" aria-modal="true" aria-label="정산 상세">
             <div class="modal__header">
                 <div>
                     <div class="modal__header-title" id="stlModalTitle">정산 상세</div>
@@ -1866,8 +1866,8 @@
     </div>
 
     <!-- ══════════════ 계약 상세 모달 ══════════════ -->
-    <div class="modal-overlay" id="ctModal" onclick="closeIntContractModal(event)">
-        <div class="modal" onclick="event.stopPropagation()" style="max-width:620px;">
+    <div class="modal-overlay" id="ctModal" onclick="closeIntContractModal(event)" role="presentation">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width:620px;" role="dialog" aria-modal="true" aria-label="통역 계약 상세">
             <div class="modal__header">
                 <div>
                     <div class="modal__header-title" id="ctModalTitle">계약 상세</div>
@@ -1880,8 +1880,8 @@
     </div>
 
     <!-- ══════════════ 통역사 취소 모달 ══════════════ -->
-    <div class="modal-overlay" id="intCancelModal" onclick="if(event.target===this)closeIntCancelModal()" style="z-index:260;">
-        <div class="modal" onclick="event.stopPropagation()" style="max-width:500px;">
+    <div class="modal-overlay" id="intCancelModal" onclick="if(event.target===this)closeIntCancelModal()" style="z-index:260;" role="presentation">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width:500px;" role="dialog" aria-modal="true" aria-label="계약 취소 요청">
             <div class="modal__header" style="background:linear-gradient(135deg,#c62828,#e53935);border-bottom:none;">
                 <div>
                     <div class="modal__header-title" style="color:#fff;">⚠️ 파견 취소 신청</div>
@@ -1916,8 +1916,8 @@
     </div>
 
     <!-- ══════════════ 상세 모달 ══════════════ -->
-    <div class="modal-overlay" id="assignModal" onclick="closeModal(event)">
-        <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-overlay" id="assignModal" onclick="closeModal(event)" role="presentation">
+        <div class="modal" onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-label="배정 상세">
             <div class="modal__header">
                 <div>
                     <div class="modal__header-title" id="modalTitle"></div>
