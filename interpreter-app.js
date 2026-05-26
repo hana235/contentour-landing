@@ -1169,6 +1169,14 @@ const InterpreterApp = {
 
         // 단가 미리보기 업데이트
         if (typeof updateRatePreview === 'function') updateRatePreview();
+
+        // 알림 설정 체크박스 반영 (01_회원.notification_settings)
+        try {
+            var profile = this.profile;
+            if (profile && profile.notification_settings && typeof applyInterpNotifSettings === 'function') {
+                applyInterpNotifSettings(profile.notification_settings);
+            }
+        } catch(e) {}
     },
 
     // ══════════════ 캘린더 이벤트 ══════════════

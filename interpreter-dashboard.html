@@ -246,7 +246,7 @@
         </nav>
 
         <div class="sb-footer">
-            <a class="sb-item" style="color:rgba(255,255,255,0.35)">
+            <a class="sb-item" href="#profile" onclick="switchView('profile', event)" title="알림·비밀번호 설정">
                 <span class="sb-item__icon">⚙️</span> 설정
             </a>
             <a class="sb-item" href="#" onclick="InterpreterApp.logout(); return false;" style="color:rgba(255,255,255,0.35)">
@@ -1659,6 +1659,30 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- ══ 알림 설정 ══ -->
+                    <div style="background:#fff;border:1.5px solid #e5eaf2;border-radius:14px;padding:24px 28px;margin-top:20px;">
+                        <h3 style="font-size:0.95rem;font-weight:800;color:#0d1b3e;margin:0 0 16px;">🔔 알림 설정</h3>
+                        <div style="display:flex;flex-direction:column;gap:14px;">
+                            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span style="font-size:0.85rem;font-weight:600;">배정·매칭 상태 알림</span><input type="checkbox" checked id="interp-notif-contract" onchange="saveInterpNotifSettings()"></label>
+                            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span style="font-size:0.85rem;font-weight:600;">정산 입금·승인 알림</span><input type="checkbox" checked id="interp-notif-payment" onchange="saveInterpNotifSettings()"></label>
+                            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span style="font-size:0.85rem;font-weight:600;">채팅 메시지 알림</span><input type="checkbox" checked id="interp-notif-chat" onchange="saveInterpNotifSettings()"></label>
+                            <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"><span style="font-size:0.85rem;font-weight:600;">마케팅·이벤트 알림</span><input type="checkbox" id="interp-notif-marketing" onchange="saveInterpNotifSettings()"></label>
+                        </div>
+                    </div>
+
+                    <!-- ══ 비밀번호 변경 ══ -->
+                    <div style="background:#fff;border:1.5px solid #e5eaf2;border-radius:14px;padding:24px 28px;margin-top:20px;">
+                        <h3 style="font-size:0.95rem;font-weight:800;color:#0d1b3e;margin:0 0 16px;">🔒 비밀번호 변경</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                            <div><label style="font-size:0.78rem;color:#666;font-weight:600;display:block;margin-bottom:6px;">새 비밀번호</label><input type="password" id="interp-new-pw" placeholder="8자 이상 + 대·소문자·숫자" minlength="8" style="width:100%;padding:10px 14px;border:1.5px solid #e5eaf2;border-radius:10px;font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;"></div>
+                            <div><label style="font-size:0.78rem;color:#666;font-weight:600;display:block;margin-bottom:6px;">새 비밀번호 확인</label><input type="password" id="interp-new-pw2" placeholder="새 비밀번호 다시 입력" style="width:100%;padding:10px 14px;border:1.5px solid #e5eaf2;border-radius:10px;font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;"></div>
+                        </div>
+                        <div id="interp-pw-error" style="display:none;color:#e53935;font-size:0.82rem;margin-top:8px;"></div>
+                        <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+                            <button id="interp-pw-btn" onclick="changeInterpreterPassword()" style="padding:10px 24px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:10px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">비밀번호 변경</button>
+                        </div>
+                    </div>
                 </div><!-- /view-profile -->
 
             </div>
@@ -2142,6 +2166,7 @@
         function handleAccept(btn) {
             const item = btn.closest('.assign-item');
             const title = item.querySelector('.assign-item__title').textContent;
+            if (!confirm('"' + title + '" 배정을 수락하시겠습니까?\n수락 후에는 취소 시 패널티가 부과될 수 있습니다.')) return;
             item.style.opacity = '0.5';
             item.style.pointerEvents = 'none';
             btn.textContent = '수락됨';
@@ -2154,6 +2179,7 @@
         function handleDecline(btn) {
             const item = btn.closest('.assign-item');
             const title = item.querySelector('.assign-item__title').textContent;
+            if (!confirm('"' + title + '" 배정을 거절하시겠습니까?\n거절한 의뢰는 다시 받을 수 없습니다.')) return;
             item.style.opacity = '0.5';
             item.style.pointerEvents = 'none';
             btn.textContent = '거절됨';
@@ -7449,6 +7475,83 @@
                 stlUpdateBankStatus();
                 showToast('프로필 정보가 저장되었습니다.');
             }
+        }
+
+        // ═══ 알림 설정 (01_회원.notification_settings JSONB) ═══
+        function applyInterpNotifSettings(settings) {
+            if (!settings || typeof settings !== 'object') return;
+            var map = {
+                'interp-notif-contract':  settings.contract,
+                'interp-notif-payment':   settings.payment,
+                'interp-notif-chat':      settings.chat,
+                'interp-notif-marketing': settings.marketing
+            };
+            Object.keys(map).forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el && typeof map[id] === 'boolean') el.checked = map[id];
+            });
+        }
+
+        async function saveInterpNotifSettings() {
+            if (!window.sbClient) return;
+            try {
+                var user = await ContentourAuth.getCurrentUser();
+                if (!user) return;
+                var get = function(id) { var el = document.getElementById(id); return !!(el && el.checked); };
+                var settings = {
+                    contract:  get('interp-notif-contract'),
+                    payment:   get('interp-notif-payment'),
+                    points:    true, // 통역사 UI에는 적립금 옵션 없음 — 기본 on (현재 의미 없음)
+                    chat:      get('interp-notif-chat'),
+                    marketing: get('interp-notif-marketing')
+                };
+                var { error } = await window.sbClient
+                    .from('01_회원')
+                    .update({ notification_settings: settings, updated_at: new Date().toISOString() })
+                    .eq('id', user.id);
+                if (error) {
+                    console.warn('알림 설정 저장 실패:', error);
+                    showToast('⚠️ 알림 설정 저장 실패: ' + (error.message || ''));
+                    return;
+                }
+                showToast('✅ 알림 설정이 저장되었습니다.');
+            } catch (e) {
+                console.warn('알림 설정 저장 예외:', e);
+            }
+        }
+
+        // ═══ 비밀번호 변경 ═══
+        async function changeInterpreterPassword() {
+            var newPw = (document.getElementById('interp-new-pw') || {}).value || '';
+            var newPw2 = (document.getElementById('interp-new-pw2') || {}).value || '';
+            var errEl = document.getElementById('interp-pw-error');
+            var btn = document.getElementById('interp-pw-btn');
+
+            function showErr(msg) {
+                if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+            }
+            if (errEl) errEl.style.display = 'none';
+
+            if (newPw.length < 8) { showErr('비밀번호는 8자 이상이어야 합니다.'); return; }
+            if (!/[A-Z]/.test(newPw) || !/[a-z]/.test(newPw) || !/[0-9]/.test(newPw)) {
+                showErr('대문자·소문자·숫자를 모두 포함해야 합니다.'); return;
+            }
+            if (newPw !== newPw2) { showErr('비밀번호가 일치하지 않습니다.'); return; }
+            if (!window.sbClient) { showErr('서비스 연결 오류'); return; }
+
+            btn.disabled = true;
+            btn.textContent = '변경 중...';
+            try {
+                var { error } = await window.sbClient.auth.updateUser({ password: newPw });
+                if (error) throw error;
+                document.getElementById('interp-new-pw').value = '';
+                document.getElementById('interp-new-pw2').value = '';
+                showToast('✅ 비밀번호가 변경되었습니다.');
+            } catch (e) {
+                showErr('변경 실패: ' + (e.message || ''));
+            }
+            btn.disabled = false;
+            btn.textContent = '비밀번호 변경';
         }
 
         // ═══ 단가 변경 신청 (pending 상태로 저장) ═══
