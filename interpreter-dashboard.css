@@ -1853,8 +1853,8 @@
             width: 6px; height: 6px;
             border-radius: 50%;
         }
-        .stl-b-request { background: #fef3e2; color: #e65100; }
-        .stl-b-request::before { background: #e65100; }
+        .stl-b-request { background: #fef3e2; color: #b8540f; }
+        .stl-b-request::before { background: #b8540f; }
         .stl-b-approved { background: #e3f0ff; color: var(--blue); }
         .stl-b-approved::before { background: var(--blue); }
         .stl-b-paid { background: #e8f5e9; color: var(--success); }
@@ -2313,7 +2313,7 @@
             padding: 3px 10px; border-radius: 12px;
         }
         .ct-pay-badge-wait {
-            background: #fef3e2; color: #e65100;
+            background: #fef3e2; color: #b8540f;
             font-size: 0.72rem; font-weight: 700;
             padding: 3px 10px; border-radius: 12px;
         }
@@ -2473,7 +2473,7 @@
             display: inline-block;
         }
 
-        .jnl-s-draft { background: #fff3e0; color: var(--warn); }
+        .jnl-s-draft { background: #fff3e0; color: #b8540f; }
         .jnl-s-submitted { background: #e8f5e9; color: var(--success); }
         .jnl-s-none { background: var(--gray-100); color: var(--gray-400); }
 
@@ -3642,7 +3642,7 @@
             flex-shrink: 0;
         }
 
-        .asb-new { background: #fff3e0; color: var(--warn); }
+        .asb-new { background: #fff3e0; color: #b8540f; }
         .asb-accepted { background: #e8f5e9; color: var(--success); }
         .asb-declined { background: var(--gray-100); color: var(--gray-400); }
 
@@ -4556,4 +4556,28 @@
             .chat-messages { padding: 12px 8px; }
             .chat-input { padding: 8px 10px; }
             .chat-msg-actions { display: none; }
+        }
+
+        /* ── 480px 이하 초소형 화면: 모달 input 축소 + 양식 빌더 wrap ── */
+        @media (max-width: 480px) {
+            .modal input[type="text"],
+            .modal input[type="email"],
+            .modal input[type="tel"],
+            .modal input[type="password"],
+            .modal input[type="number"],
+            .modal select,
+            .modal textarea {
+                padding: 8px 10px !important;
+                font-size: 0.82rem !important;
+            }
+            .icfb-field-row {
+                flex-wrap: wrap;
+            }
+            .icfb-field-name {
+                min-width: 60px !important;
+                flex: 1 1 auto;
+            }
+            .icfb-field-type {
+                width: 80px !important;
+            }
         }

@@ -72,7 +72,10 @@ const InterpreterData = {
         } catch (e) {
             console.warn('[reRequestSettlement] RPC 예외, 폴백:', e && e.message);
         }
+        // 폴백: 본인 정산만 변경 가능하도록 interpreter_id 검증 추가 (RPC 미적용 환경 권한 우회 방지)
         try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return false;
             const { error } = await supabase
                 .from('43_정산내역')
                 .update({
@@ -82,7 +85,8 @@ const InterpreterData = {
                     rejected_by: null,
                     reject_reason: null
                 })
-                .eq('id', dbId);
+                .eq('id', dbId)
+                .eq('interpreter_id', user.id);
             return !error;
         } catch (e) { return false; }
     },
