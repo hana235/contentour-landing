@@ -3161,8 +3161,20 @@
             let stlAdminTab_ = 'all';
             let stlAdminMonth_ = 'all';
             let stlAdminQuery_ = '';
+            let stlLoadedFromDb = false;
 
-            function stlAdminInit() {
+            async function stlAdminInit() {
+                // 첫 호출 시 DB에서 정산 내역 로드 (이후 호출은 로컬 캐시 사용)
+                if (!stlLoadedFromDb && typeof AdminData !== 'undefined' && AdminData.loadSettlements) {
+                    try {
+                        const dbStls = await AdminData.loadSettlements();
+                        if (dbStls && dbStls.length > 0) {
+                            stlAdminData.length = 0;
+                            dbStls.forEach(function(s) { stlAdminData.push(s); });
+                        }
+                        stlLoadedFromDb = true;
+                    } catch(e) { console.error('정산 DB 로드 실패:', e); }
+                }
                 stlAdminUpdateKpi();
                 stlAdminUpdateCounts();
                 stlAdminRender();
@@ -3327,12 +3339,23 @@
                 document.getElementById('stlRejectBox').classList.add('show');
             }
 
-            function stlApprove(id) {
+            async function stlApprove(id) {
                 const d = stlAdminData.find(x => x.id === id);
                 if (!d) return;
+
+                // DB 동기화: dbId 있는 정산만 RPC 호출 (legacy 로컬 데이터는 skip)
+                if (d.dbId && typeof AdminData !== 'undefined' && AdminData.approveSettlement) {
+                    const result = await AdminData.approveSettlement(d.dbId);
+                    if (!result || result.success === false) {
+                        showToast('❌ 정산 승인 실패: ' + ((result && result.error) || 'DB 오류'));
+                        return;
+                    }
+                    if (result.approved_at) d.approvedDate = String(result.approved_at).slice(0, 10);
+                }
+
                 d.status = 'approved';
                 d.statusText = '승인 완료';
-                d.approvedDate = new Date().toISOString().slice(0, 10);
+                if (!d.approvedDate) d.approvedDate = new Date().toISOString().slice(0, 10);
                 closeStlModal();
                 stlAdminUpdateKpi();
                 stlAdminUpdateCounts();
@@ -3358,7 +3381,7 @@
                 } catch(e) {}
             }
 
-            function stlReject(id) {
+            async function stlReject(id) {
                 const reason = document.getElementById('stlRejectReason').value.trim();
                 if (!reason) {
                     showToast('⚠️ 반려 사유를 입력해주세요.');
@@ -3366,9 +3389,20 @@
                 }
                 const d = stlAdminData.find(x => x.id === id);
                 if (!d) return;
+
+                // DB 동기화
+                if (d.dbId && typeof AdminData !== 'undefined' && AdminData.rejectSettlement) {
+                    const result = await AdminData.rejectSettlement(d.dbId, reason);
+                    if (!result || result.success === false) {
+                        showToast('❌ 정산 반려 실패: ' + ((result && result.error) || 'DB 오류'));
+                        return;
+                    }
+                    if (result.rejected_at) d.rejectedDate = String(result.rejected_at).slice(0, 10);
+                }
+
                 d.status = 'rejected';
                 d.statusText = '반려';
-                d.rejectedDate = new Date().toISOString().slice(0, 10);
+                if (!d.rejectedDate) d.rejectedDate = new Date().toISOString().slice(0, 10);
                 d.rejectReason = reason;
                 closeStlModal();
                 stlAdminUpdateKpi();
@@ -3395,12 +3429,23 @@
                 } catch(e) {}
             }
 
-            function stlMarkPaid(id) {
+            async function stlMarkPaid(id) {
                 const d = stlAdminData.find(x => x.id === id);
                 if (!d) return;
+
+                // DB 동기화
+                if (d.dbId && typeof AdminData !== 'undefined' && AdminData.completeSettlementPayment) {
+                    const result = await AdminData.completeSettlementPayment(d.dbId);
+                    if (!result || result.success === false) {
+                        showToast('❌ 입금 완료 처리 실패: ' + ((result && result.error) || 'DB 오류'));
+                        return;
+                    }
+                    if (result.paid_at) d.paidDate = String(result.paid_at).slice(0, 10);
+                }
+
                 d.status = 'paid';
                 d.statusText = '입금 완료';
-                d.paidDate = new Date().toISOString().slice(0, 10);
+                if (!d.paidDate) d.paidDate = new Date().toISOString().slice(0, 10);
                 closeStlModal();
                 stlAdminUpdateKpi();
                 stlAdminUpdateCounts();
