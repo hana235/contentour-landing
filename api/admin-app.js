@@ -492,45 +492,64 @@ module.exports = async function handler(req, res) {
             const totalAmount = rate * days;
             const customerId = posting.posted_by_user_id || posting.user_id || null;
 
-            const { data: newContract, error: cErr } = await supabase.from('42_통역계약').insert({
-                order_id: postingId,
-                customer_id: customerId,
-                interpreter_id: interpreterId,
-                exhibition_name: posting.exhibition_name || '',
-                client_company: posting.company || '',
-                venue: posting.venue || posting.location || '',
-                start_date: posting.start_date,
-                end_date: posting.end_date,
-                working_days: days,
-                language_pair: posting.language_pair || '',
-                service_type: 'OTHER',
-                daily_rate: rate,
-                total_amount: totalAmount,
-                tax_amount: Math.round(totalAmount * 0.1),
-                net_amount: totalAmount,
-                status: 'pending'
-            }).select('id').single();
-            if (cErr) {
-                console.error('계약 생성 실패:', cErr);
-                return res.status(500).json({ error: '계약 생성 실패: ' + cErr.message });
+            // ── 원자적 매칭 확정 ──
+            // 1순위: RPC 함수(showcase_assign_atomic) — 단일 트랜잭션, 부분 실패 시 전체 롤백
+            // 2순위: 단계별 fallback — RPC 미적용/실패 시. 트랜잭션 보호 없음(기존 동작과 동일).
+            let newContractId = null;
+            try {
+                const { data: rpcResult, error: rpcErr } = await supabase.rpc('showcase_assign_atomic', {
+                    p_posting_id: postingId,
+                    p_interpreter_id: interpreterId,
+                    p_daily_rate: rate,
+                    p_memo: memo || null,
+                    p_interpreter_display: interpDisplay
+                });
+                if (rpcErr) throw rpcErr;
+                newContractId = rpcResult;
+            } catch (rpcErr) {
+                console.warn('[showcase_assign] RPC 미적용 또는 실패, 단계별 fallback 사용:', (rpcErr && rpcErr.message) || rpcErr);
+
+                const { data: newContract, error: cErr } = await supabase.from('42_통역계약').insert({
+                    order_id: postingId,
+                    customer_id: customerId,
+                    interpreter_id: interpreterId,
+                    exhibition_name: posting.exhibition_name || '',
+                    client_company: posting.company || '',
+                    venue: posting.venue || posting.location || '',
+                    start_date: posting.start_date,
+                    end_date: posting.end_date,
+                    working_days: days,
+                    language_pair: posting.language_pair || '',
+                    service_type: 'OTHER',
+                    daily_rate: rate,
+                    total_amount: totalAmount,
+                    tax_amount: Math.round(totalAmount * 0.1),
+                    net_amount: totalAmount,
+                    status: 'pending'
+                }).select('id').single();
+                if (cErr) {
+                    console.error('계약 생성 실패:', cErr);
+                    return res.status(500).json({ error: '계약 생성 실패: ' + cErr.message });
+                }
+                newContractId = newContract.id;
+
+                await supabase.from('46_ITQ견적문의').update({
+                    contract_id: newContractId,
+                    status: '계약진행',
+                    admin_note: JSON.stringify({ interpreter: interpDisplay, interpreterId, memo: memo || '' })
+                }).eq('id', postingId);
+
+                await supabase.from('70_구인공고지원')
+                    .update({ status: 'matched', contract_id: newContractId })
+                    .eq('posting_id', postingId)
+                    .eq('interpreter_id', interpreterId);
+
+                await supabase.from('70_구인공고지원')
+                    .update({ status: 'declined' })
+                    .eq('posting_id', postingId)
+                    .neq('interpreter_id', interpreterId)
+                    .in('status', ['pending', 'forwarded']);
             }
-
-            await supabase.from('46_ITQ견적문의').update({
-                contract_id: newContract.id,
-                status: '계약진행',
-                admin_note: JSON.stringify({ interpreter: interpDisplay, interpreterId, memo: memo || '' })
-            }).eq('id', postingId);
-
-            await supabase.from('70_구인공고지원')
-                .update({ status: 'matched', contract_id: newContract.id })
-                .eq('posting_id', postingId)
-                .eq('interpreter_id', interpreterId);
-
-            await supabase.from('70_구인공고지원')
-                .update({ status: 'declined' })
-                .eq('posting_id', postingId)
-                .neq('interpreter_id', interpreterId)
-                .in('status', ['pending', 'forwarded']);
 
             // 알림 (best-effort)
             try {
@@ -571,7 +590,7 @@ module.exports = async function handler(req, res) {
             await recordAudit(req, admin, {
                 action: 'showcase_assign',
                 target_table: '42_통역계약',
-                target_id: newContract.id,
+                target_id: newContractId,
                 after: {
                     posting_id: postingId,
                     interpreter_id: interpreterId,
@@ -583,7 +602,7 @@ module.exports = async function handler(req, res) {
                 note: memo || null
             });
 
-            return res.status(200).json({ success: true, contractId: newContract.id });
+            return res.status(200).json({ success: true, contractId: newContractId });
 
         } else if (action === 'showcaseReject') {
             // Phase 4C — 공고 거부. review_note 필수.
