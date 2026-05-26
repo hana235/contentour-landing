@@ -8125,7 +8125,7 @@
             location.href = 'client-auth.html';
         }
 
-        // 이미 로그인된 상태 확인
+        // 이미 로그인된 상태 확인 + admin role 재검증 (페이지 진입 가드)
         (async function checkExistingSession() {
             if (!_sb) {
                 document.getElementById('adminLoginError').textContent = 'Supabase 연결 실패. 새로고침 해주세요.';
@@ -8135,19 +8135,32 @@
             }
             try {
                 const { data: { user } } = await _sb.auth.getUser();
-                if (user) {
-                    const { data: profile } = await _sb.from('01_회원').select('role, name').eq('id', user.id).single();
-                    if (profile && profile.role === 'admin') {
-                        document.getElementById('adminLoginOverlay').style.display = 'none';
-                        applyAdminProfile(profile, user.email);
-                        await _reloadAllData();
-                        return;
-                    }
+                if (!user) return; // 비로그인 → 오버레이 유지
+
+                // ── DB role 검증 (localStorage 토큰만으로는 부족, 매 페이지 진입 시 재확인) ──
+                const { data: profile, error: pErr } = await _sb
+                    .from('01_회원')
+                    .select('role, name')
+                    .eq('id', user.id)
+                    .single();
+
+                if (pErr) throw pErr;
+
+                if (!profile || profile.role !== 'admin') {
+                    // 비-admin(고객사·통역사)이 admin URL 직접 접근 → 강제 차단
+                    await _sb.auth.signOut();
+                    alert('⚠️ 관리자 권한이 없는 계정입니다. 메인 페이지로 이동합니다.');
+                    location.href = 'index.html';
+                    return;
                 }
+
+                // admin 확인됨
+                document.getElementById('adminLoginOverlay').style.display = 'none';
+                applyAdminProfile(profile, user.email);
+                await _reloadAllData();
             } catch (e) {
-                // 세션 체크 실패 시 로그인 페이지로 리다이렉트
+                console.warn('세션 체크 실패:', e);
                 location.href = 'client-auth.html';
-                return;
             }
         })();
 
