@@ -7163,12 +7163,26 @@
 
                 // 인증 상태 표시
                 var statusEl = document.getElementById('pfVerifyStatus');
+                var escapeText = function(s) { return String(s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+                var docs0 = profile.verification_docs || [];
                 if (profile.is_verified) {
                     statusEl.style.background = '#e8f5e9';
                     statusEl.style.color = '#2e7d32';
                     statusEl.style.border = '1px solid #c8e6c9';
                     statusEl.innerHTML = '✅ 인증 완료 — ' + (profile.verified_at ? profile.verified_at.split('T')[0] : '') + ' 관리자 승인';
-                    if (profile.verification_note) statusEl.innerHTML += '<br><span style="font-size:0.72rem;color:#666;">메모: ' + profile.verification_note + '</span>';
+                    if (profile.verification_note) statusEl.innerHTML += '<br><span style="font-size:0.72rem;color:#666;">메모: ' + escapeText(profile.verification_note) + '</span>';
+                } else if (profile.verification_note && docs0.length > 0) {
+                    // 서류 제출 + is_verified=false + admin이 사유 입력 → 반려로 표시
+                    statusEl.style.background = '#ffebee';
+                    statusEl.style.color = '#c62828';
+                    statusEl.style.border = '1px solid #ef9a9a';
+                    statusEl.innerHTML = '❌ 검수 반려 — 사유: <strong>' + escapeText(profile.verification_note) + '</strong>' +
+                        '<br><span style="font-size:0.72rem;color:#666;margin-top:4px;display:inline-block;">아래에서 기존 서류를 삭제하고 새 파일을 업로드해주세요. 재제출 시 검수가 다시 시작됩니다.</span>';
+                } else if (docs0.length > 0) {
+                    statusEl.style.background = '#fff3e0';
+                    statusEl.style.color = '#e65100';
+                    statusEl.style.border = '1px solid #ffcc02';
+                    statusEl.innerHTML = '⏳ 검수 대기 — 제출하신 서류를 관리자가 검토 중입니다 (평균 1~2 영업일).';
                 } else {
                     statusEl.style.background = '#fff3e0';
                     statusEl.style.color = '#e65100';
