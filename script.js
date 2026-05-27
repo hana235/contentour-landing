@@ -201,19 +201,23 @@ function downloadManual(event) {
     if (typeof showToast === 'function') showToast('운영 매뉴얼 가이드가 다운로드되었습니다!', 'success');
 }
 
-// Counter animation for stats
-function animateCounter(element, target, duration = 2000) {
-    const start = 0;
+// Counter animation for stats — 접미사(+, %, H 등)를 애니메이션에 직접 녹여 레이스 컨디션 방지
+function animateCounter(element, target, suffix = '', duration = 2000) {
     const increment = target / (duration / 16);
-    let current = start;
+    let current = 0;
 
     const timer = setInterval(() => {
         current += increment;
         if (current >= target) {
-            element.textContent = target;
             clearInterval(timer);
+            // '+'는 디자인 의도(작은 파란색)대로 span 복원, 그 외 접미사는 그대로 부착
+            if (suffix === '+') {
+                element.innerHTML = target + '<span class="stat-plus">+</span>';
+            } else {
+                element.textContent = target + suffix;
+            }
         } else {
-            element.textContent = Math.floor(current);
+            element.textContent = Math.floor(current) + suffix;
         }
     }, 16);
 }
@@ -228,19 +232,9 @@ const statsObserver = new IntersectionObserver(function (entries) {
                 const number = parseInt(text.replace(/\D/g, ''));
 
                 if (!isNaN(number)) {
+                    const suffix = text.replace(/[0-9]/g, ''); // 숫자 뒤 접미사 보존(+, %, H …)
                     stat.textContent = '0';
-                    setTimeout(() => {
-                        animateCounter(stat, number);
-                        if (text.includes('+')) {
-                            setTimeout(() => {
-                                stat.textContent = number + '+';
-                            }, 2000);
-                        } else if (text.includes('%')) {
-                            setTimeout(() => {
-                                stat.textContent = number + '%';
-                            }, 2000);
-                        }
-                    }, 300);
+                    setTimeout(() => animateCounter(stat, number, suffix), 300);
                 }
             });
             statsObserver.unobserve(entry.target);
