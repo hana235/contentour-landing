@@ -2388,6 +2388,14 @@ section {
     margin-bottom: 40px;
 }
 
+.country-grid__guide {
+    text-align: center;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #1565c0;
+    margin: 14px 0 24px;
+}
+
 .country-card {
     background: #fff;
     border: 1.5px solid #e5eaf2;
@@ -2806,6 +2814,7 @@ section {
 }
 
 .interp-panel {
+    display: none; /* 닫혔을 땐 그리드에서 빠져 카드 정렬을 흐트러뜨리지 않음 (JS가 펼칠 때 block 지정) */
     grid-column: 1 / -1;
     max-height: 0;
     overflow: hidden;

@@ -49,6 +49,14 @@ var currentOpen = null;
 var _dbLoaded = false;
 var _dbLoadPromise = null;
 
+// 닫힘 애니메이션(0.45s)이 끝난 뒤 그리드에서 빼서 카드 정렬을 유지
+function hidePanelLater(panel) {
+    if (!panel) return;
+    setTimeout(function () {
+        if (panel && !panel.classList.contains('open')) panel.style.display = 'none';
+    }, 500);
+}
+
 function toggleInterp(code, cardEl) {
     // DB 통역사 로드 완료 전이면 대기 후 재실행
     if (!_dbLoaded && _dbLoadPromise) {
@@ -61,6 +69,7 @@ function toggleInterp(code, cardEl) {
 
     if (otherPanel && otherPanel.classList.contains('open')) {
         otherPanel.classList.remove('open');
+        hidePanelLater(otherPanel);
         document.querySelectorAll('.country-card.active').forEach(function (c) {
             var cc = c.dataset.country;
             if (cc && (isRow1 ? row2 : row1).includes(cc)) {
@@ -72,6 +81,7 @@ function toggleInterp(code, cardEl) {
 
     if (currentOpen === code) {
         panel.classList.remove('open');
+        hidePanelLater(panel);
         cardEl.classList.remove('active');
         cardEl.setAttribute('aria-expanded', 'false');
         currentOpen = null;
@@ -93,6 +103,8 @@ function toggleInterp(code, cardEl) {
     cardEl.classList.add('active');
     cardEl.setAttribute('aria-expanded', 'true');
     currentOpen = code;
+
+    panel.style.display = 'block'; // 그리드에 다시 포함 → 이어지는 rAF에서 max-height 슬라이드
 
     panel.innerHTML =
         '<div class="interp-panel__head">' +
@@ -153,7 +165,7 @@ function toggleInterp(code, cardEl) {
 function closeInterp(code) {
     var isRow1 = row1.includes(code);
     var panel = document.getElementById(isRow1 ? 'interpPanel' : 'interpPanel2');
-    if (panel) panel.classList.remove('open');
+    if (panel) { panel.classList.remove('open'); hidePanelLater(panel); }
     document.querySelectorAll('.country-card.active').forEach(function (c) {
         c.classList.remove('active');
         c.setAttribute('aria-expanded', 'false');
