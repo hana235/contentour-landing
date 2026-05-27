@@ -8,7 +8,10 @@ const interpData = {
     de: { country: '독일', flag: 'de', lang: '독일어 (Deutsch)', link: 'interpreters.html?country=de', interpreters: [] },
     vn: { country: '베트남', flag: 'vn', lang: '베트남어 (Tiếng Việt)', link: 'interpreters.html?country=vn', interpreters: [] },
     ae: { country: '아랍에미레이트', flag: 'ae', lang: '아랍어 (العربية)', link: 'interpreters.html?country=ae', interpreters: [] },
-    th: { country: '태국', flag: 'th', lang: '태국어 (ภาษาไทย)', link: 'interpreters.html?country=th', interpreters: [] }
+    th: { country: '태국', flag: 'th', lang: '태국어 (ภาษาไทย)', link: 'interpreters.html?country=th', interpreters: [] },
+    fr: { country: '프랑스', flag: 'fr', lang: '프랑스어 (Français)', link: 'interpreters.html?country=fr', interpreters: [] },
+    in: { country: '인도', flag: 'in', lang: '영어·힌디어 (हिन्दी)', link: 'interpreters.html?country=in', interpreters: [] },
+    id: { country: '인도네시아', flag: 'id', lang: '인도네시아어 (Bahasa)', link: 'interpreters.html?country=id', interpreters: [] }
 };
 
 function fmtPrice(arr) {
@@ -40,7 +43,7 @@ function avatarHtml(photo, name, size) {
 }
 
 var row1 = ['jp', 'cn', 'de', 'vn'];
-var row2 = ['us', 'ae', 'th'];
+var row2 = ['us', 'ae', 'th', 'fr', 'in', 'id'];
 var currentOpen = null;
 var _dbLoaded = false;
 var _dbLoadPromise = null;
