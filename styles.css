@@ -2376,7 +2376,7 @@ section {
 
 .section-desc {
     font-size: 1rem;
-    color: #555;
+    color: #374151;
     line-height: 1.7;
 }
 
@@ -2427,7 +2427,7 @@ section {
 
 .country-lang {
     font-size: 0.8rem;
-    color: #666;
+    color: #475569;
 }
 
 .country-card__badge {
@@ -4020,7 +4020,7 @@ section {
 .svc-verify-card__num { font-size:0.68rem;font-weight:800;color:var(--blue);letter-spacing:1px;margin-bottom:10px; }
 .svc-verify-card__icon { font-size:1.6rem;margin-bottom:12px; }
 .svc-verify-card h3 { font-size:0.88rem;font-weight:800;color:var(--text);margin-bottom:8px; }
-.svc-verify-card p { font-size:0.78rem;color:var(--gray-600);line-height:1.6; }
+.svc-verify-card p { font-size:0.84rem;color:#374151;line-height:1.6; }
 
 /* 운영 가이드 */
 .svc-guide { padding:80px 24px;background:#e4ecf7;border-top:4px solid var(--blue); }
