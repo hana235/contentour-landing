@@ -9,6 +9,14 @@ const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supabase = createClient(SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const sbAuth = createClient(SUPABASE_URL, ANON_KEY);
 
+// 공개(무인증) 응답용 고객 실명 마스킹 (고○○ 형태). 원본 PII는 응답에 싣지 않는다.
+function maskName(name) {
+    const n = String(name || '').trim();
+    if (!n) return '고객';
+    if (n.length < 2) return n;
+    return n.charAt(0) + Array(n.length - 1).fill('○').join('').slice(0, 2);
+}
+
 // ────────────────────────── cases ──────────────────────────
 async function handleCases(req, res) {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -78,7 +86,7 @@ async function handleReviews(req, res) {
             const cust = custMap[r.customer_id] || {};
             return {
                 ...r,
-                _customerName: cust.name || '고객',
+                _customerName: maskName(cust.name),
                 _companyName: companyMap[r.customer_id] || '',
                 _interpreterName: interpMap[r.interpreter_id] || ''
             };
