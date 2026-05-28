@@ -30,10 +30,6 @@ async function handleMyInquiries(req, res) {
         return res.status(403).json({ error: '통역사 권한이 필요합니다.' });
     }
 
-    const { data: interpProfile } = await sb
-        .from('40_통역사프로필').select('display_name').eq('user_id', auth.user.id).single();
-    const displayName = interpProfile?.display_name || profile.name || '';
-
     try {
         const { data, error } = await sb
             .from('46_ITQ견적문의')
@@ -46,7 +42,8 @@ async function handleMyInquiries(req, res) {
             try {
                 const note = typeof d.admin_note === 'string' ? JSON.parse(d.admin_note) : d.admin_note;
                 if (!note || note.inquiry_type !== 'direct') return false;
-                return note.requested_interpreter_id === auth.user.id || note.interpreter_name === displayName;
+                // 본인 user.id로 지정된 의뢰만 (이름 매칭 fallback 제거 — 동명이인 누출 방지)
+                return note.requested_interpreter_id === auth.user.id;
             } catch (e) { return false; }
         });
 

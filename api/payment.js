@@ -152,7 +152,20 @@ async function handleVerifyPayment(req, res, rawBody) {
             console.error('process_payment RPC 실패:', rpcErr);
             return res.status(500).json({ success: false, error: '결제 기록 저장 실패' });
         }
-        if (rpcResult && rpcResult.success === false) return res.status(400).json(rpcResult);
+        if (rpcResult && rpcResult.success === false) {
+            // 중복 처리일 수 있음 — webhook(Transaction.Paid)이 먼저 결제를 확정하면 RPC는 success:false를 반환한다.
+            // 계약의 해당 결제 상태가 이미 paid면 성공으로 간주(멱등) → 고객에게 거짓 "결제 실패" 표시 방지.
+            const { data: recheck } = await sb
+                .from('42_통역계약')
+                .select('deposit_status, balance_status')
+                .eq('id', contractId).single();
+            const alreadyPaid = recheck && (
+                ((paymentType === 'deposit' || paymentType === 'full') && recheck.deposit_status === 'paid') ||
+                (paymentType === 'balance' && recheck.balance_status === 'paid')
+            );
+            if (alreadyPaid) return res.status(200).json({ success: true, alreadyProcessed: true });
+            return res.status(400).json(rpcResult);
+        }
 
         // 42_통역계약 결제 상태 서버측 UPDATE (service_role)
         // 클라이언트 직접 UPDATE는 변조 위험이 있어 제거됨 — verify-payment에서만 갱신.
@@ -362,13 +375,38 @@ async function handleWebhook(req, res, rawBody) {
             }
         }
         else if (type === 'Transaction.Cancelled' || type === 'Transaction.PartialCancelled') {
+            const nowIso = new Date().toISOString();
             await sb.from('47_결제기록')
                 .update({
                     status: 'refunded',
-                    cancelled_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
+                    cancelled_at: nowIso,
+                    updated_at: nowIso
                 })
                 .eq('imp_uid', paymentId);
+
+            // 전액 취소(부분취소 제외)인 경우, 계약이 "결제됨"으로 남는 불일치 방지를 위해
+            // 해당 결제 상태와 계약 상태도 함께 되돌린다. (PortOne 측 직접 취소 등 admin 취소 흐름을 거치지 않은 경우 대비)
+            if (type === 'Transaction.Cancelled') {
+                try {
+                    const { data: payRec } = await sb.from('47_결제기록')
+                        .select('contract_id, payment_type')
+                        .eq('imp_uid', paymentId)
+                        .limit(1).single();
+                    if (payRec && payRec.contract_id) {
+                        const patch = { status: 'cancelled', cancelled_at: nowIso, updated_at: nowIso };
+                        if (payRec.payment_type === 'deposit' || payRec.payment_type === 'full') {
+                            patch.deposit_status = 'cancelled';
+                            patch.deposit_paid_at = null;
+                        } else if (payRec.payment_type === 'balance') {
+                            patch.balance_status = 'cancelled';
+                            patch.balance_paid_at = null;
+                        }
+                        await sb.from('42_통역계약').update(patch).eq('id', payRec.contract_id);
+                    }
+                } catch (e) {
+                    console.warn('[webhook] 전액 취소 시 계약 상태 복원 경고 (무시):', e && e.message);
+                }
+            }
         }
 
         return res.status(200).json({ ok: true });
