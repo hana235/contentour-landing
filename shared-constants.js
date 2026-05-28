@@ -76,6 +76,25 @@ CT.timeAgo = function(dateStr) {
     return CT.formatDate(dateStr);
 };
 
+// ── 표시용 계약번호 CT-YYYYMMDD-XXXX ──
+// 우선순위: 저장된 contract_no(트리거가 생성 시 부여) → (마이그레이션 적용 전) 계산 fallback.
+// 날짜=계약 생성일(created_at) 기준이라 고객·통역사·admin 어디서나 동일. 내부 UUID는 유지.
+CT.contractNo = function(c) {
+    if (!c) return '';
+    if (c.contractNo) return c.contractNo;
+    if (c.contract_no) return c.contract_no;
+    var dateStr = c.createdAt || c.created_at || '';
+    if (!dateStr && c.timeline && c.timeline.length) {
+        var s = c.timeline.find(function(t){ return t.step === '계약 체결' && t.done; });
+        if (s && s.date) dateStr = s.date;
+    }
+    if (!dateStr) dateStr = new Date().toISOString().slice(0, 10);
+    var d = String(dateStr).replace(/[^0-9]/g, '').slice(0, 8);
+    if (d.length !== 8) d = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    var suffix = String(c.id || c.dbId || '').replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || '0000';
+    return 'CT-' + d + '-' + suffix;
+};
+
 // ── 감사 로그 기록 ──
 CT.logAudit = async function(action, targetTable, targetId, details) {
     var sb = CT.getClient();

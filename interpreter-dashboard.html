@@ -5226,14 +5226,9 @@
             }).join('');
         }
 
-        // 표시용 계약번호 CT-YYYYMMDD-XXXX (날짜=계약 체결일, 미체결 시 오늘 / 내부 UUID는 그대로 유지)
+        // 표시용 계약번호 — 공용 CT.contractNo로 위임 (shared-constants.js)
         function contractDisplayNumber(c) {
-            var signStep = (c.timeline || []).find(function (t) { return t.step === '계약 체결' && t.done; });
-            var dateStr = (signStep && signStep.date) ? signStep.date : new Date().toISOString().slice(0, 10);
-            var d = String(dateStr).replace(/[^0-9]/g, '').slice(0, 8);
-            if (d.length !== 8) d = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            var suffix = String(c.id || '').replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || '0000';
-            return 'CT-' + d + '-' + suffix;
+            return (window.CT && CT.contractNo) ? CT.contractNo(c) : (c && (c.contractNo || c.id) || '');
         }
 
         function openIntContractDetail(id) {
@@ -5564,11 +5559,10 @@
             var balanceAmount = 0;
             var totalCustomerPay = c.serviceFee + c.platformFee;
 
-            // 표시용 계약번호: 계약일 YYYYMMDD + 원본 ID 끝 4자 (내부 ID는 그대로 유지)
-            var _ctDispDate = (contractDate || '').replace(/[^0-9]/g, '').slice(0, 8);
-            if (_ctDispDate.length !== 8) _ctDispDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            var _ctDispSuffix = (safe.id || '').replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || '0000';
-            var displayContractId = 'CT-' + _ctDispDate + '-' + _ctDispSuffix;
+            // 표시용 계약번호 — 공용 CT.contractNo로 위임 (저장된 contract_no 우선, 모달과 동일)
+            var displayContractId = (window.CT && CT.contractNo)
+                ? CT.contractNo(c)
+                : ('CT-' + (contractDate || '').replace(/[^0-9]/g, '').slice(0, 8) + '-' + ((safe.id || '').replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || '0000'));
 
             var w = window.open('', '_blank', 'width=900,height=1200');
             w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>통역 서비스 계약서 - ' + displayContractId + '</title>');

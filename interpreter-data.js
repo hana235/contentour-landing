@@ -230,6 +230,7 @@ const InterpreterData = {
 
             return data.map(d => ({
                 id: d.id, dbId: d.id,
+                contractNo: d.contract_no,
                 expo: d.exhibition_name,
                 client: d.client_company,
                 customerName: d._customerName || '',

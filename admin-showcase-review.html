@@ -723,7 +723,10 @@
                     btn.textContent = '매칭 확정';
                     return;
                 }
-                alert('매칭이 확정되었습니다. 계약 ID: ' + json.contractId);
+                var _ctNo = json.contractId
+                    ? 'CT-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(json.contractId).replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase()
+                    : '';
+                alert('매칭이 확정되었습니다. 계약번호: ' + _ctNo);
                 closeApplicantsModal();
                 await Promise.all([loadList('pending'), loadList('approved'), loadList('rejected')]);
             } catch (e) {
