@@ -291,6 +291,7 @@
         }
         .asr-applicant--matched { background: #ecfdf5; border-color: #a7f3d0; }
         .asr-applicant--declined { opacity: 0.55; }
+        .asr-applicant--selected { background: #eff6ff; border-color: #1565c0; box-shadow: 0 0 0 1px #1565c0 inset; }
         .asr-applicant__top {
             display: flex;
             justify-content: space-between;
@@ -599,7 +600,7 @@
         function openApplicantsModal(postingId, title) {
             currentPostingId = postingId;
             document.getElementById('appsModalTitle').textContent = '지원자 풀 — ' + (title || '');
-            document.getElementById('appsModalSub').textContent = '아래 지원자 중 한 명을 매칭 확정하면 자동으로 계약이 생성되고 다른 지원자에게 알림이 갑니다.';
+            document.getElementById('appsModalSub').textContent = '아래 지원자 중 한 명을 매칭 확정하면 자동으로 계약이 생성되고 다른 지원자에게 알림이 갑니다. 고객사가 선택한 지원자는 🎯 고객 선택으로 맨 위에 표시됩니다.';
             document.getElementById('appsList').innerHTML = '<div class="asr-empty-mini">불러오는 중...</div>';
             document.getElementById('appsModal').classList.add('is-open');
             document.body.style.overflow = 'hidden';
@@ -645,15 +646,23 @@
                 el.innerHTML = '<div class="asr-empty-mini">아직 지원자가 없습니다.</div>';
                 return;
             }
+            // 고객이 선택한 지원자(selected)를 맨 위로 정렬
+            var __rank = { selected: 0, pending: 1, forwarded: 1, matched: 2, declined: 3 };
+            list = list.slice().sort(function (a, b) {
+                var ra = __rank[a.status] != null ? __rank[a.status] : 1;
+                var rb = __rank[b.status] != null ? __rank[b.status] : 1;
+                return ra - rb;
+            });
             el.innerHTML = list.map(function (a) {
                 var statusClass = '';
                 var statusLabel = '대기';
                 if (a.status === 'matched') { statusClass = 'asr-applicant--matched'; statusLabel = '✓ 매칭 확정'; }
                 else if (a.status === 'declined') { statusClass = 'asr-applicant--declined'; statusLabel = '거절됨'; }
+                else if (a.status === 'selected') { statusClass = 'asr-applicant--selected'; statusLabel = '🎯 고객 선택'; }
                 else if (a.status === 'forwarded') { statusLabel = '제안 중'; }
 
                 var matchBtn = '';
-                if (a.status === 'pending' || a.status === 'forwarded') {
+                if (a.status === 'pending' || a.status === 'forwarded' || a.status === 'selected') {
                     matchBtn = '<button class="asr-applicant__match" data-interpreter-id="' + escapeHtml(a.interpreter_id) + '" data-name="' + escapeHtml(a.display_name || a.name) + '" data-rate="' + (a.base_rate || '') + '">매칭 확정</button>';
                 }
 
