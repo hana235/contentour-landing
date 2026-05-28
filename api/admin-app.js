@@ -489,7 +489,10 @@ module.exports = async function handler(req, res) {
                 days = Math.max(1, Math.round(diffMs / 86400000) + 1);
             }
             const rate = Number(dailyRate) || (interpProf && interpProf.base_rate) || 250000;
-            const totalAmount = rate * days;
+            // 부가세 별도 모델: 일당=공급가 → 총액 = 공급가 + 부가세(10%)
+            const netAmount = rate * days;
+            const taxAmount = Math.round(netAmount * 0.1);
+            const totalAmount = netAmount + taxAmount;
             const customerId = posting.posted_by_user_id || posting.user_id || null;
 
             // ── 원자적 매칭 확정 ──
@@ -523,8 +526,11 @@ module.exports = async function handler(req, res) {
                     service_type: 'OTHER',
                     daily_rate: rate,
                     total_amount: totalAmount,
-                    tax_amount: Math.round(totalAmount * 0.1),
-                    net_amount: totalAmount,
+                    tax_amount: taxAmount,
+                    net_amount: netAmount,
+                    deposit_amount: totalAmount,
+                    balance_amount: 0,
+                    balance_status: 'paid',
                     status: 'pending'
                 }).select('id').single();
                 if (cErr) {

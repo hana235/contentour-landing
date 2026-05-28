@@ -5127,8 +5127,9 @@
                 }
 
                 var todayStr = new Date().toISOString().split('T')[0];
-                var platformFee = Math.round((d.total_amount || 0) * 0.1);
-                var subtotal = (d.total_amount || 0) - platformFee;
+                // 저장된 부가세(tax_amount)/공급가(net_amount) 우선 사용, 없으면 VAT 포함 총액에서 역산
+                var platformFee = (d.tax_amount != null) ? d.tax_amount : Math.round((d.total_amount || 0) - (d.total_amount || 0) / 1.1);
+                var subtotal = (d.net_amount != null) ? d.net_amount : ((d.total_amount || 0) - platformFee);
 
                 return {
                     id: d.id, dbId: d.id,
@@ -5144,7 +5145,7 @@
                     subtotal: subtotal,
                     platformFee: platformFee,
                     total: d.total_amount || 0,
-                    deposit: d.deposit_amount || 0,
+                    deposit: d.deposit_amount != null ? d.deposit_amount : (d.total_amount || 0),
                     balance: d.balance_amount || 0,
                     depositPaid: d.deposit_status === 'paid',
                     balancePaid: d.balance_status === 'paid',

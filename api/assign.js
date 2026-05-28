@@ -81,7 +81,10 @@ module.exports = async function handler(req, res) {
         const { data: interpProfile } = await sb.from('40_통역사프로필').select('base_rate').eq('user_id', interpreterId).single();
         if (interpProfile && interpProfile.base_rate) dailyRate = interpProfile.base_rate;
 
-        const totalAmount = dailyRate * days;
+        // 부가세 별도 모델: 일당=공급가 → 총액 = 공급가 + 부가세(10%)
+        const netAmount = dailyRate * days;
+        const taxAmount = Math.round(netAmount * 0.1);
+        const totalAmount = netAmount + taxAmount;
 
         // 3. 고객 user_id 조회
         let customerId = null;
@@ -113,8 +116,11 @@ module.exports = async function handler(req, res) {
                 service_type: serviceType,
                 daily_rate: dailyRate,
                 total_amount: totalAmount,
-                tax_amount: Math.round(totalAmount * 0.1),
-                net_amount: totalAmount
+                tax_amount: taxAmount,
+                net_amount: netAmount,
+                deposit_amount: totalAmount,
+                balance_amount: 0,
+                balance_status: 'paid'
             }).eq('id', contractId);
         } else {
             const { data: newContract, error: cErr } = await sb.from('42_통역계약').insert({
@@ -131,8 +137,11 @@ module.exports = async function handler(req, res) {
                 service_type: serviceType,
                 daily_rate: dailyRate,
                 total_amount: totalAmount,
-                tax_amount: Math.round(totalAmount * 0.1),
-                net_amount: totalAmount,
+                tax_amount: taxAmount,
+                net_amount: netAmount,
+                deposit_amount: totalAmount,
+                balance_amount: 0,
+                balance_status: 'paid',
                 status: 'pending'
             }).select().single();
 
