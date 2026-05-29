@@ -1791,7 +1791,7 @@
 
         var banner = document.createElement('div');
         banner.id = 'bizVerifyBanner';
-        banner.style.cssText = 'position:sticky;top:0;z-index:99;padding:12px 24px;font-size:0.85rem;font-weight:600;line-height:1.5;border-bottom:1px solid;';
+        banner.style.cssText = 'position:sticky;top:64px;z-index:49;padding:12px 24px;font-size:0.85rem;font-weight:600;line-height:1.5;border-bottom:1px solid;';
 
         if (status === 'pending') {
             banner.style.background = '#fff8e1';
@@ -1805,8 +1805,11 @@
             banner.innerHTML = '❌ <strong>사업자등록증 반려</strong> — 사유: ' + (reason || '-') + ' · 마이페이지에서 새 파일을 업로드해주세요.';
         }
 
-        var main = document.querySelector('.main') || document.querySelector('main') || document.body.firstElementChild;
-        if (main && main.parentNode) main.parentNode.insertBefore(banner, main);
+        // 배너는 .main 내부 topbar 바로 아래에 삽입 (body는 flex라 형제로 넣으면 좁은 컬럼으로 깨짐)
+        var main = document.querySelector('.main') || document.querySelector('main');
+        var topbar = main ? main.querySelector('.topbar') : null;
+        if (topbar && topbar.parentNode) topbar.parentNode.insertBefore(banner, topbar.nextSibling);
+        else if (main) main.insertBefore(banner, main.firstChild);
         else document.body.insertBefore(banner, document.body.firstChild);
     }
 
