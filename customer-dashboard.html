@@ -4638,7 +4638,7 @@
         html += '<div class="modal__quote-box">' +
           '<div class="modal__quote-label">견적 금액</div>' +
           '<div class="modal__quote-amount">' + formatMoney(d.quoted_amount) + '</div>' +
-          (adminNote ? '<div class="modal__quote-note">일당 ' + formatMoney(adminNote.dailyRate || 0) + ' × ' + (adminNote.days || 0) + '일 + 플랫폼 수수료 ' + formatMoney(adminNote.platformFee || 0) + '</div>' : '') +
+          (adminNote ? '<div class="modal__quote-note">일당 ' + formatMoney(adminNote.dailyRate || 0) + ' × ' + (adminNote.days || 0) + '일 + 부가세 ' + formatMoney(adminNote.platformFee || 0) + '</div>' : '') +
         '</div>';
       }
 
@@ -4786,7 +4786,7 @@
         '<table class="qd-quote-table">' +
           '<tr><th>항목</th><th style="text-align:right;">금액</th></tr>' +
           '<tr><td>일당 ' + formatMoney(q.dailyRate) + ' x ' + q.days + '일</td><td>' + formatMoney(q.subtotal) + '</td></tr>' +
-          '<tr><td>플랫폼 수수료 (10%)</td><td>' + formatMoney(q.platformFee) + '</td></tr>' +
+          '<tr><td>부가가치세 (10%)</td><td>' + formatMoney(q.platformFee) + '</td></tr>' +
           '<tr class="total"><td>총 견적 금액</td><td>' + formatMoney(q.total) + '</td></tr>' +
           '<tr class="sub"><td>선결제 (100%) — 계약 체결 시</td><td>' + formatMoney(q.total) + '</td></tr>' +
         '</table>';
@@ -5582,7 +5582,7 @@
         <table class="cm-quote-table">
           <tr><th>항목</th><th style="text-align:right;">금액</th></tr>
           <tr><td>일당 ${formatMoney(c.dailyRate)} x ${c.days}일</td><td>${formatMoney(c.subtotal)}</td></tr>
-          <tr><td>플랫폼 수수료 (10%)</td><td>${formatMoney(c.platformFee)}</td></tr>
+          <tr><td>부가가치세 (10%)</td><td>${formatMoney(c.platformFee)}</td></tr>
           <tr class="total"><td>총 금액</td><td>${formatMoney(c.total)}</td></tr>
           <tr class="sub"><td>선결제 (100%) — 계약 체결 시 ${c.depositPaid || c.balancePaid ? '&#9989; 결제완료' : ''}</td><td>${formatMoney(c.total)}</td></tr>
         </table>
@@ -6996,7 +6996,7 @@
             '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#e3f0ff;">&#128196;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">총 계약 건수</div><div class="myp-stat-row__sub">전체 진행 계약</div></div><div class="myp-stat-row__value">' + totalContracts + '건</div></div>' +
             '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#e8f5e9;">&#9989;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">완료 건수</div><div class="myp-stat-row__sub">서비스 종료 및 정산 완료</div></div><div class="myp-stat-row__value">' + completedContracts + '건</div></div>' +
             '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#fff3e0;">&#9203;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">진행 중</div><div class="myp-stat-row__sub">현재 서비스 진행 중인 계약</div></div><div class="myp-stat-row__value">' + inProgressContracts + '건</div></div>' +
-            '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#fce4ec;">&#128176;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">누적 이용 금액</div><div class="myp-stat-row__sub">플랫폼 수수료 제외</div></div><div class="myp-stat-row__value">' + formatMoney(totalAmount) + '</div></div>';
+            '<div class="myp-stat-row"><div class="myp-stat-row__icon" style="background:#fce4ec;">&#128176;</div><div class="myp-stat-row__info"><div class="myp-stat-row__label">누적 이용 금액</div><div class="myp-stat-row__sub">부가세 제외</div></div><div class="myp-stat-row__value">' + formatMoney(totalAmount) + '</div></div>';
         }
       }
 
