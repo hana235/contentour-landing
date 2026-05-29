@@ -5556,7 +5556,7 @@
             '</div>');
 
             // 제1조 서비스 내용 (v1.3)
-            var ipVat = Math.round((c.serviceFee || 0) * 10 / 110);
+            var ipVat = CT.vatFromTotal(c.serviceFee);
             var ipSupply = (c.serviceFee || 0) - ipVat;
             w.document.write('<div class="section">' +
                 '<div class="section-title">제1조 서비스 내용</div>' +
@@ -5854,7 +5854,7 @@
                     if (data.contractData) {
                         var cd = data.contractData;
                         var serviceFee = cd.dailyRate * cd.days;
-                        var platformFee = Math.round(serviceFee * 0.1);
+                        var platformFee = CT.platformFee(serviceFee);
                         var tax = Math.round(serviceFee * 0.033);
                         var newC = {
                             id: cd.id,
@@ -5932,7 +5932,7 @@
                     var todayStr = new Date().toISOString().split('T')[0];
                     var isSign = (data.status === 'contract_sign');
                     var serviceFee = cd.dailyRate * cd.days;
-                    var platformFee = Math.round(serviceFee * 0.1);
+                    var platformFee = CT.platformFee(serviceFee);
                     var tax = Math.round(serviceFee * 0.033);
                     interpreterContracts.push({
                         id: cd.id, expo: cd.expo,

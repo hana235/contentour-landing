@@ -4850,7 +4850,7 @@
             dbContractId = existing[0].id;
             _acceptingQuote = false;
           } else {
-          var fee = q.platformFee || Math.round(q.subtotal * 0.1);
+          var fee = q.platformFee || CT.vatFromNet(q.subtotal);
           var { data: insertData, error: insertErr } = await window.sbClient.from('42_통역계약').insert({
             customer_id: user ? user.id : null,
             interpreter_id: q.interpreterId || null,
@@ -5145,7 +5145,7 @@
 
                 var todayStr = new Date().toISOString().split('T')[0];
                 // 저장된 부가세(tax_amount)/공급가(net_amount) 우선 사용, 없으면 VAT 포함 총액에서 역산
-                var platformFee = (d.tax_amount != null) ? d.tax_amount : Math.round((d.total_amount || 0) - (d.total_amount || 0) / 1.1);
+                var platformFee = (d.tax_amount != null) ? d.tax_amount : CT.vatFromTotal(d.total_amount);
                 var subtotal = (d.net_amount != null) ? d.net_amount : ((d.total_amount || 0) - platformFee);
 
                 return {
@@ -5786,7 +5786,7 @@
       '</div>');
 
       // 제1조 서비스 내용 (v1.3 확장)
-      var vatAmount = Math.round((c.total || 0) * 10 / 110);
+      var vatAmount = CT.vatFromTotal(c.total);
       w.document.write('<div class="section">' +
         '<div class="section-title">제1조 서비스 내용</div>' +
         '<table class="info-table">' +

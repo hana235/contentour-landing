@@ -95,6 +95,17 @@ CT.contractNo = function(c) {
     return 'CT-' + d + '-' + suffix;
 };
 
+// ── 금액 계산 (VAT·플랫폼 수수료) ──
+// 모델: 통역사 일당 = 공급가(net), 부가세 = net×10%, 총액 = net×1.1.
+// 통역사측 플랫폼 수수료는 VAT와 별개 개념(정산에서 공제)이라 상수를 분리한다.
+CT.VAT_RATE = 0.1;             // 부가가치세율
+CT.PLATFORM_FEE_RATE = 0.1;    // 통역사 정산 플랫폼 수수료율 (VAT와 무관)
+CT.vatFromNet   = function(net)   { return Math.round((net   || 0) * CT.VAT_RATE); };          // 공급가 → 부가세
+CT.totalFromNet = function(net)   { return (net || 0) + CT.vatFromNet(net); };                  // 공급가 → 총액(VAT 포함)
+CT.vatFromTotal = function(total) { return Math.round((total || 0) * 10 / 110); };              // 총액(VAT 포함) → 부가세
+CT.netFromTotal = function(total) { return (total || 0) - CT.vatFromTotal(total); };             // 총액(VAT 포함) → 공급가
+CT.platformFee  = function(net)   { return Math.round((net   || 0) * CT.PLATFORM_FEE_RATE); };   // 공급가 → 통역사측 플랫폼 수수료
+
 // ── 감사 로그 기록 ──
 CT.logAudit = async function(action, targetTable, targetId, details) {
     var sb = CT.getClient();

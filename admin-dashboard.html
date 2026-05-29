@@ -3562,7 +3562,7 @@
                         var ui = mapContractStatus(c);
                         var days = c.working_days || 1;
                         var subtotal = c.daily_rate * days;
-                        var fee = c.tax_amount || Math.round(subtotal * 0.1);
+                        var fee = c.tax_amount || CT.vatFromNet(subtotal);
                         var total = c.total_amount || (subtotal + fee);
                         var deposit = c.deposit_amount != null ? c.deposit_amount : total; // A안: 100% 선결제 (deposit_amount이 명시된 옛 계약은 그 값 유지)
                         var balance = c.balance_amount || (total - deposit);
@@ -5346,7 +5346,7 @@
                 var days = parseInt(document.getElementById('nc-days').value) || 0;
                 var rate = parseInt(document.getElementById('nc-rate').value) || 0;
                 var subtotal = days * rate;
-                var fee = Math.round(subtotal * 0.1);
+                var fee = CT.vatFromNet(subtotal);
                 var total = subtotal + fee;
                 var deposit = total; // A안: 100% 선결제
                 var balance = 0;
@@ -5373,7 +5373,7 @@
                     showToast('⚠️ 필수 항목(*)을 모두 입력해주세요.'); return;
                 }
                 var subtotal = days * rate;
-                var fee = Math.round(subtotal * 0.1);
+                var fee = CT.vatFromNet(subtotal);
                 var total = subtotal + fee;
                 var deposit = total; // A안: 100% 선결제
                 var balance = 0;
@@ -5405,7 +5405,7 @@
                     '<b>📢 중개 플랫폼 고지</b>: 콘텐츄어(병)는 갑과 을 간의 통역 서비스 거래를 중개하는 통신판매중개업자로서, 본 계약의 직접 당사자가 아닙니다. 서비스 이행에 대한 최종 책임은 갑·을 당사자에게 있습니다.' +
                     '</div>');
 
-                var adminVat = Math.round(total * 10 / 110);
+                var adminVat = CT.vatFromTotal(total);
                 w.document.write('<div class="section-title">제1조 (서비스 내용)</div><table>' +
                     '<tr><th>전시회/행사명</th><td>' + se.expo + '</td></tr>' +
                     '<tr><th>개최 장소·주소</th><td>' + se.location + '</td></tr>' +
@@ -5528,7 +5528,7 @@
                 if (!rate) { showToast('⚠️ 일당 단가를 입력해주세요.'); return; }
 
                 var subtotal = days * rate;
-                var fee = Math.round(subtotal * 0.1);
+                var fee = CT.vatFromNet(subtotal);
                 var total = subtotal + fee;
                 var deposit = total; // A안: 100% 선결제
                 var balance = 0;
@@ -5609,7 +5609,7 @@
                 var days = parseInt(document.getElementById('qm-days').value) || 0;
                 var rate = parseInt(document.getElementById('qm-rate').value) || 0;
                 var subtotal = days * rate;
-                var fee = Math.round(subtotal * 0.1);
+                var fee = CT.vatFromNet(subtotal);
                 var total = subtotal + fee;
                 var deposit = total; // A안: 100% 선결제
                 var balance = 0;
@@ -5630,7 +5630,7 @@
                 if (!interpreter) { showToast('통역사를 선택해주세요.'); return; }
                 if (!rate) { showToast('일당 단가를 입력해주세요.'); return; }
                 var subtotal = days * rate;
-                var fee = Math.round(subtotal * 0.1);
+                var fee = CT.vatFromNet(subtotal);
                 var total = subtotal + fee;
                 var deposit = total; // A안: 100% 선결제
                 var balance = 0;
