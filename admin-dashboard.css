@@ -644,6 +644,72 @@ input[type="password"]::-ms-clear { display: none; }
             border: 2px solid var(--white);
         }
 
+        /* ── 알림 센터 (벨 드롭다운) ── */
+        .notif-wrap { position: relative; }
+        .notif-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 360px;
+            max-height: 460px;
+            overflow-y: auto;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 14px;
+            box-shadow: 0 14px 44px rgba(0,0,0,0.16);
+            z-index: 1200;
+        }
+        .notif-panel.open { display: block; }
+        .notif-panel__head {
+            position: sticky;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 13px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            background: var(--white);
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: #1a2a4a;
+        }
+        .notif-panel__readall {
+            border: none;
+            background: none;
+            color: var(--blue);
+            font-size: 0.74rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 2px 4px;
+        }
+        .notif-panel__readall:hover { text-decoration: underline; }
+        .notif-empty { padding: 38px 16px; text-align: center; color: var(--gray-400); font-size: 0.84rem; }
+        .notif-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: var(--light-bg); }
+        .notif-item.unread { background: #f0f6ff; }
+        .notif-item__icon { font-size: 1.05rem; line-height: 1.35; flex-shrink: 0; }
+        .notif-item__body { flex: 1; min-width: 0; }
+        .notif-item__title { font-size: 0.82rem; font-weight: 700; color: #1f2d4a; }
+        .notif-item__sub {
+            font-size: 0.74rem;
+            color: #6b7689;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .notif-item__time { font-size: 0.68rem; color: #aab3c4; margin-top: 3px; }
+
         .topbar__admin {
             display: flex;
             align-items: center;

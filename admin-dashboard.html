@@ -207,9 +207,20 @@
                 <div class="topbar__right">
                     <button class="btn-primary" style="padding:8px 16px;font-size:0.82rem; margin-right: 8px; display:none;"
                         id="addScheduleBtn" onclick="openAddModal()">+ 일정 등록</button>
-                    <div class="topbar__icon-btn" title="알림">
-                        🔔
-                        <div class="notif-dot"></div>
+                    <div class="notif-wrap">
+                        <div class="topbar__icon-btn" title="알림" onclick="toggleNotifPanel(event)">
+                            🔔
+                            <div class="notif-dot" id="notifDot" style="display:none;"></div>
+                        </div>
+                        <div class="notif-panel" id="notifPanel">
+                            <div class="notif-panel__head">
+                                <span>알림</span>
+                                <button type="button" class="notif-panel__readall" onclick="markAllNotifsRead(event)">모두 읽음</button>
+                            </div>
+                            <div class="notif-panel__body" id="notifPanelBody">
+                                <div class="notif-empty">불러오는 중…</div>
+                            </div>
+                        </div>
                     </div>
                     <!-- 데이터 내보내기: 미구현 — 출시 후 실수요(어느 탭/어느 데이터/얼마나 자주) 확인 후 구현 예정. style 제거 한 줄로 복원 가능. -->
                     <div class="topbar__icon-btn" title="내보내기" style="display:none;" onclick="showToast('📤 데이터 내보내기 준비 중...')">📤</div>
@@ -7442,6 +7453,160 @@
         <script src="supabase-config.js"></script>
         <script src="shared-constants.js"></script>
         <script>
+        /* ══════════ 관리자 알림 센터 (벨 드롭다운) ══════════ */
+        (function () {
+            var _notifs = [];   // {key, icon, title, sub, ts(ms), tab}
+            var _notifLastSeen = parseInt(localStorage.getItem('adminNotifLastSeen') || '0', 10) || 0;
+            var _notifAdminId = null, _notifSub = null, _notifInited = false;
+
+            function esc(s) {
+                return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+                });
+            }
+            function relTime(ts) {
+                if (!ts) return '';
+                var m = Math.floor((Date.now() - ts) / 60000);
+                if (m < 1) return '방금';
+                if (m < 60) return m + '분 전';
+                if (m < 1440) return Math.floor(m / 60) + '시간 전';
+                var d = Math.floor(m / 1440);
+                if (d < 7) return d + '일 전';
+                var dt = new Date(ts);
+                return (dt.getMonth() + 1) + '월 ' + dt.getDate() + '일';
+            }
+            function tsOf(r) {
+                var t = r && (r.created_at || r.submitted_at);
+                var ms = t ? Date.parse(t) : 0;
+                return isNaN(ms) ? 0 : ms;
+            }
+            function addNotif(n) {
+                if (!n || !n.key || _notifs.some(function (x) { return x.key === n.key; })) return false;
+                _notifs.push(n);
+                return true;
+            }
+            function mapMember(r) {
+                if (!r || !r.id) return null;
+                if (r.role === 'customer') return { key: 'member-' + r.id, icon: '🏢', title: '신규 고객사 가입', sub: r.company_name || r.name || '', ts: tsOf(r), tab: 'customers' };
+                if (r.role === 'interpreter') return { key: 'member-' + r.id, icon: '🧑‍💼', title: '신규 통역사 가입', sub: r.name || r.company_name || '', ts: tsOf(r), tab: 'interpreters' };
+                return null;
+            }
+            function renderNotifPanel() {
+                var body = document.getElementById('notifPanelBody');
+                if (!body) return;
+                var items = _notifs.slice().sort(function (a, b) { return b.ts - a.ts; }).slice(0, 40);
+                if (!items.length) { body.innerHTML = '<div class="notif-empty">새 알림이 없습니다.</div>'; return; }
+                body.innerHTML = items.map(function (n) {
+                    var unread = n.ts > _notifLastSeen ? ' unread' : '';
+                    var click = n.tab ? ' onclick="notifGo(\'' + n.tab + '\')"' : '';
+                    return '<div class="notif-item' + unread + '"' + click + '>' +
+                        '<span class="notif-item__icon">' + n.icon + '</span>' +
+                        '<div class="notif-item__body">' +
+                            '<div class="notif-item__title">' + esc(n.title) + '</div>' +
+                            (n.sub ? '<div class="notif-item__sub">' + esc(n.sub) + '</div>' : '') +
+                            '<div class="notif-item__time">' + relTime(n.ts) + '</div>' +
+                        '</div></div>';
+                }).join('');
+            }
+            function updateNotifDot() {
+                var dot = document.getElementById('notifDot');
+                if (!dot) return;
+                var unread = _notifs.filter(function (n) { return n.ts > _notifLastSeen; }).length;
+                dot.style.display = unread > 0 ? '' : 'none';
+            }
+            function markSeenNow() {
+                _notifLastSeen = Date.now();
+                try { localStorage.setItem('adminNotifLastSeen', String(_notifLastSeen)); } catch (e) {}
+            }
+
+            window.toggleNotifPanel = function (e) {
+                if (e) e.stopPropagation();
+                var p = document.getElementById('notifPanel');
+                if (!p) return;
+                if (p.classList.contains('open')) { p.classList.remove('open'); return; }
+                renderNotifPanel();           // 하이라이트는 직전 lastSeen 기준
+                p.classList.add('open');
+                markSeenNow();                // 열면 점 제거(읽음)
+                updateNotifDot();
+            };
+            window.markAllNotifsRead = function (e) {
+                if (e) e.stopPropagation();
+                markSeenNow();
+                renderNotifPanel();
+                updateNotifDot();
+            };
+            window.notifGo = function (tab) {
+                var p = document.getElementById('notifPanel');
+                if (p) p.classList.remove('open');
+                if (tab && typeof window.switchTab === 'function') window.switchTab(tab);
+            };
+            document.addEventListener('click', function (ev) {
+                if (!(ev.target.closest && ev.target.closest('.notif-wrap'))) {
+                    var p = document.getElementById('notifPanel');
+                    if (p) p.classList.remove('open');
+                }
+            });
+
+            window.initAdminNotifCenter = async function () {
+                if (_notifInited) return;
+                var sb = window.sbClient || window.supabase;
+                if (!sb) return;
+                _notifInited = true;
+                try {
+                    var ures = await sb.auth.getUser();
+                    _notifAdminId = ures && ures.data && ures.data.user && ures.data.user.id;
+                } catch (e) {}
+
+                try {
+                    var mem = await sb.from('01_회원').select('id,role,company_name,name,created_at').order('created_at', { ascending: false }).limit(12);
+                    (mem.data || []).forEach(function (r) { addNotif(mapMember(r)); });
+                } catch (e) {}
+                try {
+                    var biz = await sb.from('01_회원').select('id,company_name,name,created_at,business_registration_status').eq('business_registration_status', 'pending').limit(20);
+                    (biz.data || []).forEach(function (r) { addNotif({ key: 'biz-' + r.id, icon: '📑', title: '사업자등록증 검수 대기', sub: r.company_name || r.name || '', ts: tsOf(r), tab: 'bizverify' }); });
+                } catch (e) {}
+                try {
+                    var app = await sb.from('48_통역사지원서').select('id,name_ko,name,status,created_at').eq('status', 'pending').order('created_at', { ascending: false }).limit(20);
+                    (app.data || []).forEach(function (r) { addNotif({ key: 'app-' + r.id, icon: '📋', title: '통역사 지원서 검수 대기', sub: r.name_ko || r.name || '', ts: tsOf(r), tab: 'applications' }); });
+                } catch (e) {}
+                if (_notifAdminId) {
+                    try {
+                        var nt = await sb.from('24_알림').select('id,title,message,created_at').eq('user_id', _notifAdminId).order('created_at', { ascending: false }).limit(15);
+                        (nt.data || []).forEach(function (r) { addNotif({ key: 'notif-' + r.id, icon: '🔔', title: r.title || '새 알림', sub: r.message || '', ts: tsOf(r), tab: null }); });
+                    } catch (e) {}
+                }
+                renderNotifPanel();
+                updateNotifDot();
+
+                if (sb.channel && !_notifSub) {
+                    var ch = sb.channel('admin-notif-center')
+                        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: '01_회원' }, function (p) {
+                            if (addNotif(mapMember(p.new))) { renderNotifPanel(); updateNotifDot(); }
+                        })
+                        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: '48_통역사지원서' }, function (p) {
+                            var r = p.new; if (!r || !r.id) return;
+                            if (addNotif({ key: 'app-' + r.id, icon: '📋', title: '통역사 지원서 검수 대기', sub: r.name_ko || r.name || '', ts: tsOf(r) || Date.now(), tab: 'applications' })) { renderNotifPanel(); updateNotifDot(); }
+                        });
+                    if (_notifAdminId) {
+                        ch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: '24_알림', filter: 'user_id=eq.' + _notifAdminId }, function (p) {
+                            var r = p.new; if (!r || !r.id) return;
+                            if (addNotif({ key: 'notif-' + r.id, icon: '🔔', title: r.title || '새 알림', sub: r.message || '', ts: tsOf(r) || Date.now(), tab: null })) { renderNotifPanel(); updateNotifDot(); }
+                        });
+                    }
+                    ch.subscribe();
+                    _notifSub = ch;
+                }
+            };
+
+            // 인증 완료 후 못 불린 경우를 대비한 지연 폴백
+            setTimeout(function () {
+                if (!_notifInited && (window.sbClient || window.supabase)) {
+                    window.initAdminNotifCenter().catch(function (e) { console.warn('알림센터 폴백 실패:', e); });
+                }
+            }, 6000);
+        })();
+        </script>
+        <script>
         // ── supabase-config.js의 window.sbClient 재사용 ──
         const _sb = window.sbClient;
         // admin-data.js가 참조하는 supabase 변수 연결
@@ -7576,6 +7741,11 @@
             // 7) admin 글로벌 realtime 구독 — 계약·문의·본인 알림 자동 갱신
             if (typeof window.subscribeAdminGlobalRealtime === 'function') {
                 window.subscribeAdminGlobalRealtime().catch(function(e) { console.warn('admin realtime 구독 실패:', e); });
+            }
+
+            // 8) 알림 센터 초기화 (벨 드롭다운)
+            if (typeof window.initAdminNotifCenter === 'function') {
+                window.initAdminNotifCenter().catch(function(e) { console.warn('알림 센터 초기화 실패:', e); });
             }
         }
 
