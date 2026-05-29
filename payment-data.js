@@ -82,14 +82,15 @@ const PaymentData = {
 
         if (this.isReady()) {
             try {
-                const response = await PortOne.requestPayment({
+                const payMethod = methodMap[method] || 'CARD';
+                const reqParams = {
                     storeId: this.PORTONE_STORE_ID,
                     channelKey: this.PORTONE_CHANNEL_KEY,
                     paymentId: merchantUid,
                     orderName: '[콘텐츄어] ' + contract.expo + ' ' + label,
                     totalAmount: amount,
                     currency: 'KRW',
-                    payMethod: methodMap[method] || 'CARD',
+                    payMethod: payMethod,
                     customer: {
                         fullName: contract.client?.name || '고객'
                     },
@@ -97,7 +98,13 @@ const PaymentData = {
                         contractId: contract.dbId || contract.id,
                         paymentType: paymentType
                     }
-                });
+                };
+                // 가상계좌는 입금 만료시간(virtualAccount.accountExpiry) 필수 — 미지정 시
+                // "data.virtualAccount 파라미터는 필수 입력입니다" SDK 에러 발생
+                if (payMethod === 'VIRTUAL_ACCOUNT') {
+                    reqParams.virtualAccount = { accountExpiry: { validHours: 24 } };
+                }
+                const response = await PortOne.requestPayment(reqParams);
 
                 if (response.code) {
                     return { success: false, error: response.message || '결제가 취소되었습니다.' };
