@@ -1,6 +1,14 @@
 // ══════════════ 결제 시스템 - PortOne + Supabase 데이터 레이어 ══════════════
 // customer-dashboard.html, admin-dashboard.html 공용
 
+// 실제 Supabase 클라이언트는 window.sbClient. (window.supabase는 SDK 라이브러리라 .auth/.from/.rpc 없음 → 직접 쓰면 "Cannot read properties of undefined" 발생)
+function _sb() {
+    if (typeof window === 'undefined') return null;
+    if (window.sbClient) return window.sbClient;
+    if (window.supabase && window.supabase.auth) return window.supabase;
+    return null;
+}
+
 const PaymentData = {
 
     // PortOne 설정 — 실제 운영 시 본인의 가맹점 코드로 교체
@@ -129,12 +137,12 @@ const PaymentData = {
 
     // ══════════════ 무통장입금 신청 (관리자 수동 승인) ══════════════
     async requestManualTransfer(contractId, paymentType, depositorName) {
-        if (typeof supabase === 'undefined' || !supabase) return { success: false, error: 'DB 미연결' };
+        if (!_sb()) return { success: false, error: 'DB 미연결' };
         if (!contractId) return { success: false, error: '유효하지 않은 계약 ID' };
         const holder = String(depositorName || '').trim();
         if (!holder) return { success: false, error: '입금자명을 입력해주세요.' };
         try {
-            const session = await supabase.auth.getSession();
+            const session = await _sb().auth.getSession();
             const token = session && session.data && session.data.session && session.data.session.access_token;
             if (!token) return { success: false, error: '로그인이 필요합니다.' };
             const res = await fetch('/api/manual-transfer-request', {
@@ -156,7 +164,7 @@ const PaymentData = {
     // ══════════════ 결제 검증 & DB 저장 ══════════════
 
     async verifyAndSavePayment(contractId, paymentType, amount, method, merchantUid, impUid) {
-        if (!supabase) return { success: false, error: 'DB 미연결' };
+        if (!_sb()) return { success: false, error: 'DB 미연결' };
 
         // 입력값 검증
         if (!contractId || typeof contractId !== 'string') return { success: false, error: '유효하지 않은 계약 ID' };
@@ -166,7 +174,7 @@ const PaymentData = {
 
         try {
             // 로그인 토큰 (서버 API가 본인 계약 검증 수행)
-            const session = await supabase.auth.getSession();
+            const session = await _sb().auth.getSession();
             const token = session && session.data && session.data.session && session.data.session.access_token;
             if (!token) return { success: false, error: '로그인이 필요합니다.' };
 
@@ -199,7 +207,7 @@ const PaymentData = {
         // DB 연결 시 DB에 기록 (UUID 형식 체크: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
         const contractId = contract.dbId || contract.id;
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contractId);
-        if (typeof supabase !== 'undefined' && supabase && isUuid) {
+        if (_sb() && isUuid) {
             const result = await this.verifyAndSavePayment(
                 contract.dbId || contract.id,
                 paymentType,
@@ -219,9 +227,9 @@ const PaymentData = {
     // ══════════════ 결제 내역 조회 ══════════════
 
     async loadPaymentHistory(contractId) {
-        if (!supabase) return [];
+        if (!_sb()) return [];
         try {
-            let query = supabase
+            let query = _sb()
                 .from('47_결제기록')
                 .select('*')
                 .order('created_at', { ascending: false });
@@ -241,9 +249,9 @@ const PaymentData = {
 
     // 전체 결제 통계 (관리자용)
     async loadPaymentStats() {
-        if (!supabase) return null;
+        if (!_sb()) return null;
         try {
-            const { data, error } = await supabase
+            const { data, error } = await _sb()
                 .from('47_결제기록')
                 .select('payment_type, amount, status, method');
             if (error) throw error;
@@ -268,9 +276,9 @@ const PaymentData = {
     // ══════════════ 환불 (관리자) ══════════════
 
     async requestRefund(paymentId, reason) {
-        if (!supabase) return { success: false, error: 'DB 미연결' };
+        if (!_sb()) return { success: false, error: 'DB 미연결' };
         try {
-            const { data, error } = await supabase.rpc('process_refund', {
+            const { data, error } = await _sb().rpc('process_refund', {
                 p_payment_id: paymentId,
                 p_reason: reason || ''
             });
