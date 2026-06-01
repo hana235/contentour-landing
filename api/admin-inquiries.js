@@ -32,9 +32,11 @@ module.exports = async function handler(req, res) {
         const { data, error } = await sb
             .from('46_ITQ견적문의')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(1000);
 
         if (error) throw error;
+        if (data && data.length === 1000) console.warn('[admin-inquiries] 로드 상한 1000건 도달 — 페이지네이션 도입 필요');
 
         res.setHeader('Cache-Control', 'no-cache');
         return res.status(200).json(data || []);

@@ -136,8 +136,10 @@ const AdminData = {
                     bank:bank_account_id (bank_name, account_holder, account_number),
                     contract:contract_id (id)
                 `)
-                .order('requested_at', { ascending: false });
+                .order('requested_at', { ascending: false })
+                .limit(1000);
             if (error) throw error;
+            if (data && data.length === 1000) console.warn('[정산] 로드 상한 1000건 도달 — 페이지네이션 도입 필요');
             if (!data || data.length === 0) return null;
 
             const colors = ['#1565c0', '#0277bd', '#00695c', '#4527a0', '#c62828'];
