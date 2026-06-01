@@ -4169,6 +4169,8 @@
                             '<div style="font-size:0.8rem;color:#666;">신청자: ' + d._userName + (d._company ? ' (' + d._company + ')' : '') + '</div>' +
                             '<div style="font-size:0.8rem;color:#666;">사유: ' + d.cancel_reason + '</div>' +
                             '<div style="font-size:0.78rem;color:#999;margin-top:4px;">남은 일수: ' + d.days_remaining + '일 | 위약금: ' + (d.penalty_amount||0).toLocaleString() + '원 (' + d.penalty_rate + '%) | 환불: ' + (d.refund_amount||0).toLocaleString() + '원</div>' +
+                            // 분쟁 대비: 취소 당시 계약액 동결값(없으면 live 계약 폴백) + 상대방 통지 시각
+                            '<div style="font-size:0.74rem;color:#aab1bf;margin-top:2px;">취소 당시 계약액: ' + ((d.amount_snapshot != null ? d.amount_snapshot : ((d.contract && d.contract.total_amount) || 0)) || 0).toLocaleString() + '원' + (d.notified_at ? ' | 상대방 통지: ' + String(d.notified_at).replace('T',' ').slice(0,16) : '') + '</div>' +
                             actions +
                         '</div>' +
                         '<div style="font-size:0.75rem;color:#999;white-space:nowrap;">' + date + '</div>' +
