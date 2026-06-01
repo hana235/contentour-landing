@@ -1365,6 +1365,13 @@
                         <button class="contract-filter-tab" onclick="filterCancels('refunded',this)">💰 환불완료 <span class="cft-count" id="cfc-refunded">0</span></button>
                         <button class="contract-filter-tab" onclick="filterCancels('rejected',this)">❌ 거절됨 <span class="cft-count" id="cfc-rejected">0</span></button>
                     </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px;">
+                        <input type="text" id="cancelSearchInput" oninput="onCancelSearch(this.value)" placeholder="🔍 전시회·고객사·계약번호·사유 검색" style="flex:1;min-width:240px;padding:10px 14px;border:1.5px solid #e0e5ec;border-radius:10px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
+                        <input type="date" id="cancelDateFrom" onchange="onCancelDateFilter()" title="신청일 시작" style="padding:9px 12px;border:1.5px solid #e0e5ec;border-radius:10px;font-size:0.82rem;font-family:inherit;">
+                        <span style="color:#999;">~</span>
+                        <input type="date" id="cancelDateTo" onchange="onCancelDateFilter()" title="신청일 종료" style="padding:9px 12px;border:1.5px solid #e0e5ec;border-radius:10px;font-size:0.82rem;font-family:inherit;">
+                        <button onclick="resetCancelFilters()" style="padding:9px 16px;background:#f3f5f9;color:#5b6577;border:none;border-radius:10px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:inherit;">초기화</button>
+                    </div>
                     <div id="cancelList" style="display:flex;flex-direction:column;gap:10px;">
                         <div style="padding:40px;text-align:center;color:#8a95a8;">취소 내역을 불러오는 중...</div>
                     </div>
@@ -4032,6 +4039,9 @@
             // ═══ 취소 관리 시스템 ═══
             var cancelAdminData = [];
             var cancelFilterStatus = 'all';
+            var cancelSearchText = '';
+            var cancelDateFrom = '';
+            var cancelDateTo = '';
             // Phase 1 권한 분리 — super_admin만 취소 승인·환불 완료 가능
             var _isSuperAdmin = false;
             async function loadSuperAdminFlag() {
@@ -4114,7 +4124,23 @@
 
                 var filtered = cancelAdminData;
                 if (cancelFilterStatus !== 'all') {
-                    filtered = cancelAdminData.filter(function(d) { return d.status === cancelFilterStatus; });
+                    filtered = filtered.filter(function(d) { return d.status === cancelFilterStatus; });
+                }
+                // 검색 (전시회·고객사·계약번호·사유)
+                var q = (cancelSearchText || '').trim().toLowerCase();
+                if (q) {
+                    filtered = filtered.filter(function(d) {
+                        var hay = [d._expoName, d._company, d._userName, (d.contract && d.contract.contract_no), d.cancel_reason]
+                            .filter(Boolean).join(' ').toLowerCase();
+                        return hay.indexOf(q) !== -1;
+                    });
+                }
+                // 신청일 기간 필터 (created_at 기준)
+                if (cancelDateFrom) {
+                    filtered = filtered.filter(function(d) { return (d.created_at || '').slice(0, 10) >= cancelDateFrom; });
+                }
+                if (cancelDateTo) {
+                    filtered = filtered.filter(function(d) { return (d.created_at || '').slice(0, 10) <= cancelDateTo; });
                 }
 
                 // 요약 카드
@@ -4132,7 +4158,7 @@
                 }
 
                 if (filtered.length === 0) {
-                    listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#8a95a8;">해당 상태의 취소 내역이 없습니다.</div>';
+                    listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#8a95a8;">조건에 맞는 취소 내역이 없습니다.</div>';
                     return;
                 }
 
@@ -4186,6 +4212,23 @@
                 cancelFilterStatus = status;
                 document.querySelectorAll('.contract-filter-tab').forEach(function(el) { el.classList.remove('active'); });
                 if (btn) btn.classList.add('active');
+                renderCancellations();
+            }
+
+            // 취소 관리 검색·기간 필터 핸들러
+            function onCancelSearch(v) { cancelSearchText = v || ''; renderCancellations(); }
+            function onCancelDateFilter() {
+                var f = document.getElementById('cancelDateFrom');
+                var t = document.getElementById('cancelDateTo');
+                cancelDateFrom = (f && f.value) || '';
+                cancelDateTo = (t && t.value) || '';
+                renderCancellations();
+            }
+            function resetCancelFilters() {
+                cancelSearchText = ''; cancelDateFrom = ''; cancelDateTo = '';
+                var s = document.getElementById('cancelSearchInput'); if (s) s.value = '';
+                var f = document.getElementById('cancelDateFrom'); if (f) f.value = '';
+                var t = document.getElementById('cancelDateTo'); if (t) t.value = '';
                 renderCancellations();
             }
 
