@@ -25,6 +25,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://contentour-landing.vercel.app/interpreter-jobs</loc>
+    <lastmod>2026-05-21</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://contentour-landing.vercel.app/performance</loc>
     <lastmod>2026-05-07</lastmod>
     <changefreq>monthly</changefreq>

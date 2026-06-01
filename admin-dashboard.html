@@ -8762,7 +8762,14 @@
                 html += '<div style="background:var(--g100);padding:14px;border-radius:10px;font-size:0.84rem;line-height:1.7;">' + a.motivation + '</div>';
             }
 
-            if (a.portfolio_url) html += row('포트폴리오', '<a href="' + a.portfolio_url + '" target="_blank">' + a.portfolio_url + '</a>');
+            if (a.portfolio_url) {
+                var _purl = String(a.portfolio_url);
+                var _pesc = _purl.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                // http(s) URL만 링크로 렌더 (javascript:/data: 스킴 차단), 표시 텍스트는 항상 이스케이프
+                html += row('포트폴리오', /^https?:\/\//i.test(_purl)
+                    ? '<a href="' + _pesc + '" target="_blank" rel="noopener noreferrer">' + _pesc + '</a>'
+                    : _pesc);
+            }
             if (a.resume_file_url) {
                 html += row('이력서 파일', '<button onclick="openStorageFile(\'' + a.resume_file_url + '\', \'' + (a.resume_file_name || '이력서') + '\')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:linear-gradient(135deg,#1565c0,#1976d2);color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">📥 ' + (a.resume_file_name || '이력서') + ' 다운로드</button>');
             } else if (a.resume_file_name) {
