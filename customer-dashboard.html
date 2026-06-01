@@ -5282,6 +5282,7 @@
         }
         else if (c.status === 'cancelled') {
           actionHtml = `<span class="contract-card__action label" style="background:#ffebee;color:#c62828;">취소됨</span>`;
+          actionHtml += `<button class="contract-card__action" onclick="event.stopPropagation();viewMyCancelCert('${c.id}')" style="background:#fff;color:#0a2a5e;border:1.5px solid #0a2a5e;font-weight:700;padding:7px 14px;border-radius:8px;font-size:0.78rem;cursor:pointer;margin-left:4px;">📄 취소 확인서</button>`;
         }
         return `<div class="contract-card" onclick="openContractDetail('${c.id}')">
           <div style="flex:1;min-width:0;">
@@ -5557,6 +5558,16 @@
         showContractToast('취소 신청 중 오류가 발생했습니다: ' + (e.message || ''));
         restoreCancelBtn();
       }
+    }
+
+    // 내 취소 건 확인서 열기 (분쟁 대비 문서) — 본인 51_취소내역 조회 후 CT 렌더러로 출력
+    async function viewMyCancelCert(contractId) {
+      if (!window.CT || !CT.fetchCancellationByContract) { showContractToast('취소 확인서를 열 수 없습니다.'); return; }
+      try {
+        var row = await CT.fetchCancellationByContract(contractId);
+        if (!row) { showContractToast('취소 내역을 찾을 수 없습니다.'); return; }
+        CT.openCancellationCertificate(row);
+      } catch (e) { showContractToast('취소 확인서 조회 중 오류가 발생했습니다.'); }
     }
 
     function filterContracts(status, e) {

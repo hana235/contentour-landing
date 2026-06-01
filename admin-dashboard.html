@@ -4074,7 +4074,7 @@
                 try {
                     var { data, error } = await supabase
                         .from('51_취소내역')
-                        .select('*, contract:42_통역계약(exhibition_name, customer_id, interpreter_id, total_amount, deposit_amount)')
+                        .select('*, contract:42_통역계약(exhibition_name, contract_no, customer_id, interpreter_id, total_amount, deposit_amount)')
                         .order('created_at', { ascending: false });
 
                     if (error) throw error;
@@ -4174,6 +4174,7 @@
                             '<div style="font-size:0.78rem;color:#999;margin-top:4px;">남은 일수: ' + d.days_remaining + '일 | 위약금: ' + (d.penalty_amount||0).toLocaleString() + '원 (' + d.penalty_rate + '%) | 환불: ' + (d.refund_amount||0).toLocaleString() + '원</div>' +
                             // 분쟁 대비: 취소 당시 계약액 동결값(없으면 live 계약 폴백) + 상대방 통지 시각
                             '<div style="font-size:0.74rem;color:#aab1bf;margin-top:2px;">취소 당시 계약액: ' + ((d.amount_snapshot != null ? d.amount_snapshot : ((d.contract && d.contract.total_amount) || 0)) || 0).toLocaleString() + '원' + (d.notified_at ? ' | 상대방 통지: ' + String(d.notified_at).replace('T',' ').slice(0,16) : '') + '</div>' +
+                            '<div style="margin-top:10px;"><button onclick="viewCancelCert(\'' + d.id + '\')" style="padding:7px 14px;background:#fff;color:#0a2a5e;border:1.5px solid #0a2a5e;border-radius:8px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit;">📄 취소 확인서</button></div>' +
                             actions +
                         '</div>' +
                         '<div style="font-size:0.75rem;color:#999;white-space:nowrap;">' + date + '</div>' +
@@ -4186,6 +4187,15 @@
                 document.querySelectorAll('.contract-filter-tab').forEach(function(el) { el.classList.remove('active'); });
                 if (btn) btn.classList.add('active');
                 renderCancellations();
+            }
+
+            // 취소 확인서 열기 (분쟁 대비 문서) — shared-constants의 CT.openCancellationCertificate 사용
+            function viewCancelCert(id) {
+                var d = cancelAdminData.find(function(x) { return x.id === id; });
+                if (!d || !window.CT || !CT.openCancellationCertificate) { showToast('취소 확인서를 열 수 없습니다.'); return; }
+                d._applicantName = d._userName;
+                d._companyName = d._company;
+                CT.openCancellationCertificate(d);
             }
 
             function updateCancelFilterCounts() {

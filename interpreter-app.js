@@ -867,6 +867,7 @@ const InterpreterApp = {
                         </div>
                         <div class="assign-card__footer" style="margin-top:16px;">
                             <button class="btn-detail" onclick="openAssignModal('${escHtml(c.id)}')">상세 보기</button>
+                            ${c.status === 'cancelled' ? `<button class="btn-detail" onclick="InterpreterApp.viewMyCancelCert('${escHtml(c.id)}')" style="border-color:#0a2a5e;color:#0a2a5e;">📄 취소 확인서</button>` : ''}
                             ${actionBtns}
                         </div>
                     </div>
@@ -1485,6 +1486,16 @@ const InterpreterApp = {
         const day = Math.floor(hr / 24);
         if (day < 7) return day + '일 전';
         return this.formatDate(dateStr);
+    },
+
+    // 내 취소 건 확인서 열기 (분쟁 대비 문서) — 본인 51_취소내역 조회 후 CT 렌더러로 출력
+    async viewMyCancelCert(contractId) {
+        if (!window.CT || !CT.fetchCancellationByContract) { this.showToast('취소 확인서를 열 수 없습니다.'); return; }
+        try {
+            const row = await CT.fetchCancellationByContract(contractId);
+            if (!row) { this.showToast('취소 내역을 찾을 수 없습니다.'); return; }
+            CT.openCancellationCertificate(row);
+        } catch (e) { this.showToast('취소 확인서 조회 중 오류가 발생했습니다.'); }
     },
 
     showToast(msg) {
