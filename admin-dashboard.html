@@ -4068,6 +4068,9 @@
                 if (!listEl) return;
                 if (!supabase) { listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#8a95a8;">DB 연결 없음</div>'; return; }
 
+                // 탭 진입 시점(세션 확실)에 super_admin 플래그 재확인 — init 시점 세션 미복원으로 false 굳는 문제 방지
+                await loadSuperAdminFlag();
+
                 try {
                     var { data, error } = await supabase
                         .from('51_취소내역')
