@@ -460,11 +460,11 @@
                         <div style="text-align:center;padding:40px;color:var(--g400);">로딩 중...</div>
                     </div>
                     <!-- 통역사 상세 모달 -->
-                    <div id="interpDetailModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);overflow-y:auto;">
+                    <div id="interpDetailModal" class="modal-overlay" onclick="if(event.target===this)closeInterpModal()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);overflow-y:auto;">
                         <div style="max-width:700px;margin:40px auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.2);overflow:hidden;">
                             <div style="background:linear-gradient(135deg,var(--navy),#1a3d7a);padding:24px 28px;color:#fff;display:flex;justify-content:space-between;align-items:center;">
                                 <div id="interpModalHeader"></div>
-                                <button onclick="closeInterpModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:1.1rem;">✕</button>
+                                <button onclick="closeInterpModal()" aria-label="닫기" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:1.1rem;">✕</button>
                             </div>
                             <div id="interpModalBody" style="padding:24px 28px;"></div>
                             <div id="interpModalActions" style="padding:16px 28px;border-top:1.5px solid var(--g200);display:flex;gap:10px;justify-content:flex-end;"></div>
@@ -491,14 +491,14 @@
                 </div>
 
                 <!-- 지원서 상세 모달 -->
-                <div id="appModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);overflow-y:auto;">
+                <div id="appModal" class="modal-overlay" onclick="if(event.target===this)closeAppModal()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);overflow-y:auto;">
                     <div style="max-width:700px;margin:40px auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.2);overflow:hidden;">
                         <div style="background:linear-gradient(135deg,var(--navy),#1a3d7a);padding:24px 28px;color:#fff;display:flex;justify-content:space-between;align-items:center;">
                             <div>
                                 <div style="font-size:1.1rem;font-weight:800;" id="appModalName"></div>
                                 <div style="font-size:0.82rem;opacity:0.8;margin-top:4px;" id="appModalSub"></div>
                             </div>
-                            <button onclick="closeAppModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:1.1rem;">✕</button>
+                            <button onclick="closeAppModal()" aria-label="닫기" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:1.1rem;">✕</button>
                         </div>
                         <div style="padding:24px 28px;" id="appModalBody"></div>
                         <div style="padding:16px 28px;border-top:1.5px solid var(--g200);display:flex;gap:10px;justify-content:flex-end;" id="appModalActions"></div>
@@ -979,14 +979,14 @@
                 </div>
 
                 <!-- ══ 적립금 상세/조정 모달 ══ -->
-                <div id="loyAdminModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(10,30,60,0.55);z-index:9000;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;">
+                <div id="loyAdminModalOverlay" class="modal-overlay" onclick="if(event.target===this)closeLoyAdminModal()" style="display:none;position:fixed;inset:0;background:rgba(10,30,60,0.55);z-index:9000;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;">
                     <div style="background:#fff;border-radius:18px;max-width:780px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
                         <div style="padding:24px 28px;border-bottom:1.5px solid #e5eaf2;display:flex;align-items:center;justify-content:space-between;">
                             <div>
                                 <h3 style="font-size:1.1rem;font-weight:800;color:#0d2647;margin:0;">⭐ 고객사 적립금 상세</h3>
                                 <p style="font-size:0.72rem;color:#8a95a8;margin:4px 0 0 0;font-weight:600;">담당 관리자: 관리자</p>
                             </div>
-                            <button onclick="closeLoyAdminModal()" style="width:36px;height:36px;border:none;background:#f5f7fa;border-radius:50%;font-size:1.2rem;cursor:pointer;color:#445;">×</button>
+                            <button onclick="closeLoyAdminModal()" aria-label="닫기" style="width:36px;height:36px;border:none;background:#f5f7fa;border-radius:50%;font-size:1.2rem;cursor:pointer;color:#445;">×</button>
                         </div>
                         <div id="loyAdminModalBody" style="padding:24px 28px;"></div>
                     </div>
@@ -2859,12 +2859,12 @@
                   '<div class="jv-tags">' + countriesHtml + '</div>' +
 
                   '<div class="jv-sec">상담 내용 요약</div>' +
-                  '<div class="jv-text">' + (j.summary || '') + '</div>' +
+                  '<div class="jv-text">' + CT.escHtml(j.summary || '') + '</div>' +
 
                   '<div class="jv-sec">주요 성과</div>' +
-                  '<div class="jv-text">' + (j.result || '') + '</div>' +
+                  '<div class="jv-text">' + CT.escHtml(j.result || '') + '</div>' +
 
-                  (isInterp ? '' : '<div class="jv-sec">특이사항</div><div class="jv-text">' + (j.issue || '') + '</div>') +
+                  (isInterp ? '' : '<div class="jv-sec">특이사항</div><div class="jv-text">' + CT.escHtml(j.issue || '') + '</div>') +
 
                   '<div class="jv-sec">팔로업 액션 플랜</div>' +
                   '<div class="jv-text">' + (j.action || '') + '</div>' +
@@ -3113,7 +3113,7 @@
                 html += starsHtml;
 
                 if (j.adminComment) {
-                    html += '<div class="comment-box"><div class="lbl">💬 관리자 코멘트</div><div class="txt">' + j.adminComment + '</div></div>';
+                    html += '<div class="comment-box"><div class="lbl">💬 관리자 코멘트</div><div class="txt">' + CT.escHtml(j.adminComment) + '</div></div>';
                 }
 
                 html += '<div class="footer">본 상담일지는 콘텐츄어(CONTENTOUR) 플랫폼을 통해 작성되었습니다.<br>&copy; ' + new Date().getFullYear() + ' CONTENTOUR Co., Ltd.</div>';
@@ -6169,7 +6169,7 @@
                 // 자기소개
                 if (p.intro) {
                     html += '<div style="margin-top:16px;font-weight:800;font-size:0.9rem;margin-bottom:8px;color:var(--navy);">💬 자기소개</div>';
-                    html += '<div style="background:#f8f9fb;padding:14px;border-radius:10px;font-size:0.84rem;line-height:1.7;">' + p.intro + '</div>';
+                    html += '<div style="background:#f8f9fb;padding:14px;border-radius:10px;font-size:0.84rem;line-height:1.7;">' + CT.escHtml(p.intro) + '</div>';
                 }
 
                 // 언어 & 전문분야
@@ -8823,7 +8823,7 @@
 
             if (a.motivation) {
                 html += '<div style="margin-top:16px;font-weight:800;font-size:0.9rem;margin-bottom:8px;color:var(--navy);">💡 지원 동기</div>';
-                html += '<div style="background:var(--g100);padding:14px;border-radius:10px;font-size:0.84rem;line-height:1.7;">' + a.motivation + '</div>';
+                html += '<div style="background:var(--g100);padding:14px;border-radius:10px;font-size:0.84rem;line-height:1.7;">' + CT.escHtml(a.motivation) + '</div>';
             }
 
             if (a.portfolio_url) {
