@@ -1390,6 +1390,7 @@ const InterpreterApp = {
     },
 
     async handleHomeDecline(contractId, btn) {
+        if (!confirm('이 배정 요청을 거절하시겠습니까?')) return;
         btn.disabled = true;
         btn.textContent = '처리 중...';
         const ok = await this.declineAssignment(contractId);
@@ -1792,23 +1793,23 @@ const InterpreterApp = {
                 confirmLabel: '답글 저장',
                 onConfirm: async () => {
                     const text = (document.getElementById('replyTextarea').value || '').trim();
-                    if (!text) { alert('답글 내용을 입력해주세요.'); return false; }
+                    if (!text) { InterpreterApp.showToast('답글 내용을 입력해주세요.'); return false; }
                     if (window.ReviewFilter) {
                         const fr = window.ReviewFilter.check(text);
-                        if (fr.blockedHard) { alert('부적절한 표현이 포함되어 저장할 수 없습니다.'); return false; }
+                        if (fr.blockedHard) { InterpreterApp.showToast('부적절한 표현이 포함되어 저장할 수 없습니다.'); return false; }
                     }
                     const { error: upErr } = await window.sbClient
                         .from('49_통역사리뷰')
                         .update({ interpreter_reply: text, interpreter_reply_at: new Date().toISOString() })
                         .eq('id', reviewId);
-                    if (upErr) { alert('저장 실패: ' + upErr.message); return false; }
+                    if (upErr) { InterpreterApp.showToast('저장 실패: ' + upErr.message); return false; }
                     this.loadReviewsView();
                     return true;
                 }
             });
         } catch (e) {
             console.error('답글 폼 오류:', e);
-            alert('답글 폼을 열 수 없습니다.');
+            InterpreterApp.showToast('답글 폼을 열 수 없습니다.');
         }
     },
 
@@ -1841,16 +1842,16 @@ const InterpreterApp = {
             confirmColor: '#c62828',
             onConfirm: async () => {
                 const reasonEl = document.querySelector('input[name="reportReason"]:checked');
-                if (!reasonEl) { alert('신고 사유를 선택해주세요.'); return false; }
+                if (!reasonEl) { InterpreterApp.showToast('신고 사유를 선택해주세요.'); return false; }
                 const detail = (document.getElementById('reportDetail').value || '').trim();
                 const reason = detail ? `${reasonEl.value} — ${detail}` : reasonEl.value;
                 const { error: upErr } = await window.sbClient
                     .from('49_통역사리뷰')
                     .update({ report_status: 'reported', report_reason: reason, reported_at: new Date().toISOString() })
                     .eq('id', reviewId);
-                if (upErr) { alert('신고 실패: ' + upErr.message); return false; }
+                if (upErr) { InterpreterApp.showToast('신고 실패: ' + upErr.message); return false; }
                 this.loadReviewsView();
-                alert('신고가 접수되었습니다. 관리자가 검토 후 처리합니다.');
+                InterpreterApp.showToast('신고가 접수되었습니다. 관리자가 검토 후 처리합니다.');
                 return true;
             }
         });

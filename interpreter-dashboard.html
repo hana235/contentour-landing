@@ -49,8 +49,8 @@
                 left: 0 !important;
                 right: 0 !important;
                 bottom: 0 !important;
-                width: 100vw !important;
-                max-width: 100vw !important;
+                width: 100% !important;
+                max-width: 100% !important;
                 background: #f5f7fb !important;
                 transform: translateX(100%) !important;
                 transition: transform 0.3s ease !important;
@@ -268,7 +268,7 @@
         <header class="topbar">
             <div class="topbar-inner">
                 <div class="topbar__left">
-                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="메뉴 열기">☰</button>
                     <h1 class="topbar__page-title">통역사 대시보드</h1>
                 </div>
                 <div class="topbar__right">
@@ -1704,7 +1704,7 @@
                     <div class="modal__header-title">🏦 출금 계좌 등록</div>
                     <div class="modal__header-sub">정산 입금받을 계좌 정보를 등록해주세요</div>
                 </div>
-                <button class="modal__close" onclick="closeBankModal()">✕</button>
+                <button class="modal__close" onclick="closeBankModal()" aria-label="닫기">✕</button>
             </div>
             <div class="modal__body" style="padding:24px;">
                 <!-- 계좌 등록 상태 -->
@@ -1866,7 +1866,7 @@
                     <div class="modal__header-title" id="stlModalTitle">정산 상세</div>
                     <div class="modal__header-sub" id="stlModalSub"></div>
                 </div>
-                <button class="modal__close" onclick="closeStlModal()">✕</button>
+                <button class="modal__close" onclick="closeStlModal()" aria-label="닫기">✕</button>
             </div>
             <div class="modal__body" id="stlModalBody" style="padding:24px;max-height:70vh;overflow-y:auto;"></div>
         </div>
@@ -1880,7 +1880,7 @@
                     <div class="modal__header-title" id="ctModalTitle">계약 상세</div>
                     <div class="modal__header-sub" id="ctModalSub"></div>
                 </div>
-                <button class="modal__close" onclick="closeIntContractModal()">✕</button>
+                <button class="modal__close" onclick="closeIntContractModal()" aria-label="닫기">✕</button>
             </div>
             <div class="modal__body" id="ctModalBody" style="padding:24px;max-height:70vh;overflow-y:auto;"></div>
         </div>
@@ -1894,7 +1894,7 @@
                     <div class="modal__header-title" style="color:#fff;">⚠️ 파견 취소 신청</div>
                     <div class="modal__header-sub" id="intCancelExpo" style="color:rgba(255,255,255,0.7);"></div>
                 </div>
-                <button class="modal__close" onclick="closeIntCancelModal()" style="color:rgba(255,255,255,0.7);">✕</button>
+                <button class="modal__close" onclick="closeIntCancelModal()" aria-label="닫기" style="color:rgba(255,255,255,0.7);">✕</button>
             </div>
             <div class="modal__body" style="padding:24px;">
                 <input type="hidden" id="intCancelContractId">
@@ -1930,7 +1930,7 @@
                     <div class="modal__header-title" id="modalTitle"></div>
                     <div class="modal__header-sub" id="modalSub"></div>
                 </div>
-                <button class="modal__close" onclick="closeModal()">✕</button>
+                <button class="modal__close" onclick="closeModal()" aria-label="닫기">✕</button>
             </div>
             <div class="modal__body">
                 <!-- 기본 정보 -->
@@ -6366,7 +6366,7 @@
                     '<div class="chat-search-bar__count" id="chatSearchCount"></div>' +
                     '<button class="chat-search-bar__nav" onclick="chatSearchNav(-1)">↑</button>' +
                     '<button class="chat-search-bar__nav" onclick="chatSearchNav(1)">↓</button>' +
-                    '<button class="chat-search-bar__close" onclick="toggleChatSearch()">×</button>' +
+                    '<button class="chat-search-bar__close" onclick="toggleChatSearch()" aria-label="검색 닫기">×</button>' +
                 '</div>' +
                 '<div class="chat-messages" id="chatMessages"></div>' +
                 '<div class="chat-typing" id="chatTyping"></div>' +
