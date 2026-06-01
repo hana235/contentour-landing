@@ -13,11 +13,11 @@
 -- ═══════════════════════
 
 CREATE TYPE user_role AS ENUM ('member', 'admin', 'interpreter', 'customer');
-CREATE TYPE notification_type AS ENUM ('system', 'service', 'payment', 'matching', 'settlement', 'chat', 'contract', 'assignment', 'mutual_match', 'rate_change');
-CREATE TYPE contract_status AS ENUM ('pending', 'deposit_paid', 'in_progress', 'completed', 'settled', 'cancelled');
+CREATE TYPE notification_type AS ENUM ('system', 'service', 'payment', 'matching', 'settlement', 'chat', 'contract', 'assignment', 'mutual_match', 'rate_change', 'quote', 'marketing', 'points');
+CREATE TYPE contract_status AS ENUM ('pending', 'deposit_paid', 'balance_paid', 'paid', 'in_progress', 'completed', 'settled', 'cancelled', 'refunded');
 CREATE TYPE settlement_status AS ENUM ('request', 'approved', 'paid', 'rejected');
 CREATE TYPE consultation_status AS ENUM ('draft', 'submitted', 'reviewed');
-CREATE TYPE itq_status AS ENUM ('접수', '검토중', '견적발송', '계약진행', '완료', '취소');
+CREATE TYPE itq_status AS ENUM ('접수', '검토중', '견적발송', '계약진행', '완료', '취소', '취소됨');
 
 -- ═══════════════════════
 -- 2. 테이블 생성
