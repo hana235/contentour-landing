@@ -1301,6 +1301,23 @@ const InterpreterApp = {
             .eq('interpreter_id', this.currentUser.id);
 
         if (error) { this.showToast('배정 거절 실패: ' + error.message); return false; }
+        // 관리자 알림 (수락과 대칭 — 거절도 관리자에게 통지). best-effort
+        try {
+            const { data: { session } } = await window.sbClient.auth.getSession();
+            const token = session && session.access_token;
+            if (token) {
+                await fetch('/api/notify-admins', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({
+                        notification_type: 'service',
+                        title: '❌ 통역사 배정 거절',
+                        message: '통역사가 배정을 거절했습니다. 재배정이 필요합니다.' + (reason ? ' 사유: ' + reason : ''),
+                        link: '/admin-dashboard.html'
+                    })
+                });
+            }
+        } catch (e) { console.warn('배정 거절 관리자 알림 실패 (무시):', e); }
         this.showToast('배정을 거절했습니다.');
         return true;
     },

@@ -31,6 +31,22 @@ async function verifySuperAdmin(token) {
 // ────────────────────────── 감사로그 헬퍼 ──────────────────────────
 // 99_감사로그에 관리자 중요 액션 1줄 기록. 실패해도 본 액션은 영향 없음 (best-effort).
 // 테이블 미적용 환경에서도 호출이 깨지지 않도록 try/catch로 감싼다.
+// 계약 양 당사자(고객사·통역사)에게 in-app 알림 — service role이라 RLS 무관, best-effort
+async function notifyContractParties(contractId, title, messageSuffix) {
+    if (!contractId) return;
+    try {
+        const { data: ct } = await supabase.from('42_통역계약')
+            .select('customer_id, interpreter_id, exhibition_name').eq('id', contractId).single();
+        if (!ct) return;
+        const targets = [ct.customer_id, ct.interpreter_id].filter(Boolean);
+        if (!targets.length) return;
+        const message = '"' + (ct.exhibition_name || '') + '" ' + messageSuffix;
+        await supabase.from('24_알림').insert(targets.map(uid => ({
+            user_id: uid, notification_type: 'service', title, message, is_read: false
+        })));
+    } catch (e) { console.warn('[notifyContractParties] 알림 발송 실패:', e); }
+}
+
 async function recordAudit(req, actor, payload) {
     try {
         if (!actor || !actor.id) return;
@@ -680,6 +696,7 @@ module.exports = async function handler(req, res) {
                 target_id: cancelId,
                 after: { status: 'approved', contract_id: cancel.contract_id, refund_amount: cancel.refund_amount, penalty_amount: cancel.penalty_amount }
             });
+            await notifyContractParties(cancel.contract_id, '🚫 계약 취소 승인', '건의 계약 취소가 승인되었습니다.');
             return res.status(200).json({ success: true, cancel });
 
         } else if (action === 'refundComplete') {
@@ -723,6 +740,7 @@ module.exports = async function handler(req, res) {
                 after: { status: 'refunded', contract_id: cancel.contract_id, refund_amount: cancel.refund_amount },
                 note: 'PortOne 외부 환불 완료 후 시스템 반영'
             });
+            await notifyContractParties(cancel.contract_id, '💸 환불 완료', '건의 환불이 완료되었습니다.');
             return res.status(200).json({ success: true });
 
         } else if (action === 'cancelReject') {
@@ -765,6 +783,7 @@ module.exports = async function handler(req, res) {
                 after: { status: 'rejected', contract_id: cancel.contract_id, contract_restored_to: 'pending' },
                 note: trimmed
             });
+            await notifyContractParties(cancel.contract_id, '↩️ 계약 취소 거절', '취소 요청이 거절되어 계약이 유지됩니다. 사유: ' + trimmed);
             return res.status(200).json({ success: true });
 
         } else {
