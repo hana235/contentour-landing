@@ -1018,10 +1018,13 @@ const InterpreterApp = {
         const map = {
             pending: '배정 대기',
             deposit_paid: '계약금 결제 완료',
+            balance_paid: '잔금 결제 완료',
+            paid: '결제 완료',
             in_progress: '서비스 진행중',
             completed: '서비스 완료',
             settled: '정산 완료',
-            cancelled: '취소됨'
+            cancelled: '취소됨',
+            refunded: '환불됨'
         };
         return map[status] || status;
     },
@@ -1041,7 +1044,10 @@ const InterpreterApp = {
         }
 
         const statusOrder = ['pending', 'deposit_paid', 'in_progress', 'completed', 'settled'];
-        const currentIdx = statusOrder.indexOf(c.status);
+        // balance_paid/paid(레거시 10/90 결제완료)는 선형 단계에 없어 -1이 되면 타임라인이 깨지므로 in_progress로 정규화.
+        // cancelled/refunded(종료 상태)는 기존 cancelled와 동일하게 -1 유지 → 전 단계 미완료 표시.
+        const _timelineStatus = (c.status === 'balance_paid' || c.status === 'paid') ? 'in_progress' : c.status;
+        const currentIdx = statusOrder.indexOf(_timelineStatus);
 
         // 계약금 결제
         const depositDone = currentIdx >= 1;

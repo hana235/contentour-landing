@@ -5073,7 +5073,7 @@
     }
 
     function getStatusBadgeClass(status) {
-      const map = { quote_review:'csb-quote', contract_sign:'csb-quote', deposit_pay:'csb-deposit', deposit_review:'csb-review', balance_review:'csb-review', in_progress:'csb-progress', balance_pay:'csb-balance', complete:'csb-complete', settled:'csb-settled', cancelled:'csb-cancelled' };
+      const map = { quote_review:'csb-quote', contract_sign:'csb-quote', deposit_pay:'csb-deposit', deposit_review:'csb-review', balance_review:'csb-review', in_progress:'csb-progress', balance_pay:'csb-balance', complete:'csb-complete', settled:'csb-settled', cancelled:'csb-cancelled', refunded:'csb-cancelled' };
       return map[status] || 'csb-quote';
     }
 
@@ -5121,10 +5121,13 @@
             var uiStatusMap = {
                 pending: 'contract_sign',
                 deposit_paid: 'in_progress',
+                balance_paid: 'in_progress',
+                paid: 'in_progress',
                 in_progress: 'in_progress',
                 completed: 'complete',
                 settled: 'settled',
-                cancelled: 'cancelled'
+                cancelled: 'cancelled',
+                refunded: 'refunded'
             };
             var statusTextMap = {
                 contract_sign: '계약서 확인 대기',
@@ -5133,7 +5136,9 @@
                 in_progress: '서비스 진행중',
                 balance_pay: '잔금 결제 대기',
                 complete: '완료 확인',
-                settled: '정산 완료'
+                settled: '정산 완료',
+                cancelled: '취소됨',
+                refunded: '환불 완료'
             };
 
             contracts.length = 0;
