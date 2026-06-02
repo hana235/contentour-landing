@@ -2750,11 +2750,11 @@
                 jlist.innerHTML = visibleJournals.map(j => `
                 <div class="jitem ${j.id === activeJId ? 'active' : ''}" onclick="loadJournal(${j.id})">
                   <div class="jitem-top">
-                    <div class="jitem-expo">${j.expo}${j.source === 'interpreter' ? ' <span style="font-size:0.65rem;background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:8px;margin-left:4px;">통역사 작성</span>' : ''}</div>
+                    <div class="jitem-expo">${escapeHtml(j.expo)}${j.source === 'interpreter' ? ' <span style="font-size:0.65rem;background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:8px;margin-left:4px;">통역사 작성</span>' : ''}</div>
                     <span class="jitem-st ${stCls[j.status]}">${stLbl[j.status]}</span>
                   </div>
                   <div class="jitem-meta">
-                    <span>🏢 ${j.company}</span><span>📅 ${j.date}</span><span>👤 ${j.interp}</span>
+                    <span>🏢 ${escapeHtml(j.company)}</span><span>📅 ${escapeHtml(j.date)}</span><span>👤 ${escapeHtml(j.interp)}</span>
                   </div>
                 </div>`).join('');
             }
@@ -3781,12 +3781,12 @@
                     return '<div class="contract-card" onclick="openCtDetail(\''+c.id+'\')">' +
                         '<div style="flex:1;min-width:0;">' +
                             '<div class="contract-card__id">'+c.id+'</div>' +
-                            '<div class="contract-card__expo">'+c.expo+'</div>' +
+                            '<div class="contract-card__expo">'+escapeHtml(c.expo)+'</div>' +
                             '<div class="contract-card__meta">' +
-                                '<span>\uD83D\uDC64 '+c.client.name+' ('+c.client.company+')</span>' +
-                                '<span>\uD83C\uDF10 '+c.interpreter.name+'</span>' +
-                                '<span>\uD83D\uDCC5 '+c.dates.start+' ~ '+c.dates.end+'</span>' +
-                                '<span>\uD83D\uDDE3\uFE0F '+c.lang+'</span>' +
+                                '<span>\uD83D\uDC64 '+escapeHtml(c.client.name)+' ('+escapeHtml(c.client.company)+')</span>' +
+                                '<span>\uD83C\uDF10 '+escapeHtml(c.interpreter.name)+'</span>' +
+                                '<span>\uD83D\uDCC5 '+escapeHtml(c.dates.start)+' ~ '+escapeHtml(c.dates.end)+'</span>' +
+                                '<span>\uD83D\uDDE3\uFE0F '+escapeHtml(c.lang)+'</span>' +
                             '</div>' +
                         '</div>' +
                         '<div class="contract-card__right">' +
@@ -4119,7 +4119,7 @@
                     updateCancelBadge();
                 } catch(e) {
                     console.error('취소 내역 로드 실패:', e);
-                    listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#c62828;">로드 실패: ' + e.message + '</div>';
+                    listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#c62828;">로드 실패: ' + escapeHtml(e.message) + '</div>';
                 }
             }
 
@@ -4442,7 +4442,7 @@
                     renderLoyaltyAdminKpi();
                     loyAdminApplyFilters();
                 } catch(e) {
-                    body.innerHTML = '<tr><td colspan="8" style="padding:40px;text-align:center;color:#c62828;">로드 실패: ' + e.message + '</td></tr>';
+                    body.innerHTML = '<tr><td colspan="8" style="padding:40px;text-align:center;color:#c62828;">로드 실패: ' + escapeHtml(e.message) + '</td></tr>';
                 }
             }
 
@@ -4571,7 +4571,7 @@
                         '<div style="font-size:0.82rem;font-weight:700;color:#0d2647;margin-bottom:10px;">📜 이력 (최근 200건)</div>'+
                         '<div style="max-height:380px;overflow-y:auto;border:1.5px solid #e5eaf2;border-radius:10px;">' + historyHtml + '</div>';
                 } catch(e) {
-                    body.innerHTML = '<div style="padding:30px;text-align:center;color:#c62828;">이력 로드 실패: ' + e.message + '</div>';
+                    body.innerHTML = '<div style="padding:30px;text-align:center;color:#c62828;">이력 로드 실패: ' + escapeHtml(e.message) + '</div>';
                 }
             }
 
@@ -4741,7 +4741,7 @@
                     renderReviewsAdmin();
                 } catch (e) {
                     console.error('리뷰 로드 실패:', e);
-                    listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#c62828;">불러오기 실패: ' + (e.message || '') + '</div>';
+                    listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#c62828;">불러오기 실패: ' + escapeHtml(e.message || '') + '</div>';
                 }
             }
 
@@ -4933,7 +4933,7 @@
                     caseAdminData = data || [];
                     renderAdminCases();
                 } catch(e) {
-                    listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#c62828;">로드 실패: ' + e.message + '</div>';
+                    listEl.innerHTML = '<div style="padding:40px;text-align:center;color:#c62828;">로드 실패: ' + escapeHtml(e.message) + '</div>';
                 }
             }
 
@@ -5116,7 +5116,7 @@
                 // 기존 이미지 미리보기
                 document.getElementById('cfImageFile').value = '';
                 if (c.image_url) {
-                    document.getElementById('cfImagePreview').innerHTML = '<img src="' + c.image_url + '" style="width:100%;height:100%;object-fit:cover;">';
+                    document.getElementById('cfImagePreview').innerHTML = '<img src="' + escapeHtml(c.image_url).replace(/"/g, '&quot;') + '" style="width:100%;height:100%;object-fit:cover;">';
                     document.getElementById('cfImageActions').style.display = '';
                 } else {
                     removeCaseImage();
@@ -5126,7 +5126,7 @@
                 document.getElementById('cfInterpPhotoFile').value = '';
                 document.getElementById('cfInterpPhoto').value = c.interpreter_photo || '';
                 if (c.interpreter_photo) {
-                    document.getElementById('cfInterpPhotoPreview').innerHTML = '<img src="' + c.interpreter_photo + '" style="width:100%;height:100%;object-fit:cover;">';
+                    document.getElementById('cfInterpPhotoPreview').innerHTML = '<img src="' + escapeHtml(c.interpreter_photo).replace(/"/g, '&quot;') + '" style="width:100%;height:100%;object-fit:cover;">';
                     document.getElementById('cfInterpPhotoActions').style.display = '';
                 } else {
                     removeInterpPhoto();
@@ -6026,7 +6026,7 @@
                     renderInterpList();
                 } catch(e) {
                     console.error('통역사 목록 로드 실패:', e);
-                    el.innerHTML = '<div style="text-align:center;padding:40px;color:#c62828;">로드 실패: ' + e.message + '</div>';
+                    el.innerHTML = '<div style="text-align:center;padding:40px;color:#c62828;">로드 실패: ' + escapeHtml(e.message) + '</div>';
                 }
             }
 
@@ -9394,7 +9394,7 @@
                 sel.value = prev;
                 exRender();
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#c62828;">로드 실패: ' + e.message + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#c62828;">로드 실패: ' + escapeHtml(e.message) + '</td></tr>';
             }
         }
 
