@@ -2004,7 +2004,7 @@
                 // 직접 의뢰는 매칭 대기 표에서 제외 (안전장치)
                 data = (data || []).filter(d => !isDirectInquiry(d));
                 tbody.innerHTML = data.map(d => {
-                    const statusClass = { '검토중': 'pending', '매칭완료': 'matched', '견적거절': 'rejected', '파견확정': 'confirm', '완료': 'done' }[d.status] || 'pending';
+                    const statusClass = { '검토중': 'pending', '매칭완료': 'matched', '견적거절': 'rejected', '파견확정': 'confirm', '완료': 'done', '취소': 'rejected' }[d.status] || 'pending';
                     return `
     <tr onclick="openAssignModal('${d.id}')">
       <td class="checkbox-cell" onclick="event.stopPropagation()"><input type="checkbox"></td>
