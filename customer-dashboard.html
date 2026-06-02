@@ -2538,7 +2538,8 @@
                     rating_communication: starValues.comm || 0,
                     rating_overall: starValues.overall || 0,
                     review_text: evalText || null,
-                    is_public: true
+                    // 전체 승인제: 신규 리뷰는 비공개로 저장 → 관리자 검토 후 공개 (리뷰 모달 경로와 동일 정책)
+                    is_public: false
                   }, { onConflict: 'contract_id,customer_id' });
                   if (revErr) console.warn('통역사 평가 저장 실패:', revErr);
                   // 통역사 알림은 49_통역사리뷰 INSERT trigger가 자동 발송
