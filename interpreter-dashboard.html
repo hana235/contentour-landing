@@ -2831,6 +2831,7 @@
             var journalData = {
                 id: _activeJournalDbId || Date.now(),
                 expo: expoName,
+                expoData: (document.getElementById('jnl-expo-data') || {}).value || '',
                 company: client,
                 date: date,
                 interp: (window.InterpreterApp && InterpreterApp.interpProfile ? InterpreterApp.interpProfile.display_name : '통역사'),
@@ -2915,9 +2916,17 @@
             }
 
             var contracts = window._jnlContracts || [];
-            var match = contracts.find(function(c) {
-                return c.name && jd.expo && c.name.toLowerCase() === jd.expo.toLowerCase();
-            });
+            // dataVal(전시회명|개최지|기간|고객사|언어) 우선 매칭 → 동명 전시회/날짜·고객 구분까지 정확.
+            // 선택 시 jnl-expo-data에 저장된 값을 사용하고, 없으면 전시회명 매칭으로 폴백.
+            var match = null;
+            if (jd.expoData) {
+                match = contracts.find(function(c) { return c.dataVal && c.dataVal === jd.expoData; });
+            }
+            if (!match) {
+                match = contracts.find(function(c) {
+                    return c.name && jd.expo && c.name.toLowerCase() === jd.expo.toLowerCase();
+                });
+            }
             var customerId = match ? match.customerId : null;
             var contractId = match ? match.contractId : null;
 
