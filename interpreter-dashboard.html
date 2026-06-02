@@ -4799,33 +4799,27 @@
             document.getElementById('stlModal').classList.remove('open');
         }
 
-        function stlReRequest(id) {
-            var d = stlData.find(function(x) { return x.id === id; });
-            if (d) {
-                d.status = 'request';
-                d.statusText = '승인 대기';
-                d.rejectedDate = undefined;
-                d.rejectReason = undefined;
-                d.requestDate = new Date().toISOString().split('T')[0];
-                d.timeline = [
-                    { step: '통역 완료', date: d.timeline[0].date, done: true },
-                    { step: '정산 요청', date: new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\./g,'.').replace(/\s/g,''), done: true },
-                    { step: '관리자 승인', date: '대기 중', done: false, active: true },
-                    { step: '입금', date: '-', done: false }
-                ];
-                stlInit();
+        async function stlReRequest(id) {
+            var sb = window.sbClient;
+            if (!sb) { showToast('⚠️ 연결 오류로 재요청에 실패했습니다.'); return; }
+            // DB RPC로 재요청 — 반려된 정산을 status='request'로 복귀 + 관리자 알림
+            // (직접 UPDATE는 protect_settlement_columns 트리거가 status 변경을 막으므로 RPC 사용)
+            try {
+                var { data, error } = await sb.rpc('rerequest_settlement', { p_settlement_id: id });
+                if (error || (data && data.success === false)) {
+                    showToast('⚠️ 재요청 실패: ' + ((data && data.error) || (error && error.message) || '알 수 없는 오류'));
+                    return;
+                }
+            } catch (e) {
+                showToast('⚠️ 재요청 처리 중 오류가 발생했습니다.');
+                return;
             }
             closeStlModal();
             showToast('📨 정산 재요청이 접수되었습니다. 관리자 승인을 기다려주세요.');
-            // Cross-tab: 관리자에게 재요청 알림
-            try {
-                localStorage.removeItem('contentour_settlement_rerequest');
-                setTimeout(function() {
-                    localStorage.setItem('contentour_settlement_rerequest', JSON.stringify({
-                        settlementId: id, expo: d ? d.expo : '', action: 'rerequest', ts: Date.now()
-                    }));
-                }, 50);
-            } catch(e) {}
+            // DB에서 최신 상태 재로딩 (관리자에겐 RPC가 24_알림으로 전파)
+            if (window.InterpreterApp && typeof InterpreterApp.loadSettlementView === 'function') {
+                try { await InterpreterApp.loadSettlementView(); } catch (e) {}
+            }
         }
 
         function stlExport() {

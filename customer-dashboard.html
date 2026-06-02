@@ -4948,20 +4948,27 @@
     async function agreeContract(contractId) {
       var c = contracts.find(function(x) { return x.id === contractId; });
       if (!c) return;
-      c.customerAgreed = true;
 
-      // DB에 계약서 서명 업데이트
+      // DB에 계약서 서명 업데이트 — 성공해야만 동의 처리(실패 시 사용자에게 알리고 중단)
       var dbId = c.dbId || c.id;
       if (window.sbClient && dbId) {
         try {
-          await window.sbClient.from('42_통역계약').update({
+          var { error: signErr } = await window.sbClient.from('42_통역계약').update({
             contract_signed: true,
             contract_signed_at: new Date().toISOString()
           }).eq('id', dbId);
+          if (signErr) {
+            console.error('계약서 동의 DB 업데이트 실패:', signErr);
+            showContractToast('계약서 동의 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            return;
+          }
         } catch (e) {
-          console.error('계약서 동의 DB 업데이트 실패:', e);
+          console.error('계약서 동의 DB 업데이트 예외:', e);
+          showContractToast('네트워크 오류로 동의가 저장되지 않았습니다. 다시 시도해주세요.');
+          return;
         }
       }
+      c.customerAgreed = true;
 
       if (c.customerAgreed && c.interpreterAgreed) {
         finalizeContractSign(c);
