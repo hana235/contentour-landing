@@ -2274,14 +2274,6 @@
     function filterList(q) { document.querySelectorAll('.inquiry-card').forEach(c => { c.style.display = c.dataset.title.toLowerCase().includes(q.toLowerCase()) ? 'flex' : 'none'; }); }
     function filterStatus(s) { document.querySelectorAll('.inquiry-card').forEach(c => { c.style.display = (!s || c.dataset.status === s) ? 'flex' : 'none'; }); }
 
-    const modalData = [];
-    function openModal(idx) {
-      const d = modalData[idx];
-      document.getElementById('modalTitle').textContent = d.title;
-      document.getElementById('modalStatusBadge').innerHTML = '<span class="status-badge ' + d.statusClass + '">' + d.status + '</span>';
-      document.getElementById('modalBody').innerHTML = d.rows.map(([l,v]) => '<div class="detail-row"><div class="detail-label">' + l + '</div><div class="detail-value">' + v + '</div></div>').join('');
-      document.getElementById('modalOverlay').classList.add('open');
-    }
     function closeModal(e) { if (e.target === document.getElementById('modalOverlay')) closeModalDirect(); }
     function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('open'); }
 
@@ -4557,7 +4549,7 @@
               '<div class="inquiry-card__title">' + d.exhibition_name + '</div>' +
               '<div class="inquiry-card__meta">' +
                 '<span class="meta-item">📅 ' + d.start_date + ' ~ ' + d.end_date + '</span>' +
-                '<span class="meta-item">🌐 ' + (d.language_pair || '') + '</span>' +
+                '<span class="meta-item">🌐 ' + CT.escHtml(d.language_pair || '') + '</span>' +
                 '<span class="meta-item">👤 ' + (d.headcount || 1) + '명</span>' +
               '</div>' +
             '</div>' +
@@ -4645,7 +4637,7 @@
           '<div class="modal__interpreter-avatar">' + CT.escHtml(adminNote.interpreter.charAt(0)) + '</div>' +
           '<div class="modal__interpreter-info">' +
             '<div class="modal__interpreter-name">' + CT.escHtml(adminNote.interpreter) + ' 통역사 배정</div>' +
-            '<div class="modal__interpreter-lang">' + (d.language_pair || '') + ' · ' + (adminNote.days || '') + '일간</div>' +
+            '<div class="modal__interpreter-lang">' + CT.escHtml(d.language_pair || '') + ' · ' + (adminNote.days || '') + '일간</div>' +
           '</div>' +
         '</div>';
       }
