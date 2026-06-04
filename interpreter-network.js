@@ -32,15 +32,29 @@ function getInitial(name) {
     return name.replace(/\s/g, '').charAt(0);
 }
 
+// XSS 방지: HTML 컨텍스트 이스케이프
+function escHtml(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+// XSS 방지: onclick="f('...')" 처럼 JS 문자열이 들어가는 HTML 속성용
+function escJsAttr(s) {
+    return String(s == null ? '' : s)
+        .replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+        .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function avatarHtml(photo, name, size) {
     size = size || 68;
-    if (photo && photo.startsWith('http')) return '<img src="' + photo + '" alt="' + name + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.15);" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=&quot;width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:linear-gradient(145deg,#1565c0,#42a5f5);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:' + Math.round(size * 0.38) + 'px;border:3px solid #fff;&quot;>' + getInitial(name) + '</div>\'">';
+    if (photo && photo.startsWith('http')) return '<img src="' + escHtml(photo) + '" alt="' + escHtml(name) + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.15);" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=&quot;width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:linear-gradient(145deg,#1565c0,#42a5f5);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:' + Math.round(size * 0.38) + 'px;border:3px solid #fff;&quot;>' + escHtml(getInitial(name)) + '</div>\'">';
     var idx = 0;
     for (var i = 0; i < name.length; i++) idx += name.charCodeAt(i);
     var grad = avatarGradients[idx % avatarGradients.length];
     var fs = Math.round(size * 0.38);
     var shadow = 'box-shadow:0 4px 14px ' + grad[0] + '40;';
-    return '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:linear-gradient(145deg,' + grad[0] + ',' + grad[1] + ');display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:' + fs + 'px;letter-spacing:-1px;border:3px solid #fff;' + shadow + '">' + getInitial(name) + '</div>';
+    return '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:linear-gradient(145deg,' + grad[0] + ',' + grad[1] + ');display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:' + fs + 'px;letter-spacing:-1px;border:3px solid #fff;' + shadow + '">' + escHtml(getInitial(name)) + '</div>';
 }
 
 var row1 = ['jp', 'cn', 'de', 'vn'];
@@ -127,14 +141,14 @@ function toggleInterp(code, cardEl) {
                     '<div class="ip-card__top">' +
                         '<div class="ip-card__avatar">' + avatarHtml(p.photo, p.name, 56) + '</div>' +
                         '<div>' +
-                            '<div class="ip-card__name">' + p.name + '</div>' +
-                            '<div class="ip-card__role">' + p.role + '</div>' +
+                            '<div class="ip-card__name">' + escHtml(p.name) + '</div>' +
+                            '<div class="ip-card__role">' + escHtml(p.role) + '</div>' +
                         '</div>' +
                     '</div>' +
-                    '<div class="ip-card__intro">' + p.intro + '</div>' +
+                    '<div class="ip-card__intro">' + escHtml(p.intro) + '</div>' +
                     '<div class="ip-card__tags">' +
-                        p.tags.map(function (t) { return '<span class="ip-card__tag">' + t + '</span>'; }).join('') +
-                        '<span class="ip-card__tag field">' + p.fieldTag + '</span>' +
+                        p.tags.map(function (t) { return '<span class="ip-card__tag">' + escHtml(t) + '</span>'; }).join('') +
+                        '<span class="ip-card__tag field">' + escHtml(p.fieldTag) + '</span>' +
                     '</div>' +
                     '<div class="ip-card__price">' +
                         '<span class="ip-card__price-label">부스 통역</span>' +
@@ -184,18 +198,18 @@ function openIpModal(countryCode, idx) {
         '<button class="ip-modal__close" onclick="closeIpModal()" aria-label="통역사 상세 닫기">&times;</button>' +
         '<div class="ip-modal__photo">' + avatarHtml(p.photo, p.name, 90) + '</div>' +
         '<div class="ip-modal__header-info">' +
-            '<div class="ip-modal__name">' + p.name + '</div>' +
-            '<div class="ip-modal__role-text">' + p.role + '</div>' +
+            '<div class="ip-modal__name">' + escHtml(p.name) + '</div>' +
+            '<div class="ip-modal__role-text">' + escHtml(p.role) + '</div>' +
             '<div class="ip-modal__flag"><img src="https://flagcdn.com/w40/' + d.flag + '.png" alt="' + d.country + '"> ' + d.country + ' · ' + d.lang + '</div>' +
         '</div>';
 
     var html = '';
     html += '<div class="ip-modal__stats"><div class="ip-modal__stat"><div class="ip-modal__stat-num">' + p.years + '년</div><div class="ip-modal__stat-label">통역 경력</div></div><div class="ip-modal__stat"><div class="ip-modal__stat-num">' + p.cases + '건</div><div class="ip-modal__stat-label">파견 실적</div></div><div class="ip-modal__stat"><div class="ip-modal__stat-num">' + p.rating + '</div><div class="ip-modal__stat-label">평점</div></div><div class="ip-modal__stat"><div class="ip-modal__stat-num">' + p.satisfaction + '%</div><div class="ip-modal__stat-label">만족도</div></div></div>';
-    html += '<div class="ip-modal__section"><div class="ip-modal__section-title">소개</div><div class="ip-modal__bio">' + p.bio + '</div></div>';
-    html += '<div class="ip-modal__section"><div class="ip-modal__section-title">전문 분야</div><div class="ip-modal__tags">' + p.tags.map(function (t) { return '<span class="ip-modal__tag">' + t + '</span>'; }).join('') + '<span class="ip-modal__tag field">' + p.fieldTag + '</span></div></div>';
+    html += '<div class="ip-modal__section"><div class="ip-modal__section-title">소개</div><div class="ip-modal__bio">' + escHtml(p.bio) + '</div></div>';
+    html += '<div class="ip-modal__section"><div class="ip-modal__section-title">전문 분야</div><div class="ip-modal__tags">' + p.tags.map(function (t) { return '<span class="ip-modal__tag">' + escHtml(t) + '</span>'; }).join('') + '<span class="ip-modal__tag field">' + escHtml(p.fieldTag) + '</span></div></div>';
     html += '<div class="ip-modal__section"><div class="ip-modal__section-title">통역 단가 (1일 기준)</div><div class="ip-modal__price-table"><div class="ip-modal__price-row"><span class="ip-modal__price-type">🎯 부스 상주 통역</span><span class="ip-modal__price-val">' + fmtPrice(p.prices.booth) + '<small>/일</small></span></div><div class="ip-modal__price-row"><span class="ip-modal__price-type">🤝 미팅 동행 통역</span><span class="ip-modal__price-val">' + fmtPrice(p.prices.meeting) + '<small>/일</small></span></div><div class="ip-modal__price-row"><span class="ip-modal__price-type">🎤 컨퍼런스 통역</span><span class="ip-modal__price-val">' + fmtPrice(p.prices.conference) + '<small>/일</small></span></div><div class="ip-modal__price-row"><span class="ip-modal__price-type">⚡ 현장 운영 지원</span><span class="ip-modal__price-val">' + fmtPrice(p.prices.operation) + '<small>/일</small></span></div></div><div class="ip-modal__price-note">* 표시 금액은 기본 단가 범위이며, 전시 규모·기간·전문성에 따라 추가 금액이 발생할 수 있습니다.</div></div>';
-    html += '<div class="ip-modal__section"><div class="ip-modal__section-title">주요 전시회 통역 경력</div><div class="ip-modal__history">' + (p.history || []).map(function (h) { return '<div class="ip-modal__history-item"><span class="ip-modal__history-year">' + h.year + '</span><div><div class="ip-modal__history-text">' + h.text + '</div><div class="ip-modal__history-sub">' + h.sub + '</div></div></div>'; }).join('') + '</div></div>';
-    html += '<div class="ip-modal__cta" id="ipCtaArea"><button class="ip-modal__cta-btn" onclick="checkLoginAndInquiry(\'' + p.name.replace(/'/g, "\\'") + '\',\'' + d.lang.replace(/'/g, "\\'") + '\',\'' + (p.fieldTag || '').replace(/'/g, "\\'") + '\',\'' + d.country.replace(/'/g, "\\'") + '\',\'' + (p.photo || '').replace(/'/g, "\\'") + '\',\'' + (p.role || '').replace(/'/g, "\\'") + '\')">이 통역사에게 직접 견적 의뢰</button></div>';
+    html += '<div class="ip-modal__section"><div class="ip-modal__section-title">주요 전시회 통역 경력</div><div class="ip-modal__history">' + (p.history || []).map(function (h) { return '<div class="ip-modal__history-item"><span class="ip-modal__history-year">' + escHtml(h.year) + '</span><div><div class="ip-modal__history-text">' + escHtml(h.text) + '</div><div class="ip-modal__history-sub">' + escHtml(h.sub) + '</div></div></div>'; }).join('') + '</div></div>';
+    html += '<div class="ip-modal__cta" id="ipCtaArea"><button class="ip-modal__cta-btn" onclick="checkLoginAndInquiry(\'' + escJsAttr(p.name) + '\',\'' + escJsAttr(d.lang) + '\',\'' + escJsAttr(p.fieldTag || '') + '\',\'' + escJsAttr(d.country) + '\',\'' + escJsAttr(p.photo || '') + '\',\'' + escJsAttr(p.role || '') + '\')">이 통역사에게 직접 견적 의뢰</button></div>';
 
     document.getElementById('ipModalBody').innerHTML = html;
     _ipLastFocus = document.activeElement;

@@ -598,14 +598,25 @@
             if (!name) return '?';
             return name.replace(/\s/g,'').charAt(0);
         }
+        function escHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        function escJsAttr(s) {
+            return String(s == null ? '' : s)
+                .replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+                .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
         function avatarHtml(photo, name, size) {
             size = size || 56;
-            if (photo) return '<img src="' + photo + '" alt="' + name + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;">';
+            if (photo) return '<img src="' + escHtml(photo) + '" alt="' + escHtml(name) + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;">';
             var idx = 0;
             for(var i=0;i<name.length;i++) idx += name.charCodeAt(i);
             var color = avatarColors[idx % avatarColors.length];
             var fs = Math.round(size * 0.42);
-            return '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:linear-gradient(135deg,' + color + ',' + color + 'cc);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:' + fs + 'px;">' + getInitial(name) + '</div>';
+            return '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:linear-gradient(135deg,' + color + ',' + color + 'cc);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:' + fs + 'px;">' + escHtml(getInitial(name)) + '</div>';
         }
 
         // ═══════════════════════════
@@ -788,25 +799,25 @@
                 // 리뷰 미리보기 (샘플)
                 var reviewHtml = '';
                 if (p.cases > 0 && p._sampleReview) {
-                    reviewHtml = '<div class="profile-card__review-preview">"' + p._sampleReview + '"<div class="profile-card__review-author">- 최근 고객 리뷰</div></div>';
+                    reviewHtml = '<div class="profile-card__review-preview">"' + escHtml(p._sampleReview) + '"<div class="profile-card__review-author">- 최근 고객 리뷰</div></div>';
                 }
 
                 gridHtml += '<div class="profile-card" onclick="openIpModal(\'' + modalCountry + '\',' + modalIdx + ')">' +
                     '<div class="profile-card__top">' +
                         '<div class="profile-card__avatar">' + avatarHtml(p.photo, p.name, 56) + '</div>' +
                         '<div class="profile-card__info">' +
-                            '<div class="profile-card__name">' + p.name + '</div>' +
-                            '<div class="profile-card__role">' + p.role + countryBadge + '</div>' +
+                            '<div class="profile-card__name">' + escHtml(p.name) + '</div>' +
+                            '<div class="profile-card__role">' + escHtml(p.role) + countryBadge + '</div>' +
                         '</div>' +
                     '</div>' +
                     '<div class="profile-card__body">' +
                         ratingHtml +
                         metaHtml +
-                        '<div class="profile-card__intro">' + (p.bio || p.intro) + '</div>' +
+                        '<div class="profile-card__intro">' + escHtml(p.bio || p.intro) + '</div>' +
                         reviewHtml +
                         '<div class="profile-card__tags">' +
-                            p.tags.map(function(t) { return '<span class="profile-card__tag">' + t + '</span>'; }).join('') +
-                            '<span class="profile-card__tag field">' + p.fieldTag + '</span>' +
+                            p.tags.map(function(t) { return '<span class="profile-card__tag">' + escHtml(t) + '</span>'; }).join('') +
+                            '<span class="profile-card__tag field">' + escHtml(p.fieldTag) + '</span>' +
                         '</div>' +
                         '<div class="profile-card__price">' +
                             '<span class="profile-card__price-label">부스 통역</span>' +
@@ -929,8 +940,8 @@
                 '<button class="ip-modal__close" onclick="closeIpModal()">&times;</button>' +
                 '<div class="ip-modal__photo">' + avatarHtml(p.photo, p.name, 80) + '</div>' +
                 '<div class="ip-modal__header-info">' +
-                    '<div class="ip-modal__name">' + p.name + '</div>' +
-                    '<div class="ip-modal__role-text">' + p.role + '</div>' +
+                    '<div class="ip-modal__name">' + escHtml(p.name) + '</div>' +
+                    '<div class="ip-modal__role-text">' + escHtml(p.role) + '</div>' +
                     '<div class="ip-modal__flag">' +
                         '<img src="https://flagcdn.com/w40/' + d.flag + '.png" alt="' + d.country + '"> ' + d.country + ' · ' + d.lang +
                     '</div>' +
@@ -947,14 +958,14 @@
 
             html += '<div class="ip-modal__section">' +
                 '<div class="ip-modal__section-title">소개</div>' +
-                '<div class="ip-modal__bio">' + (p.bio || p.intro) + '</div>' +
+                '<div class="ip-modal__bio">' + escHtml(p.bio || p.intro) + '</div>' +
             '</div>';
 
             html += '<div class="ip-modal__section">' +
                 '<div class="ip-modal__section-title">전문 분야</div>' +
                 '<div class="ip-modal__tags">' +
-                    p.tags.map(function(t) { return '<span class="ip-modal__tag">' + t + '</span>'; }).join('') +
-                    '<span class="ip-modal__tag field">' + p.fieldTag + '</span>' +
+                    p.tags.map(function(t) { return '<span class="ip-modal__tag">' + escHtml(t) + '</span>'; }).join('') +
+                    '<span class="ip-modal__tag field">' + escHtml(p.fieldTag) + '</span>' +
                 '</div>' +
             '</div>';
 
@@ -974,10 +985,10 @@
                 '<div class="ip-modal__history">' +
                     p.history.map(function(h) {
                         return '<div class="ip-modal__history-item">' +
-                            '<span class="ip-modal__history-year">' + h.year + '</span>' +
+                            '<span class="ip-modal__history-year">' + escHtml(h.year) + '</span>' +
                             '<div>' +
-                                '<div class="ip-modal__history-text">' + h.text + '</div>' +
-                                '<div class="ip-modal__history-sub">' + h.sub + '</div>' +
+                                '<div class="ip-modal__history-text">' + escHtml(h.text) + '</div>' +
+                                '<div class="ip-modal__history-sub">' + escHtml(h.sub) + '</div>' +
                             '</div>' +
                         '</div>';
                     }).join('') +
@@ -985,7 +996,7 @@
             '</div>';
 
             html += '<div class="ip-modal__cta" id="ipCtaArea">' +
-                '<button class="ip-modal__cta-btn" onclick="showDirectInquiry(\'' + p.name.replace(/'/g,"\\'") + '\',\'' + d.lang.replace(/'/g,"\\'") + '\',\'' + (p.fieldTag||'').replace(/'/g,"\\'") + '\',\'' + d.country.replace(/'/g,"\\'") + '\',\'' + (p.photo||'').replace(/'/g,"\\'") + '\',\'' + (p.role||'').replace(/'/g,"\\'") + '\')">이 통역사에게 직접 견적 의뢰</button>' +
+                '<button class="ip-modal__cta-btn" onclick="showDirectInquiry(\'' + escJsAttr(p.name) + '\',\'' + escJsAttr(d.lang) + '\',\'' + escJsAttr(p.fieldTag||'') + '\',\'' + escJsAttr(d.country) + '\',\'' + escJsAttr(p.photo||'') + '\',\'' + escJsAttr(p.role||'') + '\')">이 통역사에게 직접 견적 의뢰</button>' +
             '</div>';
 
             document.getElementById('ipModalBody').innerHTML = html;
@@ -1000,8 +1011,8 @@
             '<div class="diq">' +
               '<div class="diq__head">' +
                 '<div class="diq__interp">' +
-                  '<img src="' + photo + '" class="diq__photo">' +
-                  '<div><div class="diq__name">' + name + '</div><div class="diq__role">' + role + ' · ' + lang + '</div></div>' +
+                  '<img src="' + escHtml(photo) + '" class="diq__photo">' +
+                  '<div><div class="diq__name">' + escHtml(name) + '</div><div class="diq__role">' + escHtml(role) + ' · ' + escHtml(lang) + '</div></div>' +
                 '</div>' +
                 '<div class="diq__title">직접 견적 의뢰</div>' +
               '</div>' +
@@ -1016,7 +1027,7 @@
                 '</div>' +
                 '<div class="diq__row">' +
                   '<div class="diq__field"><label>전시회명 <span class="diq__req">*</span></label><input type="text" id="diq-expo" placeholder="예: CES 2026"></div>' +
-                  '<div class="diq__field"><label>개최지</label><input type="text" id="diq-location" value="' + country + '" placeholder="예: 미국 / 라스베이거스"></div>' +
+                  '<div class="diq__field"><label>개최지</label><input type="text" id="diq-location" value="' + escHtml(country) + '" placeholder="예: 미국 / 라스베이거스"></div>' +
                 '</div>' +
                 '<div class="diq__row">' +
                   '<div class="diq__field"><label>전시 기간</label><input type="text" id="diq-period" placeholder="예: 2026.01.06 ~ 01.09"></div>' +
@@ -1028,8 +1039,8 @@
                   '<textarea id="diq-message" rows="4" placeholder="통역사에게 전달할 요청 사항을 자유롭게 작성해주세요."></textarea>' +
                 '</div>' +
                 '<div class="diq__actions">' +
-                  '<button class="diq__cancel" onclick="cancelDirectInquiry(\'' + name.replace(/'/g,"\\'") + '\',\'' + lang.replace(/'/g,"\\'") + '\',\'' + (field||'').replace(/'/g,"\\'") + '\',\'' + country.replace(/'/g,"\\'") + '\',\'' + (photo||'').replace(/'/g,"\\'") + '\',\'' + (role||'').replace(/'/g,"\\'") + '\')">취소</button>' +
-                  '<button class="diq__submit" onclick="submitDirectInquiry(\'' + name.replace(/'/g,"\\'") + '\',\'' + lang.replace(/'/g,"\\'") + '\',\'' + (field||'').replace(/'/g,"\\'") + '\')">견적 의뢰 보내기</button>' +
+                  '<button class="diq__cancel" onclick="cancelDirectInquiry(\'' + escJsAttr(name) + '\',\'' + escJsAttr(lang) + '\',\'' + escJsAttr(field||'') + '\',\'' + escJsAttr(country) + '\',\'' + escJsAttr(photo||'') + '\',\'' + escJsAttr(role||'') + '\')">취소</button>' +
+                  '<button class="diq__submit" onclick="submitDirectInquiry(\'' + escJsAttr(name) + '\',\'' + escJsAttr(lang) + '\',\'' + escJsAttr(field||'') + '\')">견적 의뢰 보내기</button>' +
                 '</div>' +
               '</div>' +
             '</div>';
@@ -1039,7 +1050,7 @@
         function cancelDirectInquiry(name, lang, field, country, photo, role) {
             var area = document.getElementById('ipCtaArea');
             if (!area) return;
-            area.innerHTML = '<button class="ip-modal__cta-btn" onclick="showDirectInquiry(\'' + name.replace(/'/g,"\\'") + '\',\'' + lang.replace(/'/g,"\\'") + '\',\'' + (field||'').replace(/'/g,"\\'") + '\',\'' + country.replace(/'/g,"\\'") + '\',\'' + (photo||'').replace(/'/g,"\\'") + '\',\'' + (role||'').replace(/'/g,"\\'") + '\')">이 통역사에게 직접 견적 의뢰</button>';
+            area.innerHTML = '<button class="ip-modal__cta-btn" onclick="showDirectInquiry(\'' + escJsAttr(name) + '\',\'' + escJsAttr(lang) + '\',\'' + escJsAttr(field||'') + '\',\'' + escJsAttr(country) + '\',\'' + escJsAttr(photo||'') + '\',\'' + escJsAttr(role||'') + '\')">이 통역사에게 직접 견적 의뢰</button>';
         }
 
         function submitDirectInquiry(interpName, lang, field) {
@@ -1085,7 +1096,7 @@
                 '<div class="diq__success-icon">&#9989;</div>' +
                 '<div class="diq__success-title">견적 의뢰가 전송되었습니다!</div>' +
                 '<div class="diq__success-info">' +
-                  '<strong>' + interpName + '</strong> 통역사에게 직접 견적 의뢰가 전달되었습니다.<br>' +
+                  '<strong>' + escHtml(interpName) + '</strong> 통역사에게 직접 견적 의뢰가 전달되었습니다.<br>' +
                   '확인 후 빠른 시일 내에 회신드리겠습니다.' +
                 '</div>' +
                 '<div class="diq__success-detail">' +

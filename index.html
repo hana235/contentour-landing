@@ -558,11 +558,11 @@
                         '<div class="testi-card__avatar" style="background:linear-gradient(135deg,' + grad[0] + ',' + grad[1] + ');">' + initial + '</div>' +
                         '<div>' +
                             '<div class="testi-card__name">' + name + '</div>' +
-                            (company ? '<div class="testi-card__company">' + company + '</div>' : '') +
+                            (company ? '<div class="testi-card__company">' + company.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' : '') +
                         '</div>' +
                     '</div>' +
                     '<div class="testi-card__footer">' +
-                        (r.exhibition_name ? '<div class="testi-card__tag">' + r.exhibition_name + '</div>' : '') +
+                        (r.exhibition_name ? '<div class="testi-card__tag">' + r.exhibition_name.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' : '') +
                         (interpMasked ? '<div class="testi-card__interp">담당 통역사: <strong>' + interpMasked + '</strong></div>' : '') +
                     '</div>' +
                 '</div>';
