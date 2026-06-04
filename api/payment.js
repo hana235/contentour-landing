@@ -320,6 +320,26 @@ async function handleWebhook(req, res, rawBody) {
                 ? String(payment.method.type).toLowerCase() : 'virtual';
             const amount = payment.amount && payment.amount.total;
 
+            // ── 금액 재검증: 계약 DB로 expected 재계산 후 실결제액과 대조 (verify-payment와 동일 강도) ──
+            // customData.contractId가 저액결제로 비싼 계약을 완납 처리하는 것을 방지 (webhook 경로 방어 보강)
+            const { data: ctChk } = await sb
+                .from('42_통역계약')
+                .select('total_amount, deposit_amount, balance_amount')
+                .eq('id', contractId).single();
+            let wExpected = 0;
+            if (ctChk) {
+                if (paymentType === 'full') wExpected = Number(ctChk.total_amount) || 0;
+                else if (paymentType === 'deposit') wExpected = Number(ctChk.deposit_amount || ctChk.total_amount) || 0;
+                else if (paymentType === 'balance') wExpected = Number(ctChk.balance_amount) || 0;
+            }
+            if (wExpected <= 0 || typeof amount !== 'number' || amount !== wExpected) {
+                console.error('[webhook] 금액 불일치 — process_payment 건너뜀:', { contractId, paymentType, amount, expected: wExpected });
+                return res.status(200).json({ ok: false, error: 'Amount mismatch' });
+            }
+            if (payment.currency && payment.currency !== 'KRW') {
+                return res.status(200).json({ ok: false, error: 'Currency mismatch' });
+            }
+
             const { data: rpcData, error: rpcErr } = await sb.rpc('process_payment', {
                 p_contract_id: contractId,
                 p_payment_type: paymentType,

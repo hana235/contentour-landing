@@ -6808,6 +6808,8 @@
     async function confirmServiceComplete(contractId) {
       const c = contracts.find(x => x.id === contractId);
       if (!c) return;
+      // 완료 확인은 관리자 잔금확인(서비스 완료) 단계에서만 가능 — 사전 단계 계약을 임의 완료 처리하지 못하도록 가드
+      if (c.status !== 'complete') { showContractToast('아직 완료 확인 단계가 아닙니다.'); return; }
 
       // DB 먼저 업데이트 — 실패 시 상태 변경·성공 토스트 없이 중단 (낙관적 업데이트로 인한 불일치 방지)
       var dbId = c.dbId || c.id;
