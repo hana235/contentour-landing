@@ -28,3 +28,6 @@ UPDATE-LOG-*.txt
 2026-*.txt
 2026.*.txt
 26.*.txt
+AUTH-REVIEW-*.txt
+SUPABASE-SETUP-GUIDE.txt
+WORK_LOG.txt
