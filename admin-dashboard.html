@@ -3480,6 +3480,12 @@
                     if (result.paid_at) d.paidDate = String(result.paid_at).slice(0, 10);
                 }
 
+                // 계약 상태를 서버(service role)에서 'settled'로 영구 반영 (클라이언트 직접 UPDATE는 트리거 차단)
+                if (d.contractId) {
+                    try { await callAdminAction({ action: 'settleContract', contractId: d.contractId }); }
+                    catch (e) { console.warn('계약 정산완료 상태 업데이트 실패:', e); }
+                }
+
                 d.status = 'paid';
                 d.statusText = '입금 완료';
                 if (!d.paidDate) d.paidDate = new Date().toISOString().slice(0, 10);
@@ -3918,71 +3924,45 @@
                 } catch(e) {}
             }
 
-            function ctAdminApproveBalance(contractId) {
+            async function ctAdminApproveBalance(contractId) {
                 var c = ctAdminContracts.find(function(x){return x.id===contractId;});
                 if (!c || c.status !== 'balance_review') return;
+                var today = new Date().toISOString().split('T')[0];
+
+                // ═══ 서버(service role)에서 계약 status='completed' + 정산건 생성/중복방지 ═══
+                // 계약 status는 클라이언트 직접 UPDATE가 트리거로 차단되므로 admin-app 서버 액션으로 처리
+                var dbStl = null;
+                try {
+                    var result = await callAdminAction({ action: 'completeContract', contractId: contractId });
+                    dbStl = result.settlement || null;
+                } catch (err) {
+                    console.error('완료 처리 실패:', err);
+                    showToast('❌ 잔금 확인 처리 실패: ' + (err.message || '다시 시도해주세요.'));
+                    return;
+                }
+
+                // 서버 성공 후에만 로컬 UI 반영
                 c.status = 'complete';
                 c.statusText = '서비스 완료';
-                var today = new Date().toISOString().split('T')[0];
                 c.timeline.forEach(function(t) {
                     if (t.step === '완료 확인') { t.done = true; t.active = false; t.date = today; }
                     if (t.step === '정산 완료') { t.active = true; }
                 });
                 ctAdminInit();
 
-                // ═══ 정산 건 자동 생성: DB에 INSERT ═══
-                var existsStl = stlAdminData.find(function(d){return d.contractId === contractId;});
-                if (!existsStl && typeof AdminData !== 'undefined' && AdminData.createSettlement) {
-                    // DB에서 계약 원본 데이터로 정산 생성
-                    (async function() {
-                        try {
-                            var contractDb = null;
-                            if (window.sbClient) {
-                                var res = await window.sbClient.from('42_통역계약').select('*').eq('id', contractId).single();
-                                if (res.data) contractDb = res.data;
-                            }
-                            if (contractDb) {
-                                var result = await AdminData.createSettlement(contractDb);
-                                if (result.success) {
-                                    // 로컬 데이터도 동기화
-                                    var dbStl = result.data;
-                                    stlAdminData.push({
-                                        id: dbStl.id, dbId: dbStl.id, contractId: contractId,
-                                        interpreter: c.interpreter.name, interpColor: c.interpreter.color || '#1565c0',
-                                        expo: c.expo, client: c.client.company,
-                                        start: c.dates.start, end: c.dates.end, lang: c.lang,
-                                        days: c.days, rate: dbStl.daily_rate, amount: dbStl.gross_amount, tax: dbStl.tax_amount,
-                                        status: 'request', statusText: '승인 대기', requestDate: today, journalSubmitted: true
-                                    });
-                                    stlAdminInit();
-                                    showToast('✅ ' + c.expo + ' 잔금 확인 완료! 통역사 정산 건이 생성되었습니다. [정산 승인] 탭에서 확인하세요.');
-                                } else {
-                                    console.error('정산 DB 생성 실패:', result.error);
-                                    showToast('⚠️ 잔금 확인 완료. 정산 건 생성 중 오류: ' + (result.error || ''));
-                                }
-                            }
-                        } catch(err) {
-                            console.error('정산 생성 에러:', err);
-                        }
-                    })();
-                } else if (existsStl) {
-                    showToast('✅ ' + c.expo + ' 잔금이 확인되었습니다. 서비스 완료 처리됩니다.');
-                } else {
-                    // AdminData 미로드 시 기존 로컬 방식 폴백
-                    var newStlId = stlAdminData.length > 0 ? Math.max.apply(null, stlAdminData.map(function(d){return d.id;})) + 1 : 1;
-                    var interpreterFee = c.subtotal;
-                    var tax = Math.round(interpreterFee * 0.033);
+                // 로컬 정산 목록 동기화
+                if (dbStl && !stlAdminData.find(function(d){return d.contractId === contractId;})) {
                     stlAdminData.push({
-                        id: newStlId, contractId: contractId,
+                        id: dbStl.id, dbId: dbStl.id, contractId: contractId,
                         interpreter: c.interpreter.name, interpColor: c.interpreter.color || '#1565c0',
                         expo: c.expo, client: c.client.company,
                         start: c.dates.start, end: c.dates.end, lang: c.lang,
-                        days: c.days, rate: Math.round(c.subtotal / c.days), amount: interpreterFee, tax: tax,
+                        days: c.days, rate: dbStl.daily_rate, amount: dbStl.gross_amount, tax: dbStl.tax_amount,
                         status: 'request', statusText: '승인 대기', requestDate: today, journalSubmitted: true
                     });
                     stlAdminInit();
-                    showToast('✅ ' + c.expo + ' 잔금 확인 완료! 정산 건이 생성되었습니다.');
                 }
+                showToast('✅ ' + c.expo + ' 잔금 확인 완료! 통역사 정산 건이 생성되었습니다. [정산 승인] 탭에서 확인하세요.');
 
                 // 고객사에게 서비스 완료 알림
                 if (window.sbClient && c.customer_id) {
@@ -4008,7 +3988,7 @@
                             action: 'approve_balance',
                             // 정산 건 정보 포함 → 통역사 대시보드에서 정산 내역 자동 생성
                             settlement: {
-                                id: existsStl ? existsStl.id : stlAdminData[stlAdminData.length - 1].id,
+                                id: dbStl ? dbStl.id : null,
                                 expo: c.expo,
                                 client: c.client.company,
                                 start: c.dates.start,

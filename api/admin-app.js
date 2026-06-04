@@ -786,6 +786,62 @@ module.exports = async function handler(req, res) {
             await notifyContractParties(cancel.contract_id, '↩️ 계약 취소 거절', '취소 요청이 거절되어 계약이 유지됩니다. 사유: ' + trimmed);
             return res.status(200).json({ success: true });
 
+        } else if (action === 'completeContract') {
+            // 잔금 확인(서비스 완료): 계약 status='completed' + 정산건 생성(중복 방지). service role이라 트리거/RLS 무관.
+            const { contractId } = req.body;
+            if (!contractId) return res.status(400).json({ error: 'contractId 필수' });
+            const { data: ct, error: ctErr } = await supabase.from('42_통역계약').select('*').eq('id', contractId).single();
+            if (ctErr || !ct) return res.status(404).json({ error: '계약을 찾을 수 없습니다.' });
+            if (ct.status === 'completed' || ct.status === 'settled') {
+                return res.status(409).json({ error: '이미 완료 처리된 계약입니다.' });
+            }
+            const { error: upErr } = await supabase.from('42_통역계약').update({ status: 'completed' }).eq('id', contractId);
+            if (upErr) return res.status(500).json({ error: '계약 완료 처리 실패' });
+
+            // 정산건: 이미 있으면 재사용, 없으면 생성 (43_정산내역.contract_id UNIQUE 권장 — migration-settlement-unique.sql)
+            let settlement = null;
+            const { data: existing } = await supabase.from('43_정산내역').select('*').eq('contract_id', contractId).maybeSingle();
+            if (existing) {
+                settlement = existing;
+            } else {
+                const serviceFee = (ct.daily_rate || 0) * (ct.working_days || 0);
+                const platformFeeRate = 0.10;
+                const platformFee = Math.round(serviceFee * platformFeeRate);
+                const taxAmount = Math.round(serviceFee * 0.033);
+                const { data: ins, error: insErr } = await supabase.from('43_정산내역').insert({
+                    contract_id: contractId,
+                    interpreter_id: ct.interpreter_id,
+                    exhibition_name: ct.exhibition_name,
+                    client_company: ct.client_company,
+                    language_pair: ct.language_pair,
+                    start_date: ct.start_date, end_date: ct.end_date,
+                    working_days: ct.working_days, daily_rate: ct.daily_rate,
+                    gross_amount: serviceFee, tax_amount: taxAmount, net_amount: serviceFee - taxAmount,
+                    platform_fee: platformFee, client_total: serviceFee + platformFee,
+                    platform_fee_rate: platformFeeRate,
+                    status: 'request', requested_at: new Date().toISOString(), journal_submitted: true
+                }).select().single();
+                if (insErr) {
+                    // 동시 처리로 UNIQUE 위반 시 기존 행 재조회 (중복 INSERT 방지)
+                    const { data: again } = await supabase.from('43_정산내역').select('*').eq('contract_id', contractId).maybeSingle();
+                    if (again) settlement = again;
+                    else return res.status(500).json({ error: '정산 생성 실패' });
+                } else {
+                    settlement = ins;
+                }
+            }
+            await recordAudit(req, admin, { action: 'complete_contract', target_table: '42_통역계약', target_id: contractId, after: { status: 'completed' } });
+            return res.status(200).json({ ok: true, settlement });
+
+        } else if (action === 'settleContract') {
+            // 입금 완료: 계약 status='settled'. service role.
+            const { contractId } = req.body;
+            if (!contractId) return res.status(400).json({ error: 'contractId 필수' });
+            const { error: upErr } = await supabase.from('42_통역계약').update({ status: 'settled' }).eq('id', contractId);
+            if (upErr) return res.status(500).json({ error: '계약 정산완료 처리 실패' });
+            await recordAudit(req, admin, { action: 'settle_contract', target_table: '42_통역계약', target_id: contractId, after: { status: 'settled' } });
+            return res.status(200).json({ ok: true });
+
         } else {
             return res.status(400).json({ error: 'Unknown action' });
         }

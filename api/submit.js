@@ -325,11 +325,18 @@ async function handleNotifyAdmins(req, res) {
     const { data: { user }, error: authErr } = await sbAuth.auth.getUser(token);
     if (authErr || !user) return res.status(401).json({ error: '인증 실패' });
 
+    // 스팸 방지: 사용자당 5분에 20건
+    if (!await checkRateLimit(sb, 'notify-admins:' + user.id, 20, 300)) {
+        return res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    }
+
     const b = req.body || {};
     const title = String(b.title || '').trim().slice(0, 200);
     const message = String(b.message || '').trim().slice(0, 2000);
     const notification_type = String(b.notification_type || 'service').trim().slice(0, 50);
-    const link = b.link ? String(b.link).trim().slice(0, 500) : null;
+    const rawLink = b.link ? String(b.link).trim().slice(0, 500) : null;
+    // 피싱 방지: 내부 상대경로(/로 시작, // 아님, : 없음)만 허용
+    const link = (rawLink && rawLink.startsWith('/') && !rawLink.startsWith('//') && !rawLink.includes(':')) ? rawLink : null;
 
     if (!title || !message) return res.status(400).json({ error: 'title과 message가 필요합니다.' });
 
