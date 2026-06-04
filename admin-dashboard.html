@@ -2009,13 +2009,13 @@
     <tr onclick="openAssignModal('${d.id}')">
       <td class="checkbox-cell" onclick="event.stopPropagation()"><input type="checkbox"></td>
       <td><span class="priority ${d.priority}">${d.priority === 'high' ? '긴급' : '보통'}</span></td>
-      <td><div class="company">${d.company}</div><div class="sub-text">${d.contact}</div></td>
-      <td><div class="expo-name">${d.expo}</div><div class="sub-text">${d.lang}</div></td>
-      <td><span class="lang-tag">${d.lang}</span></td>
-      <td>${d.start}</td>
-      <td>${d.type}</td>
-      <td><span class="badge badge-${statusClass}">${d.status}</span></td>
-      <td>${d.interpreter || '미배정'}</td>
+      <td><div class="company">${escapeHtml(d.company)}</div><div class="sub-text">${escapeHtml(d.contact)}</div></td>
+      <td><div class="expo-name">${escapeHtml(d.expo)}</div><div class="sub-text">${escapeHtml(d.lang)}</div></td>
+      <td><span class="lang-tag">${escapeHtml(d.lang)}</span></td>
+      <td>${escapeHtml(d.start)}</td>
+      <td>${escapeHtml(d.type)}</td>
+      <td><span class="badge badge-${statusClass}">${escapeHtml(d.status)}</span></td>
+      <td>${escapeHtml(d.interpreter || '미배정')}</td>
       <td>${d.received}</td>
       <td><button class="action-btn assign" onclick="event.stopPropagation();openAssignModal('${d.id}')">배정</button>${d.status === '견적거절' ? '<span style="margin-left:4px;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;background:#ffebee;color:#c62828;cursor:pointer;" onclick="event.stopPropagation();showRejectReason(\''+d.id+'\')" title="거절 사유 확인">거절됨 ⓘ</span>' : (d.status === '검토중' || d.status === '매칭완료') && !d.quoteSent ? '<button class="action-btn" style="background:#388e3c;color:#fff;margin-left:4px;" onclick="event.stopPropagation();openQuoteModal(\''+d.id+'\')">견적</button>' : ''}${d.quoteSent && d.status !== '견적거절' ? '<span class="badge-quote-sent">견적발송</span>' : ''}</td>
     </tr>`;
@@ -2197,12 +2197,12 @@
                 // 문의 요약 정보 표시
                 var adminName = '관리자';
                 document.getElementById('inquirySummary').innerHTML =
-                    '<div class="summary-item"><div class="summary-item__label">고객사</div><div class="summary-item__value">' + d.company + '</div></div>' +
-                    '<div class="summary-item"><div class="summary-item__label">고객 담당자</div><div class="summary-item__value">' + (d.contact || '-') + '</div></div>' +
+                    '<div class="summary-item"><div class="summary-item__label">고객사</div><div class="summary-item__value">' + escapeHtml(d.company) + '</div></div>' +
+                    '<div class="summary-item"><div class="summary-item__label">고객 담당자</div><div class="summary-item__value">' + escapeHtml(d.contact || '-') + '</div></div>' +
                     '<div class="summary-item"><div class="summary-item__label">담당 관리자</div><div class="summary-item__value">' + adminName + '</div></div>' +
-                    '<div class="summary-item"><div class="summary-item__label">전시회</div><div class="summary-item__value">' + d.expo + '</div></div>' +
-                    '<div class="summary-item"><div class="summary-item__label">기간</div><div class="summary-item__value">' + d.start + ' ~ ' + (d.end || '') + '</div></div>' +
-                    '<div class="summary-item"><div class="summary-item__label">언어 / 형태</div><div class="summary-item__value">' + d.lang + ' · ' + d.type + '</div></div>';
+                    '<div class="summary-item"><div class="summary-item__label">전시회</div><div class="summary-item__value">' + escapeHtml(d.expo) + '</div></div>' +
+                    '<div class="summary-item"><div class="summary-item__label">기간</div><div class="summary-item__value">' + escapeHtml(d.start) + ' ~ ' + escapeHtml(d.end || '') + '</div></div>' +
+                    '<div class="summary-item"><div class="summary-item__label">언어 / 형태</div><div class="summary-item__value">' + escapeHtml(d.lang) + ' · ' + escapeHtml(d.type) + '</div></div>';
 
                 // DB에서 전체 통역사 로드
                 if (allInterpretersFromDB.length === 0) await loadAllInterpreters();
@@ -2214,11 +2214,11 @@
                 var grid = document.getElementById('interpOptions');
                 grid.innerHTML = interpList.map(function(interp) {
                     var escapedId = typeof interp.id === 'string' ? "'" + interp.id + "'" : interp.id;
-                    return '<div class="interp-option" data-id="' + interp.id + '" data-name="' + interp.name + '" onclick="selectInterpreter(this, ' + escapedId + ')" style="display:flex;align-items:center;gap:12px;padding:12px;border:2px solid #e5eaf2;border-radius:10px;cursor:pointer;transition:all 0.2s;">' +
+                    return '<div class="interp-option" data-id="' + escapeHtml(interp.id) + '" data-name="' + escapeHtml(interp.name) + '" onclick="selectInterpreter(this, ' + escapedId + ')" style="display:flex;align-items:center;gap:12px;padding:12px;border:2px solid #e5eaf2;border-radius:10px;cursor:pointer;transition:all 0.2s;">' +
                         '<div style="width:40px;height:40px;border-radius:50%;background:' + interp.color + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;">' + interp.initials + '</div>' +
                         '<div style="flex:1;">' +
-                        '<div style="font-weight:700;font-size:0.88rem;">' + interp.name + '</div>' +
-                        '<div style="font-size:0.75rem;color:#8a95a8;">' + interp.langs.join(', ') + ' | ' + interp.field + '</div>' +
+                        '<div style="font-weight:700;font-size:0.88rem;">' + escapeHtml(interp.name) + '</div>' +
+                        '<div style="font-size:0.75rem;color:#8a95a8;">' + escapeHtml(interp.langs.join(', ')) + ' | ' + escapeHtml(interp.field) + '</div>' +
                         '</div>' +
                         '<div style="font-size:0.75rem;">' + (interp.available ? '<span style="color:#2e7d32;">가용</span>' : '<span style="color:#c62828;">불가</span>') + '</div>' +
                         '</div>';
@@ -2814,17 +2814,17 @@
                         '<div class="jv-star-item"><div class="jv-star-lbl">의사소통 정확도</div><div class="jv-star-val">' + stars(j.stars.comm) + '</div></div>' +
                         '<div class="jv-star-item"><div class="jv-star-lbl">전반적 만족도</div><div class="jv-star-val">' + stars(j.stars.overall) + '</div></div>' +
                         '</div>' +
-                        (j.eval ? '<div class="jv-text" style="margin-top:8px;">' + j.eval + '</div>' : '');
+                        (j.eval ? '<div class="jv-text" style="margin-top:8px;">' + escapeHtml(j.eval) + '</div>' : '');
                 }
                 if (!isInterp && j.customerSurveyText) {
-                    starsHtml += '<div class="jv-sec">고객사 현장 소견 (클릭 설문)</div><div class="jv-text">' + j.customerSurveyText + '</div>';
+                    starsHtml += '<div class="jv-sec">고객사 현장 소견 (클릭 설문)</div><div class="jv-text">' + escapeHtml(j.customerSurveyText) + '</div>';
                 }
 
                 jv.innerHTML =
                 '<div class="jv-head">' +
                   '<div>' +
-                    '<h3>' + j.expo + ' — ' + j.date + ' 상담일지' + sourceBadge + '</h3>' +
-                    '<p>' + j.company + ' · ' + j.interp + ' · ' + j.lang + '</p>' +
+                    '<h3>' + escapeHtml(j.expo) + ' — ' + escapeHtml(j.date) + ' 상담일지' + sourceBadge + '</h3>' +
+                    '<p>' + escapeHtml(j.company) + ' · ' + escapeHtml(j.interp) + ' · ' + escapeHtml(j.lang) + '</p>' +
                   '</div>' +
                   '<div class="jv-head-btns">' +
                     '<button class="jvbtn out" onclick="exportJournalPDF(' + j.id + ')">📥 PDF</button>' +
@@ -2833,11 +2833,11 @@
                 '</div>' +
                 '<div class="jv-body">' +
                   '<div class="jv-info">' +
-                    '<div class="jv-info-item"><label>전시회</label><span>' + j.expo + '</span></div>' +
-                    '<div class="jv-info-item"><label>고객사</label><span>' + j.company + '</span></div>' +
-                    '<div class="jv-info-item"><label>작성일</label><span>' + j.date + '</span></div>' +
-                    '<div class="jv-info-item"><label>통역사</label><span>' + j.interp + '</span></div>' +
-                    '<div class="jv-info-item"><label>언어</label><span>' + (j.lang || '-') + '</span></div>' +
+                    '<div class="jv-info-item"><label>전시회</label><span>' + escapeHtml(j.expo) + '</span></div>' +
+                    '<div class="jv-info-item"><label>고객사</label><span>' + escapeHtml(j.company) + '</span></div>' +
+                    '<div class="jv-info-item"><label>작성일</label><span>' + escapeHtml(j.date) + '</span></div>' +
+                    '<div class="jv-info-item"><label>통역사</label><span>' + escapeHtml(j.interp) + '</span></div>' +
+                    '<div class="jv-info-item"><label>언어</label><span>' + escapeHtml(j.lang || '-') + '</span></div>' +
                     '<div class="jv-info-item"><label>작성자</label><span>' + (isInterp ? '통역사' : '고객사') + '</span></div>' +
                     '<div class="jv-info-item"><label>상태</label>' +
                       '<span style="color:' + (j.status === 'reviewed' ? 'var(--success)' : j.status === 'new' ? 'var(--warn)' : 'var(--gray-400)') + ';">' +
@@ -2854,11 +2854,11 @@
                     '<div class="jv-stat"><div class="jv-stat__n">' + j.follow + '</div><div class="jv-stat__l">팔로업 예정</div></div>' +
                   '</div>' +
                   ((j.periodStart || j.periodEnd) ? (
-                    '<div class="jv-text" style="margin-top:8px;">📆 상담 기간: ' + (j.periodStart || '—') + ' ~ ' + (j.periodEnd || '—') + '</div>'
+                    '<div class="jv-text" style="margin-top:8px;">📆 상담 기간: ' + escapeHtml(j.periodStart || '—') + ' ~ ' + escapeHtml(j.periodEnd || '—') + '</div>'
                   ) : '') +
                   ((j.startTime || j.endTime || j.durationMinutes) ? (
                     '<div class="jv-text" style="margin-top:8px;">' +
-                      '🕐 상담 시간: ' + (j.startTime || '—') + ' ~ ' + (j.endTime || '—') +
+                      '🕐 상담 시간: ' + escapeHtml(j.startTime || '—') + ' ~ ' + escapeHtml(j.endTime || '—') +
                       (j.durationMinutes ? ' <strong>(' + Math.floor(j.durationMinutes/60) + '시간 ' + (j.durationMinutes%60) + '분)</strong>' : '') +
                     '</div>'
                   ) : '') +
@@ -2875,7 +2875,7 @@
                   (isInterp ? '' : '<div class="jv-sec">특이사항</div><div class="jv-text">' + CT.escHtml(j.issue || '') + '</div>') +
 
                   '<div class="jv-sec">팔로업 액션 플랜</div>' +
-                  '<div class="jv-text">' + (j.action || '') + '</div>' +
+                  '<div class="jv-text">' + escapeHtml(j.action || '') + '</div>' +
 
                   interpExtraHtml +
                   starsHtml +
@@ -3079,11 +3079,11 @@
                     '</div>';
 
                 html += '<div class="info-grid">' +
-                    '<div class="info-item"><div class="info-label">전시회</div><div class="info-value">' + j.expo + '</div></div>' +
-                    '<div class="info-item"><div class="info-label">작성일</div><div class="info-value">' + j.date + '</div></div>' +
-                    '<div class="info-item"><div class="info-label">고객사</div><div class="info-value">' + j.company + '</div></div>' +
-                    '<div class="info-item"><div class="info-label">통역사</div><div class="info-value">' + j.interp + '</div></div>' +
-                    '<div class="info-item"><div class="info-label">언어</div><div class="info-value">' + j.lang + '</div></div>' +
+                    '<div class="info-item"><div class="info-label">전시회</div><div class="info-value">' + escapeHtml(j.expo) + '</div></div>' +
+                    '<div class="info-item"><div class="info-label">작성일</div><div class="info-value">' + escapeHtml(j.date) + '</div></div>' +
+                    '<div class="info-item"><div class="info-label">고객사</div><div class="info-value">' + escapeHtml(j.company) + '</div></div>' +
+                    '<div class="info-item"><div class="info-label">통역사</div><div class="info-value">' + escapeHtml(j.interp) + '</div></div>' +
+                    '<div class="info-item"><div class="info-label">언어</div><div class="info-value">' + escapeHtml(j.lang) + '</div></div>' +
                     '<div class="info-item"><div class="info-label">작성자</div><div class="info-value">' + (isInterp ? '통역사' : '고객사') + '</div></div>' +
                     '</div>';
 
@@ -3096,7 +3096,7 @@
                     '</div>';
 
                 if (j.startTime || j.endTime || j.durationMinutes) {
-                    html += '<p class="text-block" style="margin-top:8px;">🕐 상담 시간: ' + (j.startTime || '—') + ' ~ ' + (j.endTime || '—') +
+                    html += '<p class="text-block" style="margin-top:8px;">🕐 상담 시간: ' + escapeHtml(j.startTime || '—') + ' ~ ' + escapeHtml(j.endTime || '—') +
                         (j.durationMinutes ? ' <strong>(' + Math.floor(j.durationMinutes/60) + '시간 ' + (j.durationMinutes%60) + '분)</strong>' : '') + '</p>';
                 }
 
@@ -3104,14 +3104,14 @@
                     html += '<div class="section-title">방문 바이어 주요 국가</div><div style="margin-bottom:16px;">' + countriesHtml + '</div>';
                 }
 
-                html += '<div class="section-title">상담 내용 요약</div><p class="text-block">' + (j.summary || '-') + '</p>';
-                html += '<div class="section-title">주요 성과</div><p class="text-block">' + (j.result || '-') + '</p>';
+                html += '<div class="section-title">상담 내용 요약</div><p class="text-block">' + escapeHtml(j.summary || '-') + '</p>';
+                html += '<div class="section-title">주요 성과</div><p class="text-block">' + escapeHtml(j.result || '-') + '</p>';
 
                 if (!isInterp) {
-                    html += '<div class="section-title">특이사항</div><p class="text-block">' + (j.issue || '-') + '</p>';
+                    html += '<div class="section-title">특이사항</div><p class="text-block">' + escapeHtml(j.issue || '-') + '</p>';
                 }
 
-                html += '<div class="section-title">팔로업 액션 플랜</div><p class="text-block">' + (j.action || '-') + '</p>';
+                html += '<div class="section-title">팔로업 액션 플랜</div><p class="text-block">' + escapeHtml(j.action || '-') + '</p>';
 
                 if (buyersHtml) {
                     html += '<div class="section-title">바이어 상담 상세</div>' + buyersHtml;
@@ -3717,7 +3717,7 @@
             }
 
             function escapeHtml(s) {
-                return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             }
 
             function ctAdminUpdateSummary() {

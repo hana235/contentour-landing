@@ -229,7 +229,7 @@
       document.getElementById('cardContent').innerHTML = `
         <div class="icon-wrap pending">⏳</div>
         <h1>지원서 검수 중입니다</h1>
-        <p class="sub">콘텐츄어 담당자가 ${app.name_ko}님의 지원서를 검토하고 있습니다.<br>승인되면 즉시 통역사 대시보드를 이용하실 수 있습니다.</p>
+        <p class="sub">콘텐츄어 담당자가 ${esc(app.name_ko)}님의 지원서를 검토하고 있습니다.<br>승인되면 즉시 통역사 대시보드를 이용하실 수 있습니다.</p>
         <div class="info-box">
           <div class="info-row"><span class="label">지원자</span><span class="value">${esc(app.name_ko)}</span></div>
           <div class="info-row"><span class="label">이메일</span><span class="value">${esc(app.email)}</span></div>
@@ -248,7 +248,7 @@
       document.getElementById('cardContent').innerHTML = `
         <div class="icon-wrap rejected">📋</div>
         <h1>지원서가 반려되었습니다</h1>
-        <p class="sub">아쉽지만 ${app.name_ko}님의 이번 지원서는 반려되었습니다.<br>아래 사유를 확인하시고 보완하여 재지원해주세요.</p>
+        <p class="sub">아쉽지만 ${esc(app.name_ko)}님의 이번 지원서는 반려되었습니다.<br>아래 사유를 확인하시고 보완하여 재지원해주세요.</p>
         <div class="reject-reason">
           <strong>반려 사유</strong>
           ${esc(reason).replace(/\n/g, '<br>')}

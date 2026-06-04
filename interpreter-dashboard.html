@@ -4637,13 +4637,13 @@
                 return '<div class="stl-item" onclick="openStlDetail(' + d.id + ')">' +
                     '<div>' +
                         '<div class="stl-item__top">' +
-                            '<span class="stl-item__expo">' + d.expo + '</span>' +
+                            '<span class="stl-item__expo">' + escapeHtml(d.expo) + '</span>' +
                             '<span class="stl-badge ' + badgeClass + '">' + d.statusText + '</span>' +
                         '</div>' +
                         '<div class="stl-item__meta">' +
-                            '<span class="stl-item__meta-item"><span class="stl-item__meta-icon">🏢</span> ' + d.client + '</span>' +
+                            '<span class="stl-item__meta-item"><span class="stl-item__meta-icon">🏢</span> ' + escapeHtml(d.client) + '</span>' +
                             '<span class="stl-item__meta-item"><span class="stl-item__meta-icon">📅</span> ' + d.start + ' ~ ' + d.end + '</span>' +
-                            '<span class="stl-item__meta-item"><span class="stl-item__meta-icon">🌐</span> ' + d.lang + '</span>' +
+                            '<span class="stl-item__meta-item"><span class="stl-item__meta-icon">🌐</span> ' + escapeHtml(d.lang) + '</span>' +
                             '<span class="stl-item__meta-item"><span class="stl-item__meta-icon">📋</span> ' + d.days + '일 근무</span>' +
                         '</div>' +
                     '</div>' +
@@ -4669,8 +4669,8 @@
 
             let html =
                 '<div class="stl-detail-grid">' +
-                    '<div class="stl-detail-item"><span class="stl-detail-label">고객사</span><span class="stl-detail-value">' + d.client + '</span></div>' +
-                    '<div class="stl-detail-item"><span class="stl-detail-label">통역 언어</span><span class="stl-detail-value">' + d.lang + '</span></div>' +
+                    '<div class="stl-detail-item"><span class="stl-detail-label">고객사</span><span class="stl-detail-value">' + escapeHtml(d.client) + '</span></div>' +
+                    '<div class="stl-detail-item"><span class="stl-detail-label">통역 언어</span><span class="stl-detail-value">' + escapeHtml(d.lang) + '</span></div>' +
                     '<div class="stl-detail-item"><span class="stl-detail-label">기간</span><span class="stl-detail-value">' + d.start + ' ~ ' + d.end + ' (' + d.days + '일)</span></div>' +
                     '<div class="stl-detail-item"><span class="stl-detail-label">상태</span><span class="stl-badge ' + badgeClass + '">' + d.statusText + '</span></div>' +
                 '</div>';
@@ -5099,12 +5099,12 @@
                 return '<div class="ct-item" onclick="openIntContractDetail(\'' + c.id + '\')">' +
                     '<div>' +
                         '<div class="ct-item__top">' +
-                            '<span class="ct-item__expo">' + c.expo + '</span>' +
+                            '<span class="ct-item__expo">' + escapeHtml(c.expo) + '</span>' +
                             '<span class="ct-item__id">' + c.id + '</span>' +
                             '<span class="ct-badge ' + badgeClass + '">' + c.statusText + '</span>' +
                         '</div>' +
                         '<div class="ct-item__meta">' +
-                            '<span class="ct-item__meta-item"><span class="ct-item__meta-icon">🏢</span> ' + c.client.name + ' (' + c.client.company + ')</span>' +
+                            '<span class="ct-item__meta-item"><span class="ct-item__meta-icon">🏢</span> ' + escapeHtml(c.client.name) + ' (' + escapeHtml(c.client.company) + ')</span>' +
                             '<span class="ct-item__meta-item"><span class="ct-item__meta-icon">📅</span> ' + c.dates.start + ' ~ ' + c.dates.end + '</span>' +
                             '<span class="ct-item__meta-item"><span class="ct-item__meta-icon">🌐</span> ' + c.lang + '</span>' +
                         '</div>' +
@@ -7135,7 +7135,7 @@
                 } else {
                     listEl.innerHTML = docs.map(function(d, i) {
                         return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8f9fb;border-radius:8px;margin-bottom:4px;font-size:0.78rem;">' +
-                            '<span>📄 ' + d.name + '</span>' +
+                            '<span>📄 ' + escapeHtml(d.name) + '</span>' +
                             '<span style="color:#999;font-size:0.7rem;">' + (d.uploadedAt ? d.uploadedAt.split('T')[0] : '') + '</span>' +
                             '<button onclick="deleteVerifyDoc(' + i + ')" style="margin-left:auto;background:none;border:none;color:#c62828;font-size:0.72rem;cursor:pointer;">삭제</button>' +
                         '</div>';

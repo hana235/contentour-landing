@@ -5304,11 +5304,11 @@
         return `<div class="contract-card" onclick="openContractDetail('${c.id}')">
           <div style="flex:1;min-width:0;">
             <div class="contract-card__id">${c.id}</div>
-            <div class="contract-card__expo">${c.expo}</div>
+            <div class="contract-card__expo">${escapeHtml(c.expo)}</div>
             <div class="contract-card__meta">
-              <span>&#128100; ${c.interpreter.name}</span>
+              <span>&#128100; ${escapeHtml(c.interpreter.name)}</span>
               <span>&#128197; ${c.dates.start} ~ ${c.dates.end}</span>
-              <span>&#127760; ${c.lang}</span>
+              <span>&#127760; ${escapeHtml(c.lang)}</span>
             </div>
             ${confirmBadge}
           </div>
@@ -5609,8 +5609,8 @@
       document.getElementById('cmSub').textContent = contractDisplayNumber(c) + ' | ' + c.statusText;
       let bodyHtml = `
         <div class="cm-info-grid">
-          <div class="cm-info-item"><div class="cm-info-label">통역사</div><div class="cm-info-value">${c.interpreter.name}</div></div>
-          <div class="cm-info-item"><div class="cm-info-label">언어</div><div class="cm-info-value">${c.lang}</div></div>
+          <div class="cm-info-item"><div class="cm-info-label">통역사</div><div class="cm-info-value">${escapeHtml(c.interpreter.name)}</div></div>
+          <div class="cm-info-item"><div class="cm-info-label">언어</div><div class="cm-info-value">${escapeHtml(c.lang)}</div></div>
           <div class="cm-info-item"><div class="cm-info-label">파견 기간</div><div class="cm-info-value">${c.dates.start} ~ ${c.dates.end} (${c.days}일)</div></div>
           <div class="cm-info-item"><div class="cm-info-label">상태</div><div class="cm-info-value"><span class="contract-status-badge ${getStatusBadgeClass(c.status)}">${c.statusText}</span></div></div>
           <div class="cm-info-item"><div class="cm-info-label">담당 관리자</div><div class="cm-info-value">관리자</div></div>
