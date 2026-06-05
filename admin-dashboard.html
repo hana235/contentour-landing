@@ -3510,7 +3510,7 @@
                         linkedContract.status = 'settled';
                         linkedContract.statusText = '정산 완료';
                         linkedContract.timeline.forEach(function(t) {
-                            if (t.step === '정산 완료') { t.done = true; t.active = false; t.date = d.paidDate; }
+                            if (t.step === '완료') { t.done = true; t.active = false; t.date = d.paidDate; }
                         });
                         ctAdminInit();
                     }
@@ -3899,8 +3899,9 @@
                 if (!c || c.status !== 'deposit_review') return;
                 c.status = 'in_progress';
                 c.statusText = '\uC11C\uBE44\uC2A4 \uC9C4\uD589\uC911';
+                var _approveToday = new Date().toISOString().split('T')[0];
                 c.timeline.forEach(function(t) {
-                    if (t.step === '\uAD00\uB9AC\uC790 \uC2B9\uC778') { t.done = true; t.active = false; t.date = new Date().toISOString().split('T')[0]; }
+                    if (t.step === '\uACC4\uC57D\uAE08 \uACB0\uC81C' || t.step === '\uC120\uACB0\uC81C') { t.done = true; t.active = false; if (!t.date) t.date = _approveToday; }
                     if (t.step === '\uC11C\uBE44\uC2A4 \uC9C4\uD589') { t.active = true; }
                 });
                 ctAdminInit();
@@ -3921,8 +3922,8 @@
                 c.statusText = '계약금 결제 대기';
                 c.depositPaid = false;
                 c.timeline.forEach(function(t) {
-                    if (t.step === '계약금 결제') { t.done = false; t.active = true; t.date = ''; }
-                    if (t.step === '관리자 승인') { t.active = false; t.date = ''; }
+                    if (t.step === '계약금 결제' || t.step === '선결제') { t.done = false; t.active = true; t.date = ''; }
+                    if (t.step === '서비스 진행') { t.active = false; t.date = ''; }
                 });
                 ctAdminInit();
                 showToast('❌ ' + c.expo + ' 계약이 반려되었습니다.');
@@ -3956,8 +3957,8 @@
                 c.status = 'complete';
                 c.statusText = '서비스 완료';
                 c.timeline.forEach(function(t) {
-                    if (t.step === '완료 확인') { t.done = true; t.active = false; t.date = today; }
-                    if (t.step === '정산 완료') { t.active = true; }
+                    if (t.step === '잔금 결제') { t.done = true; t.active = false; if (!t.date) t.date = today; }
+                    if (t.step === '완료') { t.done = true; t.active = false; t.date = today; }
                 });
                 ctAdminInit();
 
@@ -4024,7 +4025,7 @@
                 c.balancePaid = false;
                 c.timeline.forEach(function(t) {
                     if (t.step === '잔금 결제') { t.done = false; t.active = true; t.date = ''; }
-                    if (t.step === '완료 확인') { t.active = false; t.date = ''; }
+                    if (t.step === '완료') { t.active = false; t.date = ''; }
                 });
                 ctAdminInit();
                 showToast('❌ ' + c.expo + ' 잔금 결제가 반려되었습니다.');
@@ -5273,8 +5274,8 @@
                             c.status = 'deposit_review';
                             c.statusText = '관리자 승인 대기';
                             c.timeline.forEach(t => {
-                                if (t.step === '계약금 결제') { t.done = true; t.active = false; t.date = new Date().toISOString().split('T')[0]; }
-                                if (t.step === '관리자 승인') { t.active = true; }
+                                if (t.step === '계약금 결제' || t.step === '선결제') { t.done = true; t.active = false; t.date = new Date().toISOString().split('T')[0]; }
+                                if (t.step === '서비스 진행') { t.active = true; }
                             });
                             showToast('🔔 ' + c.expo + ' 선결제 결제가 접수되었습니다. 승인이 필요합니다.');
                         } else if (data.type === 'balance') {
@@ -5283,7 +5284,7 @@
                             c.statusText = '잔금 확인 대기';
                             c.timeline.forEach(t => {
                                 if (t.step === '잔금 결제') { t.done = true; t.active = false; t.date = new Date().toISOString().split('T')[0]; }
-                                if (t.step === '완료 확인') { t.active = true; }
+                                if (t.step === '완료') { t.active = true; }
                             });
                             showToast('🔔 ' + c.expo + ' 잔금 결제가 접수되었습니다. 확인이 필요합니다.');
                         }
@@ -5929,7 +5930,7 @@
                             c.timeline.forEach(function(t) {
                                 if (t.step === '계약서 확인') { t.done = true; t.active = false; t.date = todayStr; }
                                 if (t.step === '계약 체결') { t.done = true; t.date = todayStr; }
-                                if (t.step === '계약금 결제') { t.active = true; }
+                                if (t.step === '계약금 결제' || t.step === '선결제') { t.active = true; }
                             });
                             showToast('🎉 ' + c.expo + ' — 양측 계약서 동의 완료! 계약이 체결되었습니다.');
                         }
