@@ -3591,12 +3591,12 @@
                         var { data: profiles } = await supabase.from('40_통역사프로필').select('user_id, display_name').in('user_id', interpIds);
                         if (profiles) profiles.forEach(function(p){ interpNames[p.user_id] = p.display_name; });
                     }
-                    // 고객사 이름 조회
+                    // 고객사 정보 조회 — 회사명은 company_name, 담당자는 name (출처 통일)
                     var custIds = [...new Set(data.filter(function(c){return c.customer_id;}).map(function(c){return c.customer_id;}))];
-                    var custNames = {};
+                    var custInfo = {};
                     if (custIds.length > 0) {
-                        var { data: members } = await supabase.from('01_회원').select('id, name').in('id', custIds);
-                        if (members) members.forEach(function(m){ custNames[m.id] = m.name; });
+                        var { data: members } = await supabase.from('01_회원').select('id, name, company_name').in('id', custIds);
+                        if (members) members.forEach(function(m){ custInfo[m.id] = { name: m.name || '', company: m.company_name || '' }; });
                     }
 
                     var colors = ['#1565c0','#0277bd','#00695c','#c62828','#6a1b9a','#2e7d32','#4527a0','#e65100','#ad1457'];
@@ -3614,8 +3614,10 @@
                             contractNo: c.contract_no,
                             expo: c.exhibition_name || '-',
                             client: {
-                                name: custNames[c.customer_id] || c.client_company || '-',
-                                company: c.client_company || '-',
+                                // 회사명: 01_회원.company_name 우선, 없으면 계약 스냅샷 client_company (출처 통일)
+                                company: (custInfo[c.customer_id] && custInfo[c.customer_id].company) || c.client_company || '-',
+                                // 담당자(사람 이름): 01_회원.name (있을 때만)
+                                name: (custInfo[c.customer_id] && custInfo[c.customer_id].name) || '',
                                 color: colors[i % colors.length]
                             },
                             interpreter: {
@@ -3794,7 +3796,7 @@
                             '<div class="contract-card__id">'+c.id+'</div>' +
                             '<div class="contract-card__expo">'+escapeHtml(c.expo)+'</div>' +
                             '<div class="contract-card__meta">' +
-                                '<span>\uD83D\uDC64 '+escapeHtml(c.client.name)+' ('+escapeHtml(c.client.company)+')</span>' +
+                                '<span>\uD83C\uDFE2 '+escapeHtml(c.client.company)+(c.client.name ? ' ('+escapeHtml(c.client.name)+')' : '')+'</span>' +
                                 '<span>\uD83C\uDF10 '+escapeHtml(c.interpreter.name)+'</span>' +
                                 '<span>\uD83D\uDCC5 '+escapeHtml(c.dates.start)+' ~ '+escapeHtml(c.dates.end)+'</span>' +
                                 '<span>\uD83D\uDDE3\uFE0F '+escapeHtml(c.lang)+'</span>' +
@@ -3830,7 +3832,7 @@
                 document.getElementById('ctModalSub').textContent = contractDisplayNumber(c) + ' | ' + c.statusText;
                 var bodyHtml =
                     '<div class="cm-info-grid">' +
-                        '<div class="cm-info-item"><div class="cm-info-label">\uACE0\uAC1D\uC0AC</div><div class="cm-info-value">'+c.client.name+' ('+c.client.company+')</div></div>' +
+                        '<div class="cm-info-item"><div class="cm-info-label">\uACE0\uAC1D\uC0AC</div><div class="cm-info-value">'+escapeHtml(c.client.company)+(c.client.name ? ' ('+escapeHtml(c.client.name)+')' : '')+'</div></div>' +
                         '<div class="cm-info-item"><div class="cm-info-label">\uD1B5\uC5ED\uC0AC</div><div class="cm-info-value">'+c.interpreter.name+'</div></div>' +
                         '<div class="cm-info-item"><div class="cm-info-label">\uC5B8\uC5B4</div><div class="cm-info-value">'+c.lang+'</div></div>' +
                         '<div class="cm-info-item"><div class="cm-info-label">\uD30C\uACAC \uAE30\uAC04</div><div class="cm-info-value">'+c.dates.start+' ~ '+c.dates.end+' ('+c.days+'\uC77C)</div></div>' +
@@ -5958,8 +5960,8 @@
                 var balanceReview = ctAdminContracts.filter(function(c){return c.status==='balance_review' && c.balance > 0;});
                 var stlRequest = stlAdminData.filter(function(d){return d.status==='request';});
                 var all = [];
-                depositReview.forEach(function(c){ all.push({type:'deposit', id:c.id, title:c.expo, sub:'선결제 '+ctFmt(c.deposit)+' 결제 확인', client:c.client.name}); });
-                balanceReview.forEach(function(c){ all.push({type:'balance', id:c.id, title:c.expo, sub:'잔금 '+ctFmt(c.balance)+' 결제 확인', client:c.client.name}); });
+                depositReview.forEach(function(c){ all.push({type:'deposit', id:c.id, title:c.expo, sub:'선결제 '+ctFmt(c.deposit)+' 결제 확인', client:c.client.company}); });
+                balanceReview.forEach(function(c){ all.push({type:'balance', id:c.id, title:c.expo, sub:'잔금 '+ctFmt(c.balance)+' 결제 확인', client:c.client.company}); });
                 stlRequest.forEach(function(d){ all.push({type:'settlement', id:d.id, title:d.expo, sub:'정산 '+d.amount.toLocaleString()+'원 승인 대기', client:d.interpreter||'통역사'}); });
 
                 var body = document.getElementById('adminPanelBody');
