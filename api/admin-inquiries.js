@@ -38,8 +38,24 @@ module.exports = async function handler(req, res) {
         if (error) throw error;
         if (data && data.length === 1000) console.warn('[admin-inquiries] 로드 상한 1000건 도달 — 페이지네이션 도입 필요');
 
+        // 고객사명 출처 통일 — 회원이면 01_회원.company_name을 우선 사용(계약·결제 페이지와 동일 기준).
+        // 폼에 직접 입력한 company는 회원 회사명이 없을 때만 폴백으로 사용.
+        const rows = data || [];
+        const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+        if (userIds.length > 0) {
+            const { data: members } = await sb
+                .from('01_회원')
+                .select('id, company_name')
+                .in('id', userIds);
+            const memberCompany = {};
+            (members || []).forEach(m => { if (m.company_name) memberCompany[m.id] = m.company_name; });
+            rows.forEach(r => {
+                if (r.user_id && memberCompany[r.user_id]) r.company = memberCompany[r.user_id];
+            });
+        }
+
         res.setHeader('Cache-Control', 'no-cache');
-        return res.status(200).json(data || []);
+        return res.status(200).json(rows);
     } catch (e) {
         console.error('Inquiries query error:', e);
         return res.status(500).json({ error: '요청 처리 중 오류가 발생했습니다.' });
