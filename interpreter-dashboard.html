@@ -5096,7 +5096,6 @@
                 '<div class="stl-breakdown__row"><span>일당</span><span>₩' + c.dailyRate.toLocaleString() + '</span></div>' +
                 '<div class="stl-breakdown__row"><span>근무 일수</span><span>' + c.days + '일</span></div>' +
                 '<div class="stl-breakdown__row"><span>서비스 비용 (일당 × 일수)</span><span>₩' + c.serviceFee.toLocaleString() + '</span></div>' +
-                '<div class="stl-breakdown__row deduct"><span>플랫폼 수수료 (10%)</span><span>-₩' + c.platformFee.toLocaleString() + '</span></div>' +
                 '<div class="stl-breakdown__row deduct"><span>원천징수 (3.3%)</span><span>-₩' + c.tax.toLocaleString() + '</span></div>' +
                 '<div class="stl-breakdown__row stl-breakdown__total"><span>예상 실수령액</span><span>₩' + c.netAmount.toLocaleString() + '</span></div>' +
             '</div>';
@@ -5545,7 +5544,6 @@
                     '<tr><td>통역 서비스</td><td>' + c.days + '일</td><td>₩' + c.dailyRate.toLocaleString() + '</td><td>₩' + c.serviceFee.toLocaleString() + '</td></tr>' +
                     '<tr><td>소계 (공급가액)</td><td colspan="2"></td><td>₩' + ipSupply.toLocaleString() + '</td></tr>' +
                     '<tr><td>부가가치세 (10%)</td><td colspan="2"></td><td>₩' + ipVat.toLocaleString() + '</td></tr>' +
-                    '<tr class="deduct"><td>플랫폼 수수료 (10%)</td><td colspan="2"></td><td>-₩' + c.platformFee.toLocaleString() + '</td></tr>' +
                     '<tr class="deduct"><td>원천징수 (3.3%)</td><td colspan="2"></td><td>-₩' + c.tax.toLocaleString() + '</td></tr>' +
                     '<tr class="net-row"><td colspan="3"><b>예상 실수령액</b></td><td><b>₩' + c.netAmount.toLocaleString() + '</b></td></tr>' +
                 '</table>' +
@@ -5828,7 +5826,7 @@
                             dates: { start: cd.dates.start, end: cd.dates.end },
                             lang: cd.lang, dailyRate: cd.dailyRate, days: cd.days,
                             serviceFee: serviceFee, platformFee: platformFee, tax: tax,
-                            netAmount: serviceFee - platformFee - tax,
+                            netAmount: serviceFee - tax,
                             depositStatus: 'pending', balanceStatus: 'pending', settlementStatus: 'pending',
                             customerAgreed: false, interpreterAgreed: false,
                             timeline: [
@@ -5905,7 +5903,7 @@
                         statusText: isSign ? '계약서 확인 대기' : '계약 완료 · 결제 대기',
                         dates: cd.dates, lang: cd.lang, dailyRate: cd.dailyRate, days: cd.days,
                         serviceFee: serviceFee, platformFee: platformFee, tax: tax,
-                        netAmount: serviceFee - platformFee - tax,
+                        netAmount: serviceFee - tax,
                         depositStatus: 'pending', balanceStatus: 'pending', settlementStatus: 'pending',
                         customerAgreed: !isSign, interpreterAgreed: false,
                         timeline: [

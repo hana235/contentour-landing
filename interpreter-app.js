@@ -1024,9 +1024,9 @@ const InterpreterApp = {
         // 전역 interpreterContracts 교체
         window.interpreterContracts = contracts.map(c => {
             const serviceFee = (c.daily_rate || 0) * (c.working_days || 0);
-            const platformFee = Math.round(serviceFee * 0.10);
-            const tax = Math.round((serviceFee - platformFee) * 0.033);
-            const netAmount = serviceFee - platformFee - tax;
+            const platformFee = Math.round(serviceFee * 0.10); // 고객 부가세(10%) — 고객 결제액 표시용. 통역사에서 공제하지 않음
+            const tax = Math.round(serviceFee * 0.033);         // 원천징수 3.3%
+            const netAmount = serviceFee - tax;                 // 통역사 실수령 = 용역비 − 원천징수 (실제 정산과 동일)
 
             return {
                 id: c.id,
