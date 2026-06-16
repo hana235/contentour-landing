@@ -2337,11 +2337,12 @@
         <!-- ════════════════════════════════════════════ -->
         <div class="terms-section" id="sec-privacy" role="tabpanel" aria-labelledby="tab-privacy">
             <div class="terms-meta">
-                <span class="terms-meta__tag terms-meta__tag--version">v1.0</span>
-                <span class="terms-meta__tag terms-meta__tag--date">시행일: 2026.03.11</span>
+                <span class="terms-meta__tag terms-meta__tag--version">v1.4</span>
+                <span class="terms-meta__tag terms-meta__tag--date">시행일: 2026.06.01</span>
                 <span class="terms-meta__tag terms-meta__tag--target">적용 대상: 전체 이용자</span>
             </div>
 
+            <!-- 제1장 개인정보 수집 및 이용 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
                     <span class="terms-card__icon">📊</span>
@@ -2354,40 +2355,37 @@
                         <div class="article__content">
                             <table class="terms-table">
                                 <thead>
-                                    <tr>
-                                        <th>구분</th>
-                                        <th>수집 항목</th>
-                                        <th>수집 목적</th>
-                                    </tr>
+                                    <tr><th>구분</th><th>수집 항목</th><th>수집 목적</th></tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td><strong>필수</strong> (회원가입)</td>
-                                        <td>성명, 이메일, 연락처, 비밀번호</td>
-                                        <td>회원 관리, 본인 확인</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>필수</strong> (고객사)</td>
-                                        <td>회사명, 사업자등록번호, 담당자 정보</td>
-                                        <td>서비스 의뢰, 계약 체결, 세금계산서 발행</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>필수</strong> (통역사)</td>
-                                        <td>어학 자격증, 경력, 학력, 정산 계좌 정보</td>
-                                        <td>자격 검증, 매칭, 정산</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>자동 수집</strong></td>
-                                        <td>접속 IP, 브라우저 정보, 서비스 이용 기록</td>
-                                        <td>서비스 개선, 부정 사용 방지</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>거래 관련</strong></td>
-                                        <td>결제 정보, 계약 내역, 채팅 내역, 상담일지</td>
-                                        <td>결제/정산, 분쟁 해결, 서비스 품질 관리</td>
-                                    </tr>
+                                    <tr><td><strong>필수</strong> (회원가입)</td><td>성명, 이메일, 연락처, 비밀번호</td><td>회원 관리, 본인 확인</td></tr>
+                                    <tr><td><strong>필수</strong> (고객사)</td><td>회사명, 사업자등록번호, 담당자 정보</td><td>서비스 의뢰, 계약 체결, 세금계산서 발행</td></tr>
+                                    <tr><td><strong>필수</strong> (통역사)</td><td>어학 자격증, 경력, 학력, 국적, 신원 정보*, 정산 계좌 정보*, 거주지 주소*</td><td>자격 검증, 매칭, 정산, 원천징수 신고</td></tr>
+                                    <tr><td><strong>필수</strong> (대체 통역사)</td><td>성명, 연락처, 자격증·경력, 본인 인증 정보</td><td>통역사 자체 대체 시 자격 검증, 임시 등록, 정산</td></tr>
+                                    <tr><td><strong>자동 수집</strong></td><td>접속 IP, 브라우저 정보, 서비스 이용 기록, 쿠키</td><td>서비스 개선, 부정 사용 방지</td></tr>
+                                    <tr><td><strong>거래 관련</strong></td><td>결제 정보(카드·통장입금), 계약 내역, 채팅 내역, 상담일지</td><td>결제/정산, 분쟁 해결, 서비스 품질 관리</td></tr>
+                                    <tr><td><strong>선택</strong> (마케팅)</td><td>이메일, 연락처</td><td>서비스 안내, 이벤트 알림 (별도 동의 시에만 수집)</td></tr>
                                 </tbody>
                             </table>
+                            <p style="margin-top:10px;"><strong>통역사 신원 정보 구분:</strong></p>
+                            <ul>
+                                <li>한국 국적 통역사(유학생·해외 체류 한국인 포함): 주민등록번호 또는 사업자등록번호</li>
+                                <li>외국 국적 통역사(현지인): 여권번호 + 국적</li>
+                            </ul>
+                            <p style="margin-top:10px;"><strong>민감 정보(* 표시 항목: 신원 정보·정산 계좌·주소) 별도 보호 조치:</strong></p>
+                            <ul>
+                                <li>주민등록번호·여권번호·계좌 정보·주소는 별도 암호화하여 저장 (AES-256)</li>
+                                <li>접근 권한은 원천징수·정산 담당자에게만 부여</li>
+                                <li>법령상 보관 의무 기간 종료 즉시 자동 파기</li>
+                            </ul>
+                            <p style="margin-top:10px;"><strong>대체 통역사 정보 처리:</strong></p>
+                            <ul>
+                                <li>통역사 자체 대체(통역사 약관 참조) 승인 시에만 대체 통역사 정보를 수집합니다.</li>
+                                <li>수집한 대체 통역사 정보는 해당 계약 종료 후 즉시 파기하며, 대체 통역사가 정식 회원으로 등록하는 경우 본인 동의 하에 회원 정보로 이관합니다.</li>
+                            </ul>
+                            <div class="article__info">
+                                만 14세 미만 아동의 개인정보는 수집하지 않으며, 회원가입 시 연령 확인 절차를 거칩니다.
+                            </div>
                         </div>
                     </div>
                     <div class="article">
@@ -2396,16 +2394,29 @@
                             <ol>
                                 <li><strong>회원 관리:</strong> 가입/탈퇴 처리, 본인 확인, 민원 처리</li>
                                 <li><strong>서비스 제공:</strong> 통역사 매칭, 견적·계약 관리, 상담일지 관리</li>
-                                <li><strong>결제/정산:</strong> 계약금·잔금 결제, 통역사 정산, 세금계산서 발행</li>
+                                <li><strong>결제/정산:</strong> 계약금·잔금 결제, 통역사 정산, 세금계산서 발행, 원천징수 신고</li>
                                 <li><strong>서비스 개선:</strong> 이용 통계 분석, 신규 기능 개발, 품질 향상</li>
                                 <li><strong>분쟁 해결:</strong> 거래 분쟁 시 사실 확인 및 중재</li>
-                                <li><strong>마케팅:</strong> 서비스 안내, 이벤트 알림 (선택 동의 시)</li>
+                                <li><strong>마케팅:</strong> 서비스 안내, 이벤트 알림 (선택 동의 시에만 적용)</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="article">
+                        <div class="article__title">제3조 (쿠키 정책)</div>
+                        <div class="article__content">
+                            <ol>
+                                <li>플랫폼은 서비스 제공을 위해 쿠키(Cookie)를 사용합니다.</li>
+                                <li>수집 항목: 세션 정보, 로그인 상태 유지, 서비스 이용 행태 분석</li>
+                                <li>수집 목적: 로그인 편의 제공, 서비스 개인화, 이용 통계 분석</li>
+                                <li>보유 기간: 세션 쿠키는 브라우저 종료 시 삭제, 지속 쿠키는 최대 1년</li>
+                                <li>거부 방법: 브라우저 설정 → "쿠키 차단" 선택 가능 (단, 쿠키 거부 시 로그인 유지 등 일부 서비스 이용이 제한될 수 있습니다)</li>
                             </ol>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- 제2장 보유 기간 및 파기 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
                     <span class="terms-card__icon">🗄️</span>
@@ -2414,51 +2425,29 @@
                 </div>
                 <div class="terms-card__body">
                     <div class="article">
-                        <div class="article__title">제3조 (보유 기간)</div>
+                        <div class="article__title">제4조 (보유 기간)</div>
                         <div class="article__content">
                             <table class="terms-table">
                                 <thead>
-                                    <tr>
-                                        <th>구분</th>
-                                        <th>보유 기간</th>
-                                        <th>근거 법령</th>
-                                    </tr>
+                                    <tr><th>구분</th><th>보유 기간</th><th>근거 법령</th></tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>계약 또는 청약 철회 기록</td>
-                                        <td><strong>5년</strong></td>
-                                        <td>전자상거래법</td>
-                                    </tr>
-                                    <tr>
-                                        <td>대금 결제 및 재화 공급 기록</td>
-                                        <td><strong>5년</strong></td>
-                                        <td>전자상거래법</td>
-                                    </tr>
-                                    <tr>
-                                        <td>소비자 불만 또는 분쟁 처리 기록</td>
-                                        <td><strong>3년</strong></td>
-                                        <td>전자상거래법</td>
-                                    </tr>
-                                    <tr>
-                                        <td>접속 기록 (로그)</td>
-                                        <td><strong>6개월</strong></td>
-                                        <td>통신비밀보호법</td>
-                                    </tr>
-                                    <tr>
-                                        <td>장기 미이용 계정</td>
-                                        <td>최종 접속일로부터 <strong>3년</strong> 후 별도 보관 또는 파기</td>
-                                        <td>개인정보보호법</td>
-                                    </tr>
+                                    <tr><td>계약 또는 청약 철회 기록</td><td>5년</td><td>전자상거래법</td></tr>
+                                    <tr><td>대금 결제 및 재화 공급 기록</td><td>5년</td><td>전자상거래법</td></tr>
+                                    <tr><td>소비자 불만 또는 분쟁 처리 기록</td><td>3년</td><td>전자상거래법</td></tr>
+                                    <tr><td>접속 기록 (로그)</td><td>6개월</td><td>통신비밀보호법</td></tr>
+                                    <tr><td>원천징수 관련 기록 (주민등록번호·여권번호 등)</td><td>5년 (법령 의무 기간 종료 후 즉시 파기)</td><td>국세기본법</td></tr>
+                                    <tr><td>대체 통역사 정보</td><td>해당 계약 종료 후 즉시 파기 (정식 등록 시 본인 동의 하에 이관)</td><td>개인정보보호법</td></tr>
+                                    <tr><td>장기 미이용 계정</td><td>최종 접속일로부터 3년 후 별도 보관 또는 파기</td><td>개인정보보호법</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                     <div class="article">
-                        <div class="article__title">제4조 (파기 절차)</div>
+                        <div class="article__title">제5조 (파기 절차)</div>
                         <div class="article__content">
                             <ol>
-                                <li>보유 기간이 경과하거나 처리 목적이 달성된 개인정보는 지체 없이 파기합니다.</li>
+                                <li>보유 기간이 경과하거나 처리 목적이 달성된 개인정보는 보유 기간 종료 후 30일 이내 파기합니다.</li>
                                 <li>전자적 파일 형태: 복구 불가능한 방법으로 영구 삭제</li>
                                 <li>종이 문서: 분쇄기로 분쇄 또는 소각</li>
                             </ol>
@@ -2467,6 +2456,7 @@
                 </div>
             </div>
 
+            <!-- 제3장 제3자 제공 및 위탁 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
                     <span class="terms-card__icon">🤝</span>
@@ -2475,53 +2465,65 @@
                 </div>
                 <div class="terms-card__body">
                     <div class="article">
-                        <div class="article__title">제5조 (제3자 제공)</div>
+                        <div class="article__title">제6조 (제3자 제공)</div>
                         <div class="article__content">
-                            <ol>
-                                <li>회사는 이용자의 동의 없이 개인정보를 제3자에게 제공하지 않습니다. 단, 다음 각 호의 경우는 예외로 합니다.
-                                    <ul>
-                                        <li>통역 서비스 계약 체결을 위해 매칭된 고객사·통역사 간 필요한 최소 정보(성명, 연락처) 제공</li>
-                                        <li>법령에 따른 수사기관의 요청이 있는 경우</li>
-                                    </ul>
-                                </li>
-                            </ol>
+                            회사는 이용자의 동의 없이 개인정보를 제3자에게 제공하지 않습니다. 단, 다음 각 호의 경우는 예외로 합니다.
+                            <ul>
+                                <li>통역 서비스 계약 체결을 위해 매칭된 고객사·통역사 간 필요한 최소 정보(성명, 연락처) 제공</li>
+                                <li>원천징수 신고를 위해 국세청에 한국 국적 통역사의 신원 정보(성명, 주민등록번호, 정산 금액) 제공</li>
+                                <li>본인 인증 위탁사(NICE평가정보 등)에 본인 확인 정보 제공 (실명 인증 시)</li>
+                                <li>법령에 따른 수사기관의 요청이 있는 경우</li>
+                            </ul>
+                            <p style="margin-top:8px;">제3자 제공 시 회사는 다음 사항을 이용자에게 사전 안내합니다.</p>
+                            <ul>
+                                <li>① 제공받는 자</li>
+                                <li>② 제공 목적</li>
+                                <li>③ 제공하는 개인정보 항목</li>
+                                <li>④ 보유·이용 기간</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="article">
-                        <div class="article__title">제6조 (처리 위탁)</div>
+                        <div class="article__title">제7조 (처리 위탁)</div>
                         <div class="article__content">
                             회사는 서비스 운영을 위해 다음과 같이 개인정보 처리를 위탁합니다.
                             <table class="terms-table">
                                 <thead>
-                                    <tr>
-                                        <th>수탁사</th>
-                                        <th>위탁 업무</th>
-                                        <th>보유 기간</th>
-                                    </tr>
+                                    <tr><th>수탁사</th><th>위탁 업무</th><th>보유 기간</th></tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>결제 대행사 (PG)</td>
-                                        <td>결제 처리 및 정산</td>
-                                        <td>거래 완료 시까지</td>
-                                    </tr>
-                                    <tr>
-                                        <td>클라우드 서비스 (AWS 등)</td>
-                                        <td>데이터 저장 및 처리</td>
-                                        <td>위탁 계약 기간</td>
-                                    </tr>
-                                    <tr>
-                                        <td>알림 서비스</td>
-                                        <td>SMS, 이메일 발송</td>
-                                        <td>발송 완료 시까지</td>
-                                    </tr>
+                                    <tr><td>결제 대행사 (업체명 확정 필요 — 예: 토스페이먼츠, KG이니시스 등)</td><td>카드 결제 처리 및 정산</td><td>거래 완료 시까지</td></tr>
+                                    <tr><td>AWS (Amazon Web Services)</td><td>데이터 저장 및 서버 운영</td><td>서비스 운영 기간, 계약 종료 후 즉시 삭제</td></tr>
+                                    <tr><td>알림 서비스 (업체명 확정 필요 — 예: 채널톡, 알리고 등)</td><td>SMS, 이메일, 푸시 알림 발송</td><td>발송 완료 시까지</td></tr>
                                 </tbody>
                             </table>
+                            <div class="article__highlight">
+                                홈페이지 공개 전 수탁사 업체명 확정 및 명시 필요
+                            </div>
+                        </div>
+                    </div>
+                    <div class="article">
+                        <div class="article__title">제8조 (개인정보 국외 이전)</div>
+                        <div class="article__content">
+                            회사는 해외 통역사 매칭 서비스 제공을 위해 다음과 같이 개인정보를 국외로 이전할 수 있습니다.
+                            <table class="terms-table">
+                                <thead>
+                                    <tr><th>이전 국가</th><th>이전 항목</th><th>이전 목적</th><th>보유 기간</th><th>이전 거부 방법</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>미국 (AWS)</td><td>서비스 이용 기록, 계약 정보</td><td>서버 운영 및 데이터 저장</td><td>서비스 운영 기간</td><td>회원 탈퇴 시 삭제</td></tr>
+                                    <tr><td>매칭 통역사 소재 국가</td><td>성명, 연락처</td><td>통역 서비스 계약 체결</td><td>계약 종료 후 즉시 삭제</td><td>매칭 거절 시 미제공</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="article__info">
+                                국외 이전에 동의하지 않는 경우 해외 통역사 매칭 서비스 이용이 제한될 수 있습니다.
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- 제4장 이용자 권리 및 보호 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
                     <span class="terms-card__icon">🛡️</span>
@@ -2530,7 +2532,7 @@
                 </div>
                 <div class="terms-card__body">
                     <div class="article">
-                        <div class="article__title">제7조 (이용자 권리)</div>
+                        <div class="article__title">제9조 (이용자 권리)</div>
                         <div class="article__content">
                             이용자는 언제든지 다음 권리를 행사할 수 있습니다.
                             <ol>
@@ -2541,18 +2543,120 @@
                                 <li><strong>동의 철회:</strong> 마케팅 등 선택적 동의를 언제든지 철회할 수 있습니다.</li>
                             </ol>
                             <div class="article__info">
-                                <strong>권리 행사 방법:</strong> 플랫폼 내 "설정 > 개인정보" 메뉴 또는 고객센터(info@contentour.co.kr)로 요청할 수 있습니다.
+                                <strong>권리 행사 방법:</strong> 플랫폼 내 "설정 &gt; 개인정보" 메뉴 또는 고객센터(info@contentour.co.kr)로 요청<br>
+                                <strong>처리 기간:</strong> 요청 접수일로부터 10일 이내 처리 결과 통보 (개인정보보호법 제38조)
                             </div>
+                            <p style="margin-top:8px;"><strong>권리 행사 거부 시 절차:</strong></p>
+                            <ul>
+                                <li>① 회사는 권리 행사 거부 시 사유와 근거 법령을 서면(이메일 포함)으로 통보합니다.</li>
+                                <li>② 이용자는 통보일로부터 7일 이내 1회에 한해 이의 신청할 수 있습니다.</li>
+                                <li>③ 거부 결정에 불복하는 경우 개인정보 분쟁조정위원회 등 외부 기관에 조정을 신청할 수 있습니다.</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="article">
-                        <div class="article__title">제8조 (개인정보보호 책임자)</div>
+                        <div class="article__title">제10조 (개인정보 안전성 확보 조치)</div>
                         <div class="article__content">
+                            회사는 개인정보보호법 제29조에 따라 다음과 같은 안전성 확보 조치를 시행합니다.
+                            <ol>
+                                <li><strong>암호화:</strong> 비밀번호 BCrypt 암호화 저장, 주민등록번호·여권번호·결제 정보 별도 암호화 보관 (AES-256)</li>
+                                <li><strong>접근 통제:</strong> 개인정보 처리 시스템 접근 권한 최소화 및 관리</li>
+                                <li><strong>보안 점검:</strong> 연 1회 이상 정기 보안 점검 실시</li>
+                                <li><strong>직원 교육:</strong> 개인정보 취급 직원 대상 연 1회 이상 개인정보 보호 교육 실시</li>
+                                <li><strong>접속 기록 관리:</strong> 개인정보 처리 시스템 접속 기록 보관 및 위·변조 방지</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="article">
+                        <div class="article__title">제11조 (보안 사고 면책 및 통지)</div>
+                        <div class="article__content">
+                            회사는 다음 각 호의 경우 합리적 보안 조치를 이행하였음에도 발생한 개인정보 침해에 대해 책임이 면제될 수 있습니다.
                             <ul>
-                                <li><strong>성명:</strong> 이수경</li>
-                                <li><strong>직위:</strong> 대표이사 / 개인정보보호 책임자</li>
-                                <li><strong>이메일:</strong> info@contentour.co.kr</li>
+                                <li>① AWS 등 회사가 통제할 수 없는 제3자 클라우드 서비스의 장애 또는 보안 침해로 인한 정보 유출</li>
+                                <li>② 해킹, 디도스, 컴퓨터 바이러스 등 회사가 합리적 보안 조치를 이행하였음에도 불구하고 발생한 보안 침해 사고</li>
+                                <li>③ 이용자의 부주의(비밀번호 관리 소홀, 단말기 분실, 피싱 사기 응대 등)로 인한 정보 노출</li>
+                                <li>④ 이용자가 자발적으로 제3자에게 정보를 공개·제공한 경우</li>
+                                <li>⑤ 천재지변, 전쟁, 정부 명령 등 불가항력적 사유로 인한 정보 침해</li>
                             </ul>
+                            <p style="margin-top:8px;">단, 회사는 보안 사고 발생 시 다음 조치를 신속히 이행할 의무가 있습니다.</p>
+                            <ul>
+                                <li>① 사고 인지 후 24시간 이내 1차 통지: 사고 발생 사실 및 알려진 영향 범위를 영향받은 이용자에게 통지</li>
+                                <li>② 사고 인지 후 72시간 이내 상세 통지: 정확한 영향 범위, 유출 항목, 피해 규모, 대응 조치 등 통지</li>
+                                <li>③ 관련 법령에 따른 한국인터넷진흥원(KISA) 등 관계 기관 신고</li>
+                                <li>④ 추가 피해 방지를 위한 긴급 보안 조치 시행</li>
+                                <li>⑤ 피해 복구 및 재발 방지 대책 수립</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="article">
+                        <div class="article__title">제12조 (개인정보보호 책임자)</div>
+                        <div class="article__content">
+                            <table class="terms-table">
+                                <thead>
+                                    <tr><th>항목</th><th>내용</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>성명</td><td>이수경</td></tr>
+                                    <tr><td>직위</td><td>대표이사 / 개인정보보호 책임자</td></tr>
+                                    <tr><td>이메일</td><td>info@contentour.co.kr</td></tr>
+                                    <tr><td>일반 문의</td><td>info@contentour.co.kr</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 제5장 권리 침해 구제 안내 -->
+            <div class="terms-card">
+                <div class="terms-card__header" onclick="toggleCard(this)">
+                    <span class="terms-card__icon">🏛️</span>
+                    <span class="terms-card__title">제5장 권리 침해 구제 안내</span>
+                    <span class="terms-card__toggle">&#9660;</span>
+                </div>
+                <div class="terms-card__body">
+                    <div class="article">
+                        <div class="article__title">제13조 (외부 신고 및 상담 기관)</div>
+                        <div class="article__content">
+                            개인정보 침해로 인한 피해 구제, 상담이 필요한 경우 아래 기관에 문의하실 수 있습니다.
+                            <table class="terms-table">
+                                <thead>
+                                    <tr><th>기관</th><th>연락처</th><th>웹사이트</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>개인정보 침해 신고센터 (한국인터넷진흥원)</td><td>☎ 118</td><td>privacy.kisa.or.kr</td></tr>
+                                    <tr><td>개인정보 분쟁조정위원회</td><td>☎ 1833-6972</td><td>www.kopico.go.kr</td></tr>
+                                    <tr><td>대검찰청 사이버수사과</td><td>☎ 1301</td><td>www.spo.go.kr</td></tr>
+                                    <tr><td>경찰청 사이버수사국</td><td>☎ 182</td><td>ecrm.cyber.go.kr</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 개정 이력 -->
+            <div class="terms-card">
+                <div class="terms-card__header" onclick="toggleCard(this)">
+                    <span class="terms-card__icon">🕘</span>
+                    <span class="terms-card__title">개정 이력</span>
+                    <span class="terms-card__toggle">&#9660;</span>
+                </div>
+                <div class="terms-card__body">
+                    <div class="article">
+                        <div class="article__content">
+                            <table class="terms-table">
+                                <thead>
+                                    <tr><th>버전</th><th>일자</th><th>주요 변경 내용</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>v1.0</td><td>2026.03.11</td><td>최초 시행</td></tr>
+                                    <tr><td>v1.1</td><td>2026.04.14</td><td>쿠키 정책, 국외 이전, 만 14세 미만 처리, 안전성 확보 조치, 외부 신고 기관 추가</td></tr>
+                                    <tr><td>v1.2</td><td>2026.05.14</td><td>통역사 주민등록번호 수집 항목 명시, 원천징수 제3자 제공, 보안 사고 면책 신설</td></tr>
+                                    <tr><td>v1.3</td><td>2026.05.29</td><td>양측 균형 강화: 통역사 민감 정보 별도 암호화·접근 권한 제한 명시, 원천징수 기록 5년 보관 근거 명시, 제3자 제공 시 사전 안내 4가지 의무화, 권리 행사 거부 시 이의 절차 신설, 보안 사고 통지 2단계화(24h 1차 + 72h 상세)</td></tr>
+                                    <tr><td>v1.4</td><td>2026.06.01</td><td>다른 약관(통역사 약관 v1.8·운영정책·고객사 약관)과 동기화 — 통역사 신원 정보 국적별 구분 신설(한국: 주민등록번호 / 외국: 여권번호+국적), 통역사 자체 대체 시 대체 통역사 정보 수집 항목·목적·보유 기간 신설(계약 종료 후 즉시 파기, 정식 등록 시 본인 동의 하에 이관), 결제 정보 카드·통장입금 구분, 원천징수 제3자 제공 한국 국적 통역사로 한정, 안전성 확보 조치에 여권번호 암호화 추가, 보유 기간표에 대체 통역사 정보 행 추가</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
