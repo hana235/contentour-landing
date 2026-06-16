@@ -170,7 +170,8 @@
             transition: background 0.1s;
         }
         .terms-card__header:hover { background: var(--gray-100); }
-        .terms-card__icon { font-size: 1.2rem; }
+        .terms-card__icon { display: inline-flex; align-items: center; justify-content: center; color: var(--navy); flex-shrink: 0; }
+        .terms-card__icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
         .terms-card__title { font-size: 0.92rem; font-weight: 800; color: var(--text); flex: 1; }
         .terms-card__toggle {
             font-size: 0.7rem;
@@ -378,7 +379,7 @@
             <!-- 제1장 총칙 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">📌</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg></span>
                     <span class="terms-card__title">제1장 총칙</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -429,7 +430,7 @@
             <!-- 제2장 회원 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">👤</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
                     <span class="terms-card__title">제2장 회원 가입 및 관리</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -486,7 +487,7 @@
             <!-- 제3장 플랫폼 역할 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🏢</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="11" height="18" rx="1"/><path d="M15 8h4a1 1 0 0 1 1 1v12M8 7h3M8 11h3M8 15h3"/></svg></span>
                     <span class="terms-card__title">제3장 플랫폼의 역할과 책임</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -564,7 +565,7 @@
             <!-- 제4장 금지행위 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🚫</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span>
                     <span class="terms-card__title">제4장 금지행위</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -611,7 +612,7 @@
             <!-- 제5장 지적재산권 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">©️</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.6 9.5a3.2 3.2 0 1 0 0 5"/></svg></span>
                     <span class="terms-card__title">제5장 지적재산권</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -633,7 +634,7 @@
             <!-- 제6장 결제 및 정산 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">💳</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/></svg></span>
                     <span class="terms-card__title">제6장 결제 및 정산</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -722,7 +723,7 @@
             <!-- 제7장 분쟁 및 책임 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">⚖️</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M6 20h12M4 8h16M8 4l8-1M4 8l-2.5 5a2.5 2.5 0 0 0 5 0L4 8zM20 8l-2.5 5a2.5 2.5 0 0 0 5 0L20 8z"/></svg></span>
                     <span class="terms-card__title">제7장 분쟁 해결 및 책임 제한</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -779,7 +780,7 @@
             <!-- 제8장 보안 및 사고 대응 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🔐</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4-3.2 7.2-8 9-4.8-1.8-8-5-8-9V6l8-3z"/></svg></span>
                     <span class="terms-card__title">제8장 보안 및 사고 대응</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -806,7 +807,7 @@
             <!-- 제9장 기타 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">📎</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M20 11.5l-8.6 8.6a4.5 4.5 0 0 1-6.4-6.4l8.5-8.5a3 3 0 0 1 4.2 4.2l-8.5 8.5a1.5 1.5 0 0 1-2.1-2.1l7.8-7.8"/></svg></span>
                     <span class="terms-card__title">제9장 기타</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -872,7 +873,7 @@
             <!-- 개정 이력 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🕘</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
                     <span class="terms-card__title">개정 이력</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -915,7 +916,7 @@
             <!-- 제1장 총칙 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">📌</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg></span>
                     <span class="terms-card__title">제1장 총칙</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -936,7 +937,7 @@
             <!-- 제2장 고객사 자격 및 서비스 의뢰 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">📋</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg></span>
                     <span class="terms-card__title">제2장 고객사 자격 및 서비스 의뢰</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -990,7 +991,7 @@
             <!-- 제3장 고객사의 권리 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">✅</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></span>
                     <span class="terms-card__title">제3장 고객사의 권리</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1027,7 +1028,7 @@
             <!-- 제4장 결제 및 취소/환불 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">💳</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/></svg></span>
                     <span class="terms-card__title">제4장 결제 및 취소/환불</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1229,7 +1230,7 @@
             <!-- 제5장 계약 해지 및 분쟁 해결 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">⚖️</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M6 20h12M4 8h16M8 4l8-1M4 8l-2.5 5a2.5 2.5 0 0 0 5 0L4 8zM20 8l-2.5 5a2.5 2.5 0 0 0 5 0L20 8z"/></svg></span>
                     <span class="terms-card__title">제5장 계약 해지 및 분쟁 해결</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1275,7 +1276,7 @@
             <!-- 개정 이력 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🕘</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
                     <span class="terms-card__title">개정 이력</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1316,7 +1317,7 @@
             <!-- 제1장 총칙 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">📌</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg></span>
                     <span class="terms-card__title">제1장 총칙</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1337,7 +1338,7 @@
             <!-- 제2장 통역사 자격 및 등록 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🗣️</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.7 7.1L4 20l1.4-4.3A8 8 0 1 1 20 11.5z"/></svg></span>
                     <span class="terms-card__title">제2장 통역사 자격 및 등록</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1397,7 +1398,7 @@
             <!-- 제3장 업무 수행 의무 및 권리 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">📝</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M12 20h8M4 20l1-4L16 5a2 2 0 0 1 3 3L8 19l-4 1z"/></svg></span>
                     <span class="terms-card__title">제3장 업무 수행 의무 및 권리</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1605,7 +1606,7 @@
             <!-- 제4장 비밀유지 및 금지행위 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🔒</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
                     <span class="terms-card__title">제4장 비밀유지 및 금지행위</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1668,7 +1669,7 @@
             <!-- 제5장 정산 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">💰</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span>
                     <span class="terms-card__title">제5장 정산</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1799,7 +1800,7 @@
             <!-- 제6장 계약 해지 및 분쟁 해결 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">⚖️</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M12 4v16M6 20h12M4 8h16M8 4l8-1M4 8l-2.5 5a2.5 2.5 0 0 0 5 0L4 8zM20 8l-2.5 5a2.5 2.5 0 0 0 5 0L20 8z"/></svg></span>
                     <span class="terms-card__title">제6장 계약 해지 및 분쟁 해결</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1854,7 +1855,7 @@
             <!-- 개정 이력 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🕘</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
                     <span class="terms-card__title">개정 이력</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1894,7 +1895,7 @@
             <!-- 제1장 통역사 매칭 운영 정책 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🤝</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M9 15l6-6M8.5 7H6.5a4.5 4.5 0 0 0 0 9h2M15.5 17h2a4.5 4.5 0 0 0 0-9h-2"/></svg></span>
                     <span class="terms-card__title">제1장 통역사 매칭 운영 정책</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -1975,7 +1976,7 @@
             <!-- 제2장 취소·환불 운영 기준 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">💳</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/></svg></span>
                     <span class="terms-card__title">제2장 취소·환불 운영 기준</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -2128,7 +2129,7 @@
             <!-- 제3장 금지행위 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🚫</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span>
                     <span class="terms-card__title">제3장 금지행위</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -2185,7 +2186,7 @@
             <!-- 제4장 제재 조치 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">⚡</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
                     <span class="terms-card__title">제4장 제재 조치</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -2273,7 +2274,7 @@
             <!-- 제5장 신고 및 접수 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">📣</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M4 10v4a1 1 0 0 0 1 1h2l1 5h2l-1-5 9 4V5L8 9H5a1 1 0 0 0-1 1z"/></svg></span>
                     <span class="terms-card__title">제5장 신고 및 접수</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -2304,7 +2305,7 @@
             <!-- 개정 이력 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🕘</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
                     <span class="terms-card__title">개정 이력</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -2345,7 +2346,7 @@
             <!-- 제1장 개인정보 수집 및 이용 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">📊</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M4 4v16h16M8 18V10M13 18V6M18 18v-5"/></svg></span>
                     <span class="terms-card__title">제1장 개인정보 수집 및 이용</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -2419,7 +2420,7 @@
             <!-- 제2장 보유 기간 및 파기 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🗄️</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4"/></svg></span>
                     <span class="terms-card__title">제2장 보유 기간 및 파기</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -2459,7 +2460,7 @@
             <!-- 제3장 제3자 제공 및 위탁 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🤝</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M9 15l6-6M8.5 7H6.5a4.5 4.5 0 0 0 0 9h2M15.5 17h2a4.5 4.5 0 0 0 0-9h-2"/></svg></span>
                     <span class="terms-card__title">제3장 제3자 제공 및 위탁</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -2526,7 +2527,7 @@
             <!-- 제4장 이용자 권리 및 보호 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🛡️</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4-3.2 7.2-8 9-4.8-1.8-8-5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
                     <span class="terms-card__title">제4장 이용자 권리 및 보호</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -2610,7 +2611,7 @@
             <!-- 제5장 권리 침해 구제 안내 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🏛️</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M4 21V10M9 21V10M15 21V10M20 21V10M3 10l9-6 9 6H3z"/></svg></span>
                     <span class="terms-card__title">제5장 권리 침해 구제 안내</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
@@ -2638,7 +2639,7 @@
             <!-- 개정 이력 -->
             <div class="terms-card">
                 <div class="terms-card__header" onclick="toggleCard(this)">
-                    <span class="terms-card__icon">🕘</span>
+                    <span class="terms-card__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
                     <span class="terms-card__title">개정 이력</span>
                     <span class="terms-card__toggle">&#9660;</span>
                 </div>
