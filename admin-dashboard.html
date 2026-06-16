@@ -5539,17 +5539,20 @@
                 w.document.write('<div class="section-title">제5조 (취소 및 환불 규정)</div>' +
                     '<p style="font-size:0.85rem;font-weight:700;margin:6px 0;">5-1. 고객사(갑) 귀책 취소 — 100% 선결제 기준</p>' +
                     '<table style="font-size:0.82rem;">' +
-                    '<tr><th style="width:40%;">취소 시점</th><th>환불·위약금</th></tr>' +
-                    '<tr><td>서비스 시작 30일 전 이전</td><td>선결제 금액 <b>전액 환불</b> (위약금 없음)</td></tr>' +
-                    '<tr><td>서비스 시작 29~14일 전</td><td>선결제 금액의 <b>80% 환불</b> / 20% 위약금</td></tr>' +
-                    '<tr><td>서비스 시작 13~8일 전</td><td>선결제 금액의 <b>50% 환불</b> / 50% 위약금</td></tr>' +
-                    '<tr><td>서비스 시작 7일 이내·당일</td><td>환불 불가 / <b>100% 위약금</b></td></tr>' +
+                    '<tr><th style="width:34%;">취소 시점</th><th>계약금 (회사 수수료)</th><th>잔금 (통역사 정산금)</th></tr>' +
+                    '<tr><td>서비스 시작 30일 전 이상</td><td>90% 환불 (매칭 수수료 10% 공제)</td><td>95% 환불 (통역사 손해배상 5%)</td></tr>' +
+                    '<tr><td>서비스 시작 29~14일 전</td><td>50% 환불</td><td>80% 환불 (통역사 손해배상 20%)</td></tr>' +
+                    '<tr><td>서비스 시작 13~8일 전</td><td>환불 불가</td><td>50% 환불 (통역사 손해배상 50%)</td></tr>' +
+                    '<tr><td>서비스 시작 7일 이내·당일</td><td>환불 불가</td><td>20% 환불 (통역사 손해배상 80%)</td></tr>' +
                     '</table>' +
-                    '<p style="font-size:0.85rem;font-weight:700;margin:14px 0 6px;">5-2. 통역사(을) 귀책 취소</p>' +
+                    '<p style="font-size:0.85rem;font-weight:700;margin:14px 0 6px;">5-2. 통역사(을) 귀책 취소 (통보 시점별 차등)</p>' +
                     '<table style="font-size:0.82rem;">' +
-                    '<tr><th style="width:28%;">사유</th><th>처리</th><th style="width:30%;">통역사 패널티</th></tr>' +
-                    '<tr><td>7일 전 이상 사전 통보</td><td>갑에게 결제분 전액 환불</td><td>경고 + 위약금 20%</td></tr>' +
-                    '<tr><td>7일 이내 통보 또는 노쇼</td><td>갑에게 결제분 전액 환불 + 대체 배정</td><td>계정 정지 + 위약금 50%</td></tr>' +
+                    '<tr><th style="width:28%;">통보 시점</th><th>고객사(갑) 처리</th><th style="width:30%;">통역사 패널티 (1회차)</th></tr>' +
+                    '<tr><td>무단 노쇼 (당일 통보 없음)</td><td>갑에게 결제분 전액 환불 + 대체 배정 시도</td><td>정산금 100% 미지급 + 60일 활동 제한 + 추가 손해배상</td></tr>' +
+                    '<tr><td>24시간 이내 통보</td><td>갑에게 결제분 전액 환불</td><td>정산금 80% + 30일 활동 제한</td></tr>' +
+                    '<tr><td>1~7일 전 통보</td><td>갑에게 결제분 전액 환불</td><td>정산금 30% + 7일 활동 제한</td></tr>' +
+                    '<tr><td>7일 이상 사전 통보</td><td>갑에게 결제분 전액 환불</td><td>1회 경고 (시정 기회)</td></tr>' +
+                    '<tr><td colspan="3" style="font-size:11px;color:#6b7280;">※ 반복 시 단계적으로 가중되며 누적 시 영구 이용 제한·추가 손해배상이 적용됩니다. (세부 기준: 서비스 운영정책 제4조)</td></tr>' +
                     '</table>' +
                     '<p style="font-size:0.85rem;font-weight:700;margin:14px 0 6px;">5-3. 부분 수행 후 취소</p>' +
                     '<table style="font-size:0.82rem;">' +
