@@ -4852,52 +4852,34 @@
       q.status = 'accepted';
       var todayStr = new Date().toISOString().split('T')[0];
 
-      // DB에 42_통역계약 생성
+      // 서버에서 계약 생성 (가격 변조 방지: 서버가 admin_note 권위 금액으로 재계산)
       var dbContractId = null;
-      if (window.sbClient) {
-        try {
-          var user = await ContentourAuth.getCurrentUser();
-          // DB 중복 체크: 같은 고객+전시회명으로 이미 계약이 있는지 확인
-          var { data: existing } = await window.sbClient.from('42_통역계약')
-            .select('id')
-            .eq('customer_id', user ? user.id : '')
-            .eq('exhibition_name', q.expo)
-            .limit(1);
-          if (existing && existing.length > 0) {
-            dbContractId = existing[0].id;
-            _acceptingQuote = false;
-          } else {
-          var fee = q.platformFee || CT.vatFromNet(q.subtotal);
-          var { data: insertData, error: insertErr } = await window.sbClient.from('42_통역계약').insert({
-            customer_id: user ? user.id : null,
-            interpreter_id: q.interpreterId || null,
-            exhibition_name: q.expo,
-            client_company: q.company || '',
-            venue: q.country || '',
-            start_date: q.startDate,
-            end_date: q.endDate,
-            working_days: q.days || 1,
-            language_pair: q.lang || '',
-            service_type: q.type || '',
-            daily_rate: q.dailyRate || 0,
-            total_amount: q.total || 0,
-            tax_amount: fee,
-            net_amount: q.subtotal || 0,
-            deposit_amount: q.deposit || 0,
-            balance_amount: q.balance || 0,
-            // A안 (100% 선결제): 잔금이 0이면 미리 paid로 표시해서 'balance_pay' 단계 자동 통과
-            balance_status: (q.balance && q.balance > 0) ? 'pending' : 'paid',
-            status: 'pending',
-            interpreter_accepted: null,
-            contract_signed: false
-          }).select('id').single();
-
-          if (insertErr) console.error('계약 DB 생성 실패:', insertErr);
-          else if (insertData) dbContractId = insertData.id;
-          } // else 블록 닫기 (중복 체크)
-        } catch (e) {
-          console.error('계약 DB 생성 예외:', e);
+      try {
+        var _sess = await window.sbClient.auth.getSession();
+        var _token = _sess && _sess.data && _sess.data.session ? _sess.data.session.access_token : null;
+        if (!_token) { showContractToast('로그인이 필요합니다. 다시 로그인해주세요.'); q.status = 'sent'; _acceptingQuote = false; return; }
+        var acceptRes = await fetch('/api/accept-quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token },
+          body: JSON.stringify({ inquiryId: q.inquiryId })
+        });
+        var acceptData = await acceptRes.json();
+        if (!acceptRes.ok) {
+          showContractToast(acceptData.error || '계약 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+          q.status = 'sent'; _acceptingQuote = false; return;
         }
+        dbContractId = acceptData.contractId;
+        // 서버가 재계산한 권위 금액으로 갱신 (표시 일관성)
+        if (acceptData.amounts) {
+          var _a = acceptData.amounts;
+          q.subtotal = _a.subtotal; q.platformFee = _a.tax; q.total = _a.total;
+          q.deposit = _a.deposit; q.balance = _a.balance;
+          q.dailyRate = _a.dailyRate; q.days = _a.days;
+        }
+      } catch (e) {
+        console.error('계약 생성 실패:', e);
+        showContractToast('네트워크 오류로 계약 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        q.status = 'sent'; _acceptingQuote = false; return;
       }
       _acceptingQuote = false;
 
@@ -4933,12 +4915,7 @@
         contracts.push(newContract);
       }
 
-      // 문의 상태를 '계약진행'으로 업데이트 → 문의 현황에서 자동 반영
-      if (window.sbClient && q.inquiryId) {
-        try {
-          await window.sbClient.from('46_ITQ견적문의').update({ status: '계약진행' }).eq('id', q.inquiryId);
-        } catch(e) { console.error('문의 상태 업데이트 실패:', e); }
-      }
+      // 문의 상태('계약진행') 업데이트는 서버(/api/accept-quote)에서 처리됨
 
       closeQuoteDetail();
       showContractToast('견적을 수락했습니다! 계약서를 확인하고 동의해주세요.');

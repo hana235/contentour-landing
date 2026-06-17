@@ -11,6 +11,7 @@
     { "source": "/api/customer-select-applicant", "destination": "/api/submit?_route=customer-select-applicant" },
     { "source": "/api/my-showcase-applicants", "destination": "/api/my?_route=my-showcase-applicants" },
     { "source": "/api/accept-assignment", "destination": "/api/my?_route=accept-assignment" },
+    { "source": "/api/accept-quote", "destination": "/api/my?_route=accept-quote" },
     { "source": "/api/upload-application-file", "destination": "/api/submit?_route=upload-application-file" },
     { "source": "/api/notify-admins", "destination": "/api/submit?_route=notify-admins" },
     { "source": "/api/verify-payment", "destination": "/api/payment?_route=verify-payment" },

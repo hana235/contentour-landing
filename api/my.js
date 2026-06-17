@@ -350,6 +350,91 @@ async function handleAcceptAssignment(req, res) {
     }
 }
 
+// ────────────────────────── accept-quote ──────────────────────────
+// 고객이 견적을 수락하면 서버가 admin_note(관리자 작성)에서 권위 금액을 읽어
+// 42_통역계약을 생성한다. 클라이언트가 보낸 금액을 신뢰하지 않음 → 가격 변조 차단.
+async function handleAcceptQuote(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const auth = await authenticate(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+    const inquiryId = req.body && req.body.inquiryId;
+    if (!inquiryId) return res.status(400).json({ error: '문의 ID가 필요합니다.' });
+
+    try {
+        // 1. 권위 견적 조회 (service role)
+        const { data: inq, error: inqErr } = await sb.from('46_ITQ견적문의')
+            .select('id, user_id, exhibition_name, company, location, language_pair, service_type, start_date, end_date, status, quoted_amount, admin_note')
+            .eq('id', inquiryId).single();
+        if (inqErr || !inq) return res.status(404).json({ error: '문의를 찾을 수 없습니다.' });
+
+        // 2. 소유권 확인 (본인 문의만)
+        if (inq.user_id !== auth.user.id) return res.status(403).json({ error: '본인의 문의만 수락할 수 있습니다.' });
+
+        // 3. admin_note 파싱 (관리자가 작성한 권위 데이터)
+        let note = {};
+        try { note = typeof inq.admin_note === 'string' ? JSON.parse(inq.admin_note) : (inq.admin_note || {}); } catch (e) { note = {}; }
+
+        // 4. 서버측 금액 산정 (admin_note 우선, 누락 시 일당×일수 재계산) — VAT 10%
+        const dailyRate = Number(note.dailyRate) || 0;
+        const days = Number(note.days) || 1;
+        const subtotal = Number(note.subtotal) || (dailyRate * days);             // 공급가(net)
+        const tax = Number(note.platformFee) || Math.round(subtotal * 0.1);       // 부가세
+        const total = Number(note.total) || (subtotal + tax);                     // 총액
+        const deposit = Number(note.deposit) || total;                            // A안 100% 선결제
+        const balance = Number(note.balance) || 0;
+        if (subtotal <= 0 || total <= 0) return res.status(400).json({ error: '견적 금액이 유효하지 않습니다.' });
+
+        // 5. 중복 계약 방지 (같은 고객+전시회) — 멱등 처리
+        const { data: existing } = await sb.from('42_통역계약')
+            .select('id').eq('customer_id', auth.user.id).eq('exhibition_name', inq.exhibition_name).limit(1);
+        if (existing && existing.length > 0) {
+            return res.status(200).json({ contractId: existing[0].id, duplicate: true,
+                amounts: { subtotal, tax, total, deposit, balance, dailyRate, days } });
+        }
+
+        // 6. 상태 확인 (견적발송 상태만 신규 수락 가능)
+        if (inq.status !== '견적발송') {
+            return res.status(409).json({ error: '수락 가능한 견적이 아닙니다. (상태: ' + inq.status + ')' });
+        }
+
+        // 7. 계약 생성
+        const { data: ins, error: insErr } = await sb.from('42_통역계약').insert({
+            customer_id: auth.user.id,
+            interpreter_id: note.interpreterId || null,
+            exhibition_name: inq.exhibition_name,
+            client_company: inq.company || '',
+            venue: note.country || note.location || inq.location || '',
+            start_date: inq.start_date,
+            end_date: inq.end_date,
+            working_days: days,
+            language_pair: inq.language_pair || '',
+            service_type: inq.service_type || '',
+            daily_rate: dailyRate,
+            total_amount: total,
+            tax_amount: tax,
+            net_amount: subtotal,
+            deposit_amount: deposit,
+            balance_amount: balance,
+            balance_status: (balance > 0) ? 'pending' : 'paid',
+            status: 'pending',
+            interpreter_accepted: null,
+            contract_signed: false
+        }).select('id').single();
+        if (insErr || !ins) { console.error('accept-quote insert 실패:', insErr); return res.status(500).json({ error: '계약 생성에 실패했습니다.' }); }
+
+        // 8. 문의 상태 → 계약진행
+        try { await sb.from('46_ITQ견적문의').update({ status: '계약진행' }).eq('id', inquiryId); }
+        catch (e) { console.error('문의 상태 업데이트 실패(무시):', e && e.message); }
+
+        return res.status(200).json({ contractId: ins.id,
+            amounts: { subtotal, tax, total, deposit, balance, dailyRate, days } });
+    } catch (e) {
+        console.error('accept-quote 예외:', e);
+        return res.status(500).json({ error: '요청 처리 중 오류가 발생했습니다.' });
+    }
+}
+
 module.exports = async function handler(req, res) {
     if (!SERVICE_KEY) return res.status(500).json({ error: '서버 설정 오류' });
 
@@ -361,6 +446,7 @@ module.exports = async function handler(req, res) {
         case 'my-showcase-applications': return handleMyShowcaseApplications(req, res);
         case 'my-showcase-applicants': return handleMyShowcaseApplicants(req, res);
         case 'accept-assignment': return handleAcceptAssignment(req, res);
+        case 'accept-quote': return handleAcceptQuote(req, res);
         default: return res.status(404).json({ error: 'Unknown route: ' + route });
     }
 };
