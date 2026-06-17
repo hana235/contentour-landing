@@ -76,7 +76,7 @@
 
     <!-- 플로팅 CTA -->
     <a href="#contact" class="floating-cta" id="floatingCta">
-        <span class="floating-cta__icon">📋</span>
+        <span class="floating-cta__icon" aria-hidden="true">📋</span>
         <span class="floating-cta__text">견적 문의</span>
     </a>
 
@@ -255,7 +255,7 @@
                     <span class="flow-arrow" aria-hidden="true">›</span>
                     <div class="flow-step"><span class="flow-num">9</span><span class="flow-label">정산 완료</span></div>
                 </div>
-                <a href="service.html" class="btn btn-primary" style="margin-top:32px;display:inline-block;padding:14px 36px;font-size:1rem;border-radius:8px;text-decoration:none;">서비스 상세 보기 →</a>
+                <a href="service.html" class="btn btn-primary" style="margin-top:32px;display:inline-block;padding:14px 36px;font-size:1rem;border-radius:8px;text-decoration:none;">서비스 상세 보기 <span aria-hidden="true">→</span></a>
             </div>
         </section>
 
@@ -351,10 +351,10 @@
                     </p>
 
                     <div class="blue-itq__chips">
-                        <span class="chip">🎯 부스 상주 통역</span>
-                        <span class="chip">🤝 미팅 동행 통역</span>
-                        <span class="chip">📋 주최사 커뮤니케이션</span>
-                        <span class="chip">⚡ 24시간 내 견적 회신</span>
+                        <span class="chip"><span aria-hidden="true">🎯</span> 부스 상주 통역</span>
+                        <span class="chip"><span aria-hidden="true">🤝</span> 미팅 동행 통역</span>
+                        <span class="chip"><span aria-hidden="true">📋</span> 주최사 커뮤니케이션</span>
+                        <span class="chip"><span aria-hidden="true">⚡</span> 24시간 내 견적 회신</span>
                     </div>
                 </header>
 
@@ -569,7 +569,7 @@
                 var interpMasked = rawInterp.length >= 2 ? rawInterp.charAt(0) + '○○' : rawInterp;
 
                 return '<div class="testi-card">' +
-                    '<div class="testi-card__stars">' + starsHtml + '</div>' +
+                    '<div class="testi-card__stars" role="img" aria-label="별점 ' + avg.toFixed(1) + '점 (5점 만점)"><span aria-hidden="true">' + starsHtml + '</span></div>' +
                     '<p class="testi-card__text">"' + (r.review_text || '').replace(/\u003c/g,'&lt;').replace(/\u003e/g,'&gt;') + '"</p>' +
                     '<div class="testi-card__author">' +
                         '<div class="testi-card__avatar" style="background:linear-gradient(135deg,' + grad[0] + ',' + grad[1] + ');">' + initial + '</div>' +
