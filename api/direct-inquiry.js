@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { checkRateLimit } = require('../lib/rate-limit');
 
 const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -28,6 +29,11 @@ module.exports = async function handler(req, res) {
     const { data: reqProfile } = await sb.from('01_회원').select('role').eq('id', user.id).single();
     if (!reqProfile || reqProfile.role !== 'customer') {
         return res.status(403).json({ error: '고객 회원만 직접 견적을 요청할 수 있습니다.' });
+    }
+
+    // 스팸 방지: 사용자당 1분에 10건
+    if (!await checkRateLimit(sb, 'direct-inquiry:' + user.id, 10, 60)) {
+        return res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
     }
 
     const {
@@ -135,27 +141,20 @@ module.exports = async function handler(req, res) {
             if (byId) interpreterUserId = byId.user_id;
         }
 
-        if (!interpreterUserId && interpreterName_) {
-            const { data: interpProfile } = await sb
-                .from('40_통역사프로필')
-                .select('user_id')
-                .eq('display_name', interpreterName_)
-                .eq('is_active', true)
-                .limit(1)
-                .single();
+        // 이름(display_name) 기반 fallback 제거:
+        //   - 임의 이름으로 타 통역사에게 알림 발송(스푸핑) 차단
+        //   - notified 응답으로 이름 존재 여부를 캐내는 열거(enumeration) 오라클 차단
+        //   알림은 검증된 interpreterId(활성 프로필)로만 발송.
 
-            if (interpProfile) {
-                interpreterUserId = interpProfile.user_id;
-            }
-        }
-
-        // 3. 통역사에게 알림 발송
+        // 3. 통역사에게 알림 발송 (저장형 XSS 씨앗 방지: 사용자 입력 태그 제거)
         if (interpreterUserId) {
+            const safeCompany = company_.replace(/[<>]/g, '');
+            const safeExpo = exhibitionName_.replace(/[<>]/g, '');
             await sb.from('24_알림').insert({
                 user_id: interpreterUserId,
                 notification_type: 'service',
                 title: '📩 새로운 직접 견적 의뢰',
-                message: `${company_}에서 "${exhibitionName_}" 건으로 직접 견적을 의뢰했습니다. 견적 요청 탭에서 확인해주세요.`,
+                message: `${safeCompany}에서 "${safeExpo}" 건으로 직접 견적을 의뢰했습니다. 견적 요청 탭에서 확인해주세요.`,
                 is_read: false
             });
         }

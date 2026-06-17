@@ -2,6 +2,7 @@
 // vercel.json rewrites가 옛 URL을 _route 쿼리로 매핑
 
 const { createClient } = require('@supabase/supabase-js');
+const { checkRateLimit } = require('../lib/rate-limit');
 
 const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -299,6 +300,10 @@ async function handleAcceptAssignment(req, res) {
     const { data: profile } = await sb.from('01_회원').select('role, name').eq('id', auth.user.id).single();
     if (!profile || profile.role !== 'interpreter') return res.status(403).json({ success: false, error: '통역사만 수락할 수 있습니다.' });
 
+    if (!await checkRateLimit(sb, 'accept-assign:' + auth.user.id, 20, 60)) {
+        return res.status(429).json({ success: false, error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    }
+
     const contractId = req.body && req.body.contractId;
     if (!contractId) return res.status(400).json({ success: false, error: '계약 ID가 필요합니다.' });
 
@@ -358,6 +363,10 @@ async function handleAcceptQuote(req, res) {
     const auth = await authenticate(req);
     if (auth.error) return res.status(auth.status).json({ error: auth.error });
 
+    if (!await checkRateLimit(sb, 'accept-quote:' + auth.user.id, 10, 60)) {
+        return res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    }
+
     const inquiryId = req.body && req.body.inquiryId;
     if (!inquiryId) return res.status(400).json({ error: '문의 ID가 필요합니다.' });
 
@@ -385,9 +394,15 @@ async function handleAcceptQuote(req, res) {
         const balance = Number(note.balance) || 0;
         if (subtotal <= 0 || total <= 0) return res.status(400).json({ error: '견적 금액이 유효하지 않습니다.' });
 
-        // 5. 중복 계약 방지 (같은 고객+전시회) — 멱등 처리
+        // 5. 중복 계약 방지 (같은 고객+전시회+기간) — 멱등 처리
+        //    전시회명만으로는 동명 다른 의뢰가 충돌하므로 기간(시작·종료일)까지 키에 포함
         const { data: existing } = await sb.from('42_통역계약')
-            .select('id').eq('customer_id', auth.user.id).eq('exhibition_name', inq.exhibition_name).limit(1);
+            .select('id')
+            .eq('customer_id', auth.user.id)
+            .eq('exhibition_name', inq.exhibition_name)
+            .eq('start_date', inq.start_date)
+            .eq('end_date', inq.end_date)
+            .limit(1);
         if (existing && existing.length > 0) {
             return res.status(200).json({ contractId: existing[0].id, duplicate: true,
                 amounts: { subtotal, tax, total, deposit, balance, dailyRate, days } });

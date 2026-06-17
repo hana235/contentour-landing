@@ -5,6 +5,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 const { emailPaymentCompleteToCustomer, emailPaymentCompleteToInterpreter } = require('../lib/email-templates');
+const { checkRateLimit } = require('../lib/rate-limit');
 
 const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -41,6 +42,10 @@ async function handleVerifyPayment(req, res, rawBody) {
 
     const { data: { user }, error: authErr } = await sbAuth.auth.getUser(token);
     if (authErr || !user) return res.status(401).json({ success: false, error: '인증 실패' });
+
+    if (!await checkRateLimit(sb, 'verify-payment:' + user.id, 20, 60)) {
+        return res.status(429).json({ success: false, error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    }
 
     let body;
     try { body = JSON.parse(rawBody || '{}'); }
@@ -233,7 +238,7 @@ async function handleVerifyPayment(req, res, rawBody) {
         return res.status(200).json(Object.assign({ success: true }, rpcResult || {}));
     } catch (e) {
         console.error('verify-payment 예외:', e);
-        return res.status(500).json({ success: false, error: e.message || '결제 검증 실패' });
+        return res.status(500).json({ success: false, error: '결제 검증에 실패했습니다.' });
     }
 }
 
@@ -432,7 +437,7 @@ async function handleWebhook(req, res, rawBody) {
         return res.status(200).json({ ok: true });
     } catch (e) {
         console.error('portone-webhook 예외:', e);
-        return res.status(200).json({ ok: false, error: e.message });
+        return res.status(200).json({ ok: false, error: '처리 중 오류가 발생했습니다.' });
     }
 }
 
@@ -446,6 +451,10 @@ async function handleManualTransferRequest(req, res, rawBody) {
     if (!token) return res.status(401).json({ success: false, error: '로그인이 필요합니다.' });
     const { data: { user }, error: authErr } = await sbAuth.auth.getUser(token);
     if (authErr || !user) return res.status(401).json({ success: false, error: '인증 실패' });
+
+    if (!await checkRateLimit(sb, 'manual-transfer:' + user.id, 10, 60)) {
+        return res.status(429).json({ success: false, error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    }
 
     let body;
     try { body = JSON.parse(rawBody || '{}'); }
@@ -510,7 +519,7 @@ async function handleManualTransferRequest(req, res, rawBody) {
         return res.status(200).json({ success: true, status: 'manual_pending' });
     } catch (e) {
         console.error('manual-transfer-request 예외:', e);
-        return res.status(500).json({ success: false, error: e.message || '오류' });
+        return res.status(500).json({ success: false, error: '요청 처리 중 오류가 발생했습니다.' });
     }
 }
 
@@ -573,7 +582,7 @@ async function handleManualTransferConfirm(req, res, rawBody) {
         }
     } catch (e) {
         console.error('manual-transfer-confirm 예외:', e);
-        return res.status(500).json({ success: false, error: e.message || '오류' });
+        return res.status(500).json({ success: false, error: '요청 처리 중 오류가 발생했습니다.' });
     }
 }
 

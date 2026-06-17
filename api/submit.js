@@ -331,8 +331,9 @@ async function handleNotifyAdmins(req, res) {
     }
 
     const b = req.body || {};
-    const title = String(b.title || '').trim().slice(0, 200);
-    const message = String(b.message || '').trim().slice(0, 2000);
+    // 저장형 XSS 씨앗 방지: 관리자 대시보드에 렌더되는 내용에서 태그문자 제거
+    const title = String(b.title || '').trim().slice(0, 200).replace(/[<>]/g, '');
+    const message = String(b.message || '').trim().slice(0, 2000).replace(/[<>]/g, '');
     const notification_type = String(b.notification_type || 'service').trim().slice(0, 50);
     const rawLink = b.link ? String(b.link).trim().slice(0, 500) : null;
     // 피싱 방지: 내부 상대경로(/로 시작, // 아님, : 없음)만 허용
