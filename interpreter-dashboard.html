@@ -5271,19 +5271,12 @@
                     throw new Error((rpcResult && rpcResult.error) || '취소 처리 실패');
                 }
 
-                // 40_통역사프로필 패널티 카운트 증가
+                // 패널티 적용은 서버 RPC로만 (직접 UPDATE는 trigger로 차단 — 변조 방지)
                 var action = modal.dataset.action || '';
                 if (action.indexOf('패널티') >= 0 || action.indexOf('정지') >= 0 || action.indexOf('제한') >= 0) {
                     try {
-                        var { data: profile } = await window.sbClient.from('40_통역사프로필').select('penalty_count').eq('user_id', user.id).maybeSingle();
-                        var newCount = (profile ? profile.penalty_count : 0) + 1;
-                        var isSuspended = newCount >= 3;
-                        await window.sbClient.from('40_통역사프로필').update({
-                            penalty_count: newCount,
-                            is_suspended: isSuspended,
-                            suspended_until: isSuspended ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null
-                        }).eq('user_id', user.id);
-                    } catch(pe) { console.error('패널티 업데이트 실패:', pe); }
+                        await window.sbClient.rpc('apply_cancel_penalty', { p_contract_id: c.id });
+                    } catch(pe) { console.error('패널티 적용 실패:', pe); }
                 }
 
                 c.status = 'cancelled';
