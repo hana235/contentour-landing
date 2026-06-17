@@ -1136,9 +1136,6 @@
                         <button class="contract-filter-tab" onclick="ctAdminTabFilter('active')">진행중 <span class="cft-count" id="ctf-active">0</span></button>
                         <button class="contract-filter-tab" onclick="ctAdminTabFilter('done')">완료 <span class="cft-count" id="ctf-done">0</span></button>
                     </div>
-                    <div style="display:flex;justify-content:flex-end;margin:-10px 0 14px;">
-                        <button onclick="openNewContractModal()" style="padding:10px 22px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:10px;font-size:0.85rem;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;box-shadow:0 3px 12px rgba(21,101,192,0.3);transition:all 0.2s;">&#128221; 계약서 직접 작성</button>
-                    </div>
                     <div class="contract-list" id="ctAdminList"></div>
                 </div>
 
@@ -1255,102 +1252,6 @@
                     </div>
                 </div>
 
-                <!-- 계약서 직접 작성 모달 -->
-                <div class="quote-modal-overlay" id="newContractOverlay" onclick="if(event.target===this)closeNewContractModal()">
-                    <div class="quote-modal">
-                        <div class="quote-modal__head">
-                            <div>
-                                <h3>&#128221; 통역 서비스 계약서 직접 작성</h3>
-                                <p>관리자가 직접 계약을 생성합니다</p>
-                            </div>
-                            <button class="quote-modal__close" onclick="closeNewContractModal()">&#10005;</button>
-                        </div>
-                        <div class="quote-modal__body">
-                            <div class="qm-section">고객 정보</div>
-                            <div class="qm-grid">
-                                <div class="qm-field"><label>고객사명 *</label><input type="text" id="nc-company" placeholder="예: (주)메디컬코리아"></div>
-                                <div class="qm-field"><label>담당자명 *</label><input type="text" id="nc-contact" placeholder="예: 김영수"></div>
-                            </div>
-
-                            <div class="qm-section">전시회 정보</div>
-                            <div class="qm-grid">
-                                <div class="qm-field full"><label>전시회명 *</label><input type="text" id="nc-expo" placeholder="예: MEDICA 2026"></div>
-                                <div class="qm-field"><label>시작일 *</label><input type="date" id="nc-start"></div>
-                                <div class="qm-field"><label>종료일 *</label><input type="date" id="nc-end"></div>
-                                <div class="qm-field"><label>개최지</label><input type="text" id="nc-location" placeholder="예: 독일 뒤셀도르프"></div>
-                                <div class="qm-field">
-                                    <label>통역 언어 *</label>
-                                    <select id="nc-lang" onchange="onNcInterpreterChange()">
-                                        <option value="">선택</option>
-                                        <option>한국어 ↔ 영어</option>
-                                        <option>한국어 ↔ 일본어</option>
-                                        <option>한국어 ↔ 중국어</option>
-                                        <option>한국어 ↔ 독일어</option>
-                                        <option>한국어 ↔ 베트남어</option>
-                                        <option>한국어 ↔ 태국어</option>
-                                        <option>한국어 ↔ 프랑스어</option>
-                                        <option>한국어 ↔ 러시아어</option>
-                                        <option>한국어 ↔ 스페인어</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="qm-section">통역사 배정</div>
-                            <div class="qm-grid">
-                                <div class="qm-field">
-                                    <label>배정 통역사 *</label>
-                                    <select id="nc-interpreter" onchange="onNcInterpreterChange()">
-                                        <option value="">통역사 선택</option>
-                                        <option value="김하나">김하나 (영어·일본어)</option>
-                                    </select>
-                                </div>
-                                <div class="qm-field">
-                                    <label>통역 형태</label>
-                                    <select id="nc-type" onchange="onNcInterpreterChange()">
-                                        <option value="부스 상주">부스 상주 (상담 통역)</option>
-                                        <option value="미팅 동행">미팅 동행</option>
-                                        <option value="현장 운영">현장 운영 / 주최사 커뮤니케이션</option>
-                                        <option value="기타">기타</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="qm-rate-info" id="ncRateInfo" style="display:none;"></div>
-
-                            <div class="qm-section">금액 설정</div>
-                            <div class="qm-grid">
-                                <div class="qm-field"><label>파견 일수 *</label><input type="number" id="nc-days" min="1" value="1" onchange="calcNewContract()" oninput="calcNewContract()"></div>
-                                <div class="qm-field"><label>일당 단가 (원) *</label><input type="number" id="nc-rate" min="0" placeholder="예: 400000" onchange="calcNewContract()" oninput="calcNewContract()"></div>
-                            </div>
-                            <div class="qm-calc" id="ncCalc">
-                                <div class="qm-calc-row"><span class="label">통역 서비스</span><span class="value" id="ncSubtotal">₩0</span></div>
-                                <div class="qm-calc-row"><span class="label">부가가치세 (10%)</span><span class="value" id="ncFee">₩0</span></div>
-                                <div class="qm-calc-row total"><span class="label">총 계약 금액</span><span class="value" id="ncTotal">₩0</span></div>
-                                <div class="qm-calc-row sub"><span class="label">선결제 (100%) — 계약 체결 시</span><span class="value" id="ncDeposit">₩0</span></div>
-                                <div class="qm-calc-row sub" style="display:none;"><span class="label">잔금</span><span class="value" id="ncBalance">₩0</span></div>
-                            </div>
-
-                            <div class="qm-section">계약 조건</div>
-                            <div class="qm-grid">
-                                <div class="qm-field">
-                                    <label>초기 상태</label>
-                                    <select id="nc-status">
-                                        <option value="contract_sign">계약서 확인 대기 (양측 동의 필요)</option>
-                                        <option value="deposit_pay">계약금 결제 대기 (바로 결제 단계)</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="qm-field full" style="margin-top:12px;">
-                                <label>비고 / 특이사항 (선택)</label>
-                                <textarea id="nc-memo" placeholder="계약 관련 특이사항을 입력하세요."></textarea>
-                            </div>
-                        </div>
-                        <div class="qm-footer">
-                            <button class="btn-ghost" onclick="closeNewContractModal()">취소</button>
-                            <button class="btn-send" onclick="previewNewContract()">&#128065; 미리보기</button>
-                            <button class="btn-send" onclick="submitNewContract()" style="background:#1565c0;">&#128221; 계약서 생성</button>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- ══ 취소 관리 뷰 ══ -->
                 <div class="view" id="view-cancellations">
