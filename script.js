@@ -292,6 +292,22 @@ function initInquiryForm() {
     const form = document.querySelector("#interpreterForm");
     if (!form) return;
 
+    // 날짜: 과거일 선택 방지 (오늘 이후만), 종료일은 시작일 이후만
+    const startEl = form.querySelector('#startDate');
+    const endEl = form.querySelector('#endDate');
+    if (startEl && endEl) {
+        const today = new Date();
+        const todayStr = today.getFullYear() + '-' +
+            String(today.getMonth() + 1).padStart(2, '0') + '-' +
+            String(today.getDate()).padStart(2, '0');
+        startEl.min = todayStr;
+        endEl.min = todayStr;
+        startEl.addEventListener('change', function () {
+            endEl.min = startEl.value || todayStr;
+            if (endEl.value && endEl.value < startEl.value) endEl.value = startEl.value;
+        });
+    }
+
     function formToJSON(form) {
         const fd = new FormData(form);
         const obj = {};
@@ -311,6 +327,14 @@ function initInquiryForm() {
         const btn = form.querySelector('button[type="submit"]');
 
         // 간단 검증 (기간)
+        const _today = new Date();
+        const _todayStr = _today.getFullYear() + '-' +
+            String(_today.getMonth() + 1).padStart(2, '0') + '-' +
+            String(_today.getDate()).padStart(2, '0');
+        if (payload.startDate && payload.startDate < _todayStr) {
+            if (status) status.textContent = "시작일은 오늘 이후로 선택해주세요.";
+            return;
+        }
         if (payload.startDate && payload.endDate && payload.startDate > payload.endDate) {
             if (status) status.textContent = "종료일은 시작일 이후로 선택해주세요.";
             return;
