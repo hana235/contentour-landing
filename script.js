@@ -339,6 +339,13 @@ function initInquiryForm() {
             if (status) status.textContent = "종료일은 시작일 이후로 선택해주세요.";
             return;
         }
+        // 출발·도착 언어 동일 선택 방지 ("기타"는 자유 기재이므로 예외)
+        if (payload.sourceLang && payload.targetLang &&
+            payload.sourceLang !== "기타" && payload.targetLang !== "기타" &&
+            payload.sourceLang === payload.targetLang) {
+            if (status) status.textContent = "출발 언어와 도착 언어를 다르게 선택해주세요.";
+            return;
+        }
 
         if (btn) { btn.disabled = true; btn.textContent = "전송 중..."; }
         if (status) status.textContent = "전송 중입니다…";
