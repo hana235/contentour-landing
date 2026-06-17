@@ -3052,10 +3052,10 @@
                 var safeId = String(j.dbId).replace(/'/g, "\\'");
                 return '<div class="jnl-list-item ' + (_activeJournalDbId === j.dbId ? 'active' : '') + '" onclick="jnlOpenJournal(\'' + safeId + '\')">' +
                        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
-                       '<div class="jnl-list-expo">' + (j.expo || '-') + '</div>' +
+                       '<div class="jnl-list-expo">' + CT.escHtml(j.expo || '-') + '</div>' +
                        '<span class="jnl-list-status ' + statusCls + '">' + statusText + '</span>' +
                        '</div>' +
-                       '<div class="jnl-list-meta"><span>📅 ' + (j.date || '-') + '</span><span>🏢 ' + (j.client || '-') + '</span>' + (dur ? '<span>🕐 ' + dur + '</span>' : '') + '</div>' +
+                       '<div class="jnl-list-meta"><span>📅 ' + CT.escHtml(j.date || '-') + '</span><span>🏢 ' + CT.escHtml(j.client || '-') + '</span>' + (dur ? '<span>🕐 ' + dur + '</span>' : '') + '</div>' +
                        '</div>';
             }).join('');
         }
@@ -5532,7 +5532,7 @@
                     '<tr><th>통역 언어</th><td>한국어 ↔ ' + safe.lang + '</td></tr>' +
                     '<tr><th>서비스 유형</th><td>전시회 부스 통역 (비즈니스 상담 통역 포함)</td></tr>' +
                     '<tr><th>복장 규정</th><td>비즈니스 캐주얼 (행사 주최 측 별도 지정 시 우선 적용)</td></tr>' +
-                    '<tr><th>특이사항</th><td>' + (c.notes || c.specialRequests || '없음') + '</td></tr>' +
+                    '<tr><th>특이사항</th><td>' + _esc(c.notes || c.specialRequests || '없음') + '</td></tr>' +
                 '</table>' +
             '</div>');
 

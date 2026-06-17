@@ -4552,10 +4552,10 @@
           var stClass = statusClassMap[st] || 'sb-pending';
           var barClass = statusBarMap[st] || 'status-pending';
           var created = d.created_at ? d.created_at.split('T')[0] : '';
-          return '<div class="inquiry-card" onclick="openDbInquiryModal(' + idx + ')" data-title="' + d.exhibition_name + '" data-status="' + st + '">' +
+          return '<div class="inquiry-card" onclick="openDbInquiryModal(' + idx + ')" data-title="' + CT.escHtml(d.exhibition_name) + '" data-status="' + st + '">' +
             '<div class="inquiry-card__status ' + barClass + '"></div>' +
             '<div class="inquiry-card__main">' +
-              '<div class="inquiry-card__title">' + d.exhibition_name + '</div>' +
+              '<div class="inquiry-card__title">' + CT.escHtml(d.exhibition_name) + '</div>' +
               '<div class="inquiry-card__meta">' +
                 '<span class="meta-item">📅 ' + d.start_date + ' ~ ' + d.end_date + '</span>' +
                 '<span class="meta-item">🌐 ' + CT.escHtml(d.language_pair || '') + '</span>' +
@@ -4772,11 +4772,11 @@
       var quoteHtml = receivedQuotes.filter(function(q) { return q.status === 'sent'; }).map(function(q) {
         var statusLabel = q.status === 'accepted' ? '<span style="color:var(--gray-400);font-weight:700;">[수락됨]</span>' : '';
         return '<div class="quote-notif-card' + (q.status === 'accepted' ? ' reviewed' : '') + '" onclick="openQuoteDetail(\'' + q.quoteId + '\')">' +
-          '<div class="quote-notif-card__title">&#128200; ' + q.expo + ' 견적서 도착 ' + statusLabel + '</div>' +
+          '<div class="quote-notif-card__title">&#128200; ' + CT.escHtml(q.expo) + ' 견적서 도착 ' + statusLabel + '</div>' +
           '<div class="quote-notif-card__meta">' +
-            '<span>&#128100; 통역사: ' + q.interpreter + '</span>' +
+            '<span>&#128100; 통역사: ' + CT.escHtml(q.interpreter) + '</span>' +
             '<span>&#128197; ' + q.startDate + ' ~ ' + q.endDate + '</span>' +
-            '<span>&#127760; ' + q.lang + '</span>' +
+            '<span>&#127760; ' + CT.escHtml(q.lang) + '</span>' +
           '</div>' +
           '<div class="quote-notif-card__amount">견적 금액: ' + formatMoney(q.total) + '</div>' +
           '<div class="quote-notif-card__date">견적 수신일: ' + q.sentAt + '</div>' +
@@ -4788,15 +4788,15 @@
     function openQuoteDetail(quoteId) {
       var q = receivedQuotes.find(function(x) { return x.quoteId === quoteId; });
       if (!q) return;
-      document.getElementById('qdTitle').innerHTML = '&#128200; ' + q.expo + ' 견적서';
+      document.getElementById('qdTitle').innerHTML = '&#128200; ' + CT.escHtml(q.expo) + ' 견적서';
       document.getElementById('qdSub').textContent = q.quoteId + ' | ' + q.sentAt + ' 발송';
       var bodyHtml = '<div class="qd-info-grid">' +
-        '<div class="qd-info-item"><div class="qd-info-label">전시회</div><div class="qd-info-value">' + q.expo + '</div></div>' +
-        '<div class="qd-info-item"><div class="qd-info-label">개최 국가</div><div class="qd-info-value">' + q.country + '</div></div>' +
-        '<div class="qd-info-item"><div class="qd-info-label">통역사</div><div class="qd-info-value">' + q.interpreter + '</div></div>' +
-        '<div class="qd-info-item"><div class="qd-info-label">언어</div><div class="qd-info-value">' + q.lang + '</div></div>' +
+        '<div class="qd-info-item"><div class="qd-info-label">전시회</div><div class="qd-info-value">' + CT.escHtml(q.expo) + '</div></div>' +
+        '<div class="qd-info-item"><div class="qd-info-label">개최 국가</div><div class="qd-info-value">' + CT.escHtml(q.country) + '</div></div>' +
+        '<div class="qd-info-item"><div class="qd-info-label">통역사</div><div class="qd-info-value">' + CT.escHtml(q.interpreter) + '</div></div>' +
+        '<div class="qd-info-item"><div class="qd-info-label">언어</div><div class="qd-info-value">' + CT.escHtml(q.lang) + '</div></div>' +
         '<div class="qd-info-item"><div class="qd-info-label">파견 기간</div><div class="qd-info-value">' + q.startDate + ' ~ ' + q.endDate + ' (' + q.days + '일)</div></div>' +
-        '<div class="qd-info-item"><div class="qd-info-label">통역 형태</div><div class="qd-info-value">' + q.type + '</div></div>' +
+        '<div class="qd-info-item"><div class="qd-info-label">통역 형태</div><div class="qd-info-value">' + CT.escHtml(q.type) + '</div></div>' +
         '<div class="qd-info-item"><div class="qd-info-label">담당 관리자</div><div class="qd-info-value">관리자</div></div>' +
       '</div>';
       bodyHtml += '<div class="qd-section">견적 내역</div>' +
@@ -4808,7 +4808,7 @@
           '<tr class="sub"><td>선결제 (100%) — 계약 체결 시</td><td>' + formatMoney(q.total) + '</td></tr>' +
         '</table>';
       if (q.memo) {
-        bodyHtml += '<div class="qd-section">관리자 메모</div><div class="qd-memo">' + q.memo + '</div>';
+        bodyHtml += '<div class="qd-section">관리자 메모</div><div class="qd-memo">' + CT.escHtml(q.memo) + '</div>';
       }
       if (q.status === 'sent') {
         bodyHtml += '<div class="qd-actions">' +

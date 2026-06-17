@@ -8636,7 +8636,7 @@
                         '<button onclick="bizVerifyApprove(\'' + r.id + '\')" style="padding:8px 14px;background:linear-gradient(135deg,#43a047,#2e7d32);color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">✅ 승인</button>' +
                         '<button onclick="bizVerifyReject(\'' + r.id + '\')" style="padding:8px 14px;background:#fff;color:#c62828;border:1.5px solid #ffcdd2;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">❌ 반려</button>';
                 } else if (r.business_registration_status === 'rejected') {
-                    actionBtns = '<div style="font-size:0.75rem;color:#c62828;background:#ffebee;padding:8px 12px;border-radius:8px;">사유: ' + (r.business_registration_reject_reason || '-') + '</div>';
+                    actionBtns = '<div style="font-size:0.75rem;color:#c62828;background:#ffebee;padding:8px 12px;border-radius:8px;">사유: ' + CT.escHtml(r.business_registration_reject_reason || '-') + '</div>';
                 }
 
                 var fileBtn = hasFile
@@ -8647,11 +8647,11 @@
                     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;">' +
                         '<div style="flex:1;min-width:240px;">' +
                             '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
-                                '<strong style="font-size:0.95rem;color:var(--text);">' + (r.company_name || '회사명 미입력') + '</strong>' +
+                                '<strong style="font-size:0.95rem;color:var(--text);">' + CT.escHtml(r.company_name || '회사명 미입력') + '</strong>' +
                                 statusBadge +
                             '</div>' +
-                            '<div style="font-size:0.78rem;color:var(--g600);margin-bottom:3px;">담당자: ' + (r.name || '-') + ' · ' + (r.email || '-') + '</div>' +
-                            '<div style="font-size:0.78rem;color:var(--g600);margin-bottom:3px;">사업자번호: ' + (r.business_number || '-') + '</div>' +
+                            '<div style="font-size:0.78rem;color:var(--g600);margin-bottom:3px;">담당자: ' + CT.escHtml(r.name || '-') + ' · ' + CT.escHtml(r.email || '-') + '</div>' +
+                            '<div style="font-size:0.78rem;color:var(--g600);margin-bottom:3px;">사업자번호: ' + CT.escHtml(r.business_number || '-') + '</div>' +
                             '<div style="font-size:0.72rem;color:var(--g400);">제출일: ' + uploadedAt + '</div>' +
                         '</div>' +
                         '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
@@ -8761,19 +8761,19 @@
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
                         <div style="flex:1;">
                             <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                                <span style="font-size:1rem;font-weight:800;">${a.name_ko}</span>
-                                ${a.name_en ? '<span style="font-size:0.82rem;color:var(--g400);">' + a.name_en + '</span>' : ''}
+                                <span style="font-size:1rem;font-weight:800;">${CT.escHtml(a.name_ko)}</span>
+                                ${a.name_en ? '<span style="font-size:0.82rem;color:var(--g400);">' + CT.escHtml(a.name_en) + '</span>' : ''}
                                 <span style="padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;color:#fff;background:${sc};">${statusMap[a.status] || a.status}</span>
                             </div>
                             <div style="display:flex;flex-wrap:wrap;gap:6px 16px;font-size:0.82rem;color:var(--g600);">
-                                <span>📧 ${a.email}</span>
-                                <span>📱 ${a.phone}</span>
-                                ${a.nationality ? '<span>🌍 ' + a.nationality + '</span>' : ''}
+                                <span>📧 ${CT.escHtml(a.email)}</span>
+                                <span>📱 ${CT.escHtml(a.phone)}</span>
+                                ${a.nationality ? '<span>🌍 ' + CT.escHtml(a.nationality) + '</span>' : ''}
                             </div>
                             <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
-                                ${langs ? '<span style="padding:3px 10px;background:#e3f0ff;color:#1565c0;border-radius:6px;font-size:0.75rem;font-weight:600;">🌐 ' + langs + '</span>' : ''}
-                                ${specs ? '<span style="padding:3px 10px;background:#e8f5e9;color:#2e7d32;border-radius:6px;font-size:0.75rem;font-weight:600;">' + specs + '</span>' : ''}
-                                ${a.total_experience ? '<span style="padding:3px 10px;background:#fff3e0;color:#f57c00;border-radius:6px;font-size:0.75rem;font-weight:600;">📋 ' + a.total_experience + '</span>' : ''}
+                                ${langs ? '<span style="padding:3px 10px;background:#e3f0ff;color:#1565c0;border-radius:6px;font-size:0.75rem;font-weight:600;">🌐 ' + CT.escHtml(langs) + '</span>' : ''}
+                                ${specs ? '<span style="padding:3px 10px;background:#e8f5e9;color:#2e7d32;border-radius:6px;font-size:0.75rem;font-weight:600;">' + CT.escHtml(specs) + '</span>' : ''}
+                                ${a.total_experience ? '<span style="padding:3px 10px;background:#fff3e0;color:#f57c00;border-radius:6px;font-size:0.75rem;font-weight:600;">📋 ' + CT.escHtml(a.total_experience) + '</span>' : ''}
                             </div>
                         </div>
                         <div style="text-align:right;font-size:0.78rem;color:var(--g400);white-space:nowrap;">
@@ -8804,45 +8804,45 @@
 
             let html = '<div style="font-size:0.85rem;">';
             html += '<div style="font-weight:800;font-size:0.9rem;margin-bottom:12px;color:var(--navy);">👤 기본 정보</div>';
-            html += row('이메일', a.email);
-            html += row('연락처', a.phone);
-            html += row('국적', a.nationality);
-            html += row('도시', a.city);
-            html += row('성별', a.gender);
-            html += row('생년월일', a.birth_date);
+            html += row('이메일', CT.escHtml(a.email));
+            html += row('연락처', CT.escHtml(a.phone));
+            html += row('국적', CT.escHtml(a.nationality));
+            html += row('도시', CT.escHtml(a.city));
+            html += row('성별', CT.escHtml(a.gender));
+            html += row('생년월일', CT.escHtml(a.birth_date));
 
             if (a.intro) {
                 html += '<div style="margin-top:16px;font-weight:800;font-size:0.9rem;margin-bottom:8px;color:var(--navy);">💬 자기소개</div>';
-                html += '<div style="background:var(--g100);padding:14px;border-radius:10px;font-size:0.84rem;line-height:1.7;">' + a.intro + '</div>';
+                html += '<div style="background:var(--g100);padding:14px;border-radius:10px;font-size:0.84rem;line-height:1.7;">' + CT.escHtml(a.intro) + '</div>';
             }
 
             html += '<div style="margin-top:16px;font-weight:800;font-size:0.9rem;margin-bottom:12px;color:var(--navy);">🌐 언어 & 전문분야</div>';
-            html += row('통역 언어', langs);
-            html += row('전문 분야', specs);
-            html += row('통역 형태', types);
-            html += row('희망 지역', regions);
+            html += row('통역 언어', CT.escHtml(langs));
+            html += row('전문 분야', CT.escHtml(specs));
+            html += row('통역 형태', CT.escHtml(types));
+            html += row('희망 지역', CT.escHtml(regions));
 
             if (careers.length > 0) {
                 html += '<div style="margin-top:16px;font-weight:800;font-size:0.9rem;margin-bottom:12px;color:var(--navy);">📋 경력</div>';
-                html += row('총 경력', a.total_experience);
+                html += row('총 경력', CT.escHtml(a.total_experience));
                 careers.forEach((c, i) => {
-                    html += row('경력 ' + (i+1), [c.expo, c.location, c.period, c.language].filter(Boolean).join(' | '));
+                    html += row('경력 ' + (i+1), CT.escHtml([c.expo, c.location, c.period, c.language].filter(Boolean).join(' | ')));
                 });
             }
 
             if (certs.length > 0) {
                 html += '<div style="margin-top:16px;font-weight:800;font-size:0.9rem;margin-bottom:12px;color:var(--navy);">🏅 자격증</div>';
                 certs.forEach(c => {
-                    let certVal = c.year || '';
+                    let certVal = CT.escHtml(c.year || '');
                     if (c.file_url) {
-                        certVal += ' <button onclick="openStorageFile(\'' + c.file_url + '\', \'' + (c.file_name || '증빙파일') + '\')" style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:3px 10px;background:#e3f2fd;color:#1565c0;border:none;border-radius:6px;font-size:0.78rem;font-weight:700;cursor:pointer;">📄 ' + (c.file_name || '증빙파일') + ' 보기</button>';
+                        certVal += ' <button onclick="openStorageFile(\'' + String(c.file_url||'').replace(/'/g, "\\'") + '\', \'' + String(c.file_name||'증빙파일').replace(/'/g, "\\'") + '\')" style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:3px 10px;background:#e3f2fd;color:#1565c0;border:none;border-radius:6px;font-size:0.78rem;font-weight:700;cursor:pointer;">📄 ' + CT.escHtml(c.file_name || '증빙파일') + ' 보기</button>';
                     }
-                    html += row(c.name, certVal);
+                    html += row(CT.escHtml(c.name), certVal);
                 });
             }
 
-            html += row('학교', a.school);
-            html += row('전공', a.major);
+            html += row('학교', CT.escHtml(a.school));
+            html += row('전공', CT.escHtml(a.major));
 
             if (a.motivation) {
                 html += '<div style="margin-top:16px;font-weight:800;font-size:0.9rem;margin-bottom:8px;color:var(--navy);">💡 지원 동기</div>';
@@ -8858,9 +8858,9 @@
                     : _pesc);
             }
             if (a.resume_file_url) {
-                html += row('이력서 파일', '<button onclick="openStorageFile(\'' + a.resume_file_url + '\', \'' + (a.resume_file_name || '이력서') + '\')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:linear-gradient(135deg,#1565c0,#1976d2);color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">📥 ' + (a.resume_file_name || '이력서') + ' 다운로드</button>');
+                html += row('이력서 파일', '<button onclick="openStorageFile(\'' + String(a.resume_file_url||'').replace(/'/g, "\\'") + '\', \'' + String(a.resume_file_name||'이력서').replace(/'/g, "\\'") + '\')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:linear-gradient(135deg,#1565c0,#1976d2);color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">📥 ' + CT.escHtml(a.resume_file_name || '이력서') + ' 다운로드</button>');
             } else if (a.resume_file_name) {
-                html += row('이력서 파일', a.resume_file_name);
+                html += row('이력서 파일', CT.escHtml(a.resume_file_name));
             }
 
             html += '</div>';
@@ -9262,7 +9262,7 @@
                     var sb2 = statusBgs[ct.status] || '#f5f5f5';
                     return '<div style="border:1px solid #e8ecf2;border-radius:12px;padding:16px 18px;transition:all 0.15s;cursor:default;" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(0,0,0,0.08)\';this.style.borderColor=\'#1565c0\'" onmouseout="this.style.boxShadow=\'none\';this.style.borderColor=\'#e8ecf2\'">' +
                         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">' +
-                            '<div style="font-size:0.88rem;font-weight:800;color:#0d253f;">' + (ct.exhibition_name || '-') + '</div>' +
+                            '<div style="font-size:0.88rem;font-weight:800;color:#0d253f;">' + CT.escHtml(ct.exhibition_name || '-') + '</div>' +
                             '<span style="padding:4px 12px;border-radius:20px;font-size:0.68rem;font-weight:700;background:' + sb2 + ';color:' + sc + ';white-space:nowrap;">' + (statusLabels[ct.status] || ct.status) + '</span>' +
                         '</div>' +
                         '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.78rem;color:#666;">' +
