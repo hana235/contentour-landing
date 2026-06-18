@@ -4678,7 +4678,7 @@
             document.getElementById('stlModalTitle').textContent = d.expo;
             document.getElementById('stlModalSub').textContent = d.client + ' | ' + d.start + ' ~ ' + d.end;
 
-            const net = d.amount - d.tax;
+            const net = d.amount; // d.amount=net_amount(이미 원천징수 3.3% 차감 후). 추가 차감 금지(이중공제 버그 수정)
             const badgeClass = 'stl-b-' + d.status;
 
             let html =
@@ -4927,9 +4927,10 @@
         }
 
         function ctRenderTabs() {
+            const ACTIVE_ST = ['deposit_paid', 'balance_paid', 'paid', 'in_progress', 'completed'];
             const allCnt = interpreterContracts.length;
-            const activeCnt = interpreterContracts.filter(c => c.status === 'in_progress' || c.status === 'contract_signed' || c.status === 'deposit_review').length;
-            const payCnt = interpreterContracts.filter(c => c.status === 'balance_pending' || c.status === 'contract_signed' || c.status === 'deposit_review').length;
+            const activeCnt = interpreterContracts.filter(c => ACTIVE_ST.includes(c.status)).length;
+            const payCnt = interpreterContracts.filter(c => c.status === 'pending').length;
             const settledCnt = interpreterContracts.filter(c => c.status === 'settled').length;
 
             document.getElementById('ctTabs').innerHTML =
@@ -4951,9 +4952,9 @@
         function ctGetFiltered() {
             let filtered = interpreterContracts;
             if (ctCurrentTab === 'active') {
-                filtered = filtered.filter(c => c.status === 'in_progress' || c.status === 'contract_signed' || c.status === 'contract_sign');
+                filtered = filtered.filter(c => ['deposit_paid', 'balance_paid', 'paid', 'in_progress', 'completed'].includes(c.status));
             } else if (ctCurrentTab === 'payment') {
-                filtered = filtered.filter(c => c.status === 'balance_pending' || c.status === 'contract_signed' || c.status === 'deposit_review' || c.status === 'contract_sign');
+                filtered = filtered.filter(c => c.status === 'pending');
             } else if (ctCurrentTab === 'settled') {
                 filtered = filtered.filter(c => c.status === 'settled');
             }
@@ -5470,8 +5471,9 @@
             '</div>');
 
             // 제1조 서비스 내용 (v1.3)
-            var ipVat = CT.vatFromTotal(c.serviceFee);
-            var ipSupply = (c.serviceFee || 0) - ipVat;
+            // serviceFee = daily_rate×days = 공급가(net). VAT 모델: 부가세=net×0.1 (total=net×1.1)
+            var ipSupply = c.serviceFee || 0;
+            var ipVat = CT.vatFromNet(ipSupply);
             w.document.write('<div class="section">' +
                 '<div class="section-title">제1조 서비스 내용</div>' +
                 '<table class="info-table">' +

@@ -3446,6 +3446,10 @@
             function mapContractStatus(c) {
                 var s = c.status;
                 if (s === 'completed') return { status:'settled', statusText:'완료' };
+                // settled/cancelled/refunded는 종료 상태 — 명시 분기 없으면 '검토중'으로 폴백돼 완료탭/배지 오류
+                if (s === 'settled') return { status:'settled', statusText:'정산 완료' };
+                if (s === 'cancelled') return { status:'cancelled', statusText:'취소됨' };
+                if (s === 'refunded') return { status:'cancelled', statusText:'환불 완료' };
                 if (s === 'deposit_paid') {
                     if (c.balance_status === 'paid') return { status:'settled', statusText:'정산 완료' };
                     // A안: 잔금 개념 없음 — balance가 0이거나 미설정이면 자동 통과
