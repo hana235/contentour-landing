@@ -325,6 +325,8 @@
             .terms-section { page-break-before: always; }
             .terms-section:first-child { page-break-before: auto; }
         }
+    /* 좁은 화면에서 약관 표가 압축되지 않고 가로 스크롤 */
+    @media (max-width: 560px) { .terms-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; } }
     </style>
 </head>
 <body>
@@ -2698,6 +2700,36 @@
             body.classList.toggle('open');
             if (toggle) toggle.classList.toggle('open');
         }
+
+        // 키보드 접근성: 아코디언 헤더·탭에 role/tabindex/키 핸들러 부여
+        (function() {
+            document.querySelectorAll('.terms-card__header').forEach(function(h) {
+                h.setAttribute('role', 'button');
+                h.setAttribute('tabindex', '0');
+                var body = h.nextElementSibling;
+                h.setAttribute('aria-expanded', (body && body.classList && body.classList.contains('open')) ? 'true' : 'false');
+                h.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); h.click(); }
+                });
+                h.addEventListener('click', function() {
+                    var b = h.nextElementSibling;
+                    h.setAttribute('aria-expanded', (b && b.classList && b.classList.contains('open')) ? 'true' : 'false');
+                });
+            });
+            var tabs = Array.prototype.slice.call(document.querySelectorAll('.terms-tab'));
+            tabs.forEach(function(t) {
+                t.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); t.click(); }
+                    else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        var idx = tabs.indexOf(t);
+                        var next = e.key === 'ArrowRight' ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length;
+                        tabs[next].click();
+                        tabs[next].focus();
+                    }
+                });
+            });
+        })();
 
         // 외부에서 탭 지정하여 진입 시 자동 전환 (해시 또는 localStorage)
         (function() {

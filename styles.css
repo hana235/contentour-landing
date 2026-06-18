@@ -3772,6 +3772,9 @@ section {
     max-height: 2400px; /* 환불정책 등 표 포함 긴 답변이 모바일에서 잘리지 않도록 충분히 확보 */
     padding: 0 24px 20px;
 }
+/* 표 가로 스크롤 래퍼 — 좁은 화면에서 표가 압축/잘리지 않고 가로로 스크롤 */
+.ct-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 560px) { .ct-table-scroll > table { min-width: 480px; } }
 .faq-item__a strong {
     color: var(--blue);
     font-weight: 700;
