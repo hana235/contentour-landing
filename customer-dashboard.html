@@ -3455,15 +3455,15 @@
         '<h1>📋 ' + tpl.name + '</h1><div class="sub">나만의 양식 · ' + new Date().toLocaleDateString('ko-KR') + '</div>';
 
       tpl.sections.forEach(function(sec) {
-        html += '<div class="section">' + sec.title + '</div><table>';
+        html += '<div class="section">' + sec.name + '</div><table>';
         sec.fields.forEach(function(f) {
           var id = 'cfb-f-' + f.name.replace(/[^a-zA-Z0-9가-힣]/g, '_');
           var el = document.getElementById(id);
           var val = el ? el.value : '';
           if (f.type === 'textarea') {
-            html += '</table><p class="cust-form-label">' + f.label + '</p><div class="text-box">' + (val||'-') + '</div><table>';
+            html += '</table><p class="cust-form-label">' + f.name + '</p><div class="text-box">' + (val||'-') + '</div><table>';
           } else {
-            html += '<tr><th>' + f.label + '</th><td>' + (val||'-') + '</td></tr>';
+            html += '<tr><th>' + f.name + '</th><td>' + (val||'-') + '</td></tr>';
           }
         });
         html += '</table>';
