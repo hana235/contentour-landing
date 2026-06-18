@@ -2153,6 +2153,10 @@
                 if (!currentAssignInquiry) return;
                 if (!selectedInterpreter) { showToast('통역사를 선택해주세요.'); return; }
 
+                // 문의 ID 가드 — 버튼 잠금 설정 전에 검사 (early return 시 버튼이 '저장 중'으로 잠기는 것 방지)
+                var dbId = currentAssignInquiry.dbId || currentAssignInquiry.id;
+                if (!dbId) { showToast('⚠️ 문의 ID를 찾을 수 없습니다.'); return; }
+
                 _assignInProgress = true;
                 var confirmBtn = document.querySelector('.btn-confirm');
                 if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '⏳ 저장 중...'; }
@@ -2163,9 +2167,6 @@
                 var savedExpo = currentAssignInquiry.expo;
 
                 // 서버사이드 API로 배정 처리 (RLS 우회)
-                var dbId = currentAssignInquiry.dbId || currentAssignInquiry.id;
-                if (!dbId) { showToast('⚠️ 문의 ID를 찾을 수 없습니다.'); return; }
-
                 try {
                     var d = currentAssignInquiry;
                     var accessToken = '';
