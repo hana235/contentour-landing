@@ -5316,6 +5316,10 @@
             showToast('양측 계약서 동의 완료! 계약이 체결되었습니다.');
             ctUpdateSummary();
             ctRenderList();
+            // 낙관적 표시 후 DB 진실로 재조정 (새로고침 시 상태가 사라지는 혼란 방지)
+            if (window.InterpreterApp && typeof InterpreterApp.loadContractsView === 'function') {
+                setTimeout(function() { InterpreterApp.loadContractsView(); }, 800);
+            }
         }
 
         function openIntContractDocument(id, agreeMode) {

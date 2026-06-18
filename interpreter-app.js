@@ -925,6 +925,7 @@ const InterpreterApp = {
     },
 
     async handleCardAcceptDB(contractId, btn) {
+        if (!confirm('이 배정을 수락하시겠습니까?\n수락 후 취소 시 패널티가 부과될 수 있습니다.')) return;
         btn.disabled = true;
         btn.textContent = '처리 중...';
         const ok = await this.acceptAssignment(contractId);
@@ -1446,6 +1447,7 @@ const InterpreterApp = {
     // ══════════════ 홈 배정 수락/거절 ══════════════
 
     async handleHomeAccept(contractId, btn) {
+        if (!confirm('이 배정을 수락하시겠습니까?\n수락 후 취소 시 패널티가 부과될 수 있습니다.')) return;
         btn.disabled = true;
         btn.textContent = '처리 중...';
         const ok = await this.acceptAssignment(contractId);
