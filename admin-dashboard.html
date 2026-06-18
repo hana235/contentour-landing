@@ -3698,7 +3698,7 @@
                     } else if (c.status === 'balance_pay') {
                         actionHtml = '<span class="contract-card__action label">\uC794\uAE08 \uB300\uAE30</span>';
                     } else if (c.status === 'in_progress') {
-                        actionHtml = '<span class="contract-card__action label">\uC9C4\uD589\uC911</span>';
+                        actionHtml = '<div class="contract-card__actions"><button class="contract-card__action approve" onclick="event.stopPropagation();ctAdminCompleteService(\''+c.id+'\')">\uC11C\uBE44\uC2A4 \uC644\uB8CC</button></div>';
                     } else {
                         actionHtml = '<span class="contract-card__action label">\uC644\uB8CC</span>';
                     }
@@ -3836,6 +3836,55 @@
                         localStorage.setItem('contentour_admin_approve', JSON.stringify({ contractId: contractId, action:'reject', ts:Date.now() }));
                     }, 50);
                 } catch(e) {}
+            }
+
+            // A안(100% 선결제) 계약은 balance_review에 도달하지 않아 잔금확인 버튼이 안 뜬다.
+            // → in_progress(결제완료·진행중)에서 직접 '서비스 완료'로 completeContract 호출(정산건 생성).
+            async function ctAdminCompleteService(contractId) {
+                var c = ctAdminContracts.find(function(x){return x.id===contractId;});
+                if (!c || c.status !== 'in_progress') return;
+                if (!confirm((c.expo || '이 계약') + ' 서비스를 완료 처리하시겠습니까?\n통역사 정산 건이 생성됩니다.')) return;
+                var today = new Date().toISOString().split('T')[0];
+                var dbStl = null;
+                try {
+                    var result = await callAdminAction({ action: 'completeContract', contractId: contractId });
+                    dbStl = result.settlement || null;
+                } catch (err) {
+                    console.error('서비스 완료 처리 실패:', err);
+                    showToast('❌ 서비스 완료 처리 실패: ' + (err.message || '다시 시도해주세요.'));
+                    return;
+                }
+                c.status = 'complete';
+                c.statusText = '서비스 완료';
+                if (c.timeline) c.timeline.forEach(function(t) {
+                    if (t.step === '완료') { t.done = true; t.active = false; t.date = today; }
+                });
+                ctAdminInit();
+                if (dbStl && !stlAdminData.find(function(d){return d.contractId === contractId;})) {
+                    stlAdminData.push({
+                        id: dbStl.id, dbId: dbStl.id, contractId: contractId,
+                        interpreter: c.interpreter.name, interpColor: c.interpreter.color || '#1565c0',
+                        expo: c.expo, client: c.client.company,
+                        start: c.dates.start, end: c.dates.end, lang: c.lang,
+                        days: c.days, rate: dbStl.daily_rate, amount: dbStl.gross_amount, tax: dbStl.tax_amount,
+                        status: 'request', statusText: '승인 대기', requestDate: today, journalSubmitted: true
+                    });
+                    stlAdminInit();
+                }
+                showToast('✅ ' + c.expo + ' 서비스 완료! 통역사 정산 건이 생성되었습니다. [정산 승인] 탭에서 확인하세요.');
+                if (window.sbClient && c.customer_id) {
+                    (async function() {
+                        try {
+                            await window.sbClient.from('24_알림').insert({
+                                user_id: c.customer_id,
+                                notification_type: 'service',
+                                title: '✅ 서비스가 완료되었습니다',
+                                message: '"' + c.expo + '" 통역 서비스가 완료 처리되었습니다. 이용해주셔서 감사합니다.',
+                                is_read: false
+                            });
+                        } catch(e) { console.warn('고객사 완료 알림 실패:', e); }
+                    })();
+                }
             }
 
             async function ctAdminApproveBalance(contractId) {
