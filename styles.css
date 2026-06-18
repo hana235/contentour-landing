@@ -3769,7 +3769,7 @@ section {
     padding: 0 24px;
 }
 .faq-item.open .faq-item__a {
-    max-height: 800px;
+    max-height: 2400px; /* 환불정책 등 표 포함 긴 답변이 모바일에서 잘리지 않도록 충분히 확보 */
     padding: 0 24px 20px;
 }
 .faq-item__a strong {

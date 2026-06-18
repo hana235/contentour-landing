@@ -26,8 +26,10 @@
     --gray-50: #f8fafc;
     --gray-100: #f4f6fb;
     --gray-200: #e5eaf2;
+    --gray-300: #cbd5e6;
     --gray-400: #66748c;
     --gray-600: #3d4f6a;
+    --gray-700: #2a3a52;
 
     /* ── 텍스트 ── */
     --text: #0d1b3e;

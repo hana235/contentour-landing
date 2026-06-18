@@ -2702,7 +2702,8 @@
         // 외부에서 탭 지정하여 진입 시 자동 전환 (해시 또는 localStorage)
         (function() {
             var hash = window.location.hash.replace('#', '');
-            var savedTab = hash || localStorage.getItem('terms_tab');
+            // 푸터 링크가 #sec-customer 형태(섹션 id와 동일)로 들어와도, localStorage가 customer 형태로 들어와도 모두 처리
+            var savedTab = (hash || localStorage.getItem('terms_tab') || '').replace(/^sec-/, '');
             if (savedTab) {
                 localStorage.removeItem('terms_tab');
                 var sec = document.getElementById('sec-' + savedTab);
@@ -2717,7 +2718,7 @@
             }
             // 해시 변경 시에도 탭 전환
             window.addEventListener('hashchange', function() {
-                var h = window.location.hash.replace('#', '');
+                var h = window.location.hash.replace('#', '').replace(/^sec-/, '');
                 var s = document.getElementById('sec-' + h);
                 if (s) {
                     document.querySelectorAll('.terms-tab').forEach(function(t) { t.classList.remove('active'); });
