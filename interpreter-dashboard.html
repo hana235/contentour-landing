@@ -2338,22 +2338,36 @@
 
         function modalAccept() {
             if (!currentModalId) return;
+            // 카드의 실제 '수락하기' 버튼을 클릭해 서버 경로(InterpreterApp.handleCardAcceptDB)를 그대로 실행
             const card = document.querySelector('.assign-card[data-id="' + currentModalId + '"]');
-            if (card) {
-                const btn = card.querySelector('.btn-accept-lg');
-                if (btn) handleCardAccept(btn);
+            const btn = card ? card.querySelector('.btn-accept-lg') : null;
+            if (btn) {
+                btn.click();
+                closeModal();
+            } else if (window.InterpreterApp && typeof InterpreterApp.acceptAssignment === 'function') {
+                // 카드가 화면에 없을 때 폴백: 서버 수락 후 모달 닫기
+                InterpreterApp.acceptAssignment(currentModalId).then(function(ok) {
+                    if (ok && typeof InterpreterApp.loadAssignmentsView === 'function') InterpreterApp.loadAssignmentsView();
+                });
+                closeModal();
             }
-            closeModal();
         }
 
         function modalDecline() {
             if (!currentModalId) return;
+            // 카드의 실제 '거절' 버튼을 클릭해 서버 경로(InterpreterApp.handleCardDeclineDB)를 그대로 실행
             const card = document.querySelector('.assign-card[data-id="' + currentModalId + '"]');
-            if (card) {
-                const btn = card.querySelector('.btn-decline-lg');
-                if (btn) handleCardDecline(btn);
+            const btn = card ? card.querySelector('.btn-decline-lg') : null;
+            if (btn) {
+                btn.click();
+                closeModal();
+            } else if (window.InterpreterApp && typeof InterpreterApp.declineAssignment === 'function') {
+                const reason = prompt('거절 사유를 입력해주세요 (선택):');
+                InterpreterApp.declineAssignment(currentModalId, reason).then(function(ok) {
+                    if (ok && typeof InterpreterApp.loadAssignmentsView === 'function') InterpreterApp.loadAssignmentsView();
+                });
+                closeModal();
             }
-            closeModal();
         }
 
         // ESC로 모달 닫기
