@@ -996,7 +996,7 @@
             '</div>';
 
             html += '<div class="ip-modal__cta" id="ipCtaArea">' +
-                '<button class="ip-modal__cta-btn" onclick="showDirectInquiry(\'' + escJsAttr(p.name) + '\',\'' + escJsAttr(d.lang) + '\',\'' + escJsAttr(p.fieldTag||'') + '\',\'' + escJsAttr(d.country) + '\',\'' + escJsAttr(p.photo||'') + '\',\'' + escJsAttr(p.role||'') + '\')">이 통역사에게 직접 견적 의뢰</button>' +
+                '<button class="ip-modal__cta-btn" onclick="showDirectInquiry(\'' + escJsAttr(p.name) + '\',\'' + escJsAttr(d.lang) + '\',\'' + escJsAttr(p.fieldTag||'') + '\',\'' + escJsAttr(d.country) + '\',\'' + escJsAttr(p.photo||'') + '\',\'' + escJsAttr(p.role||'') + '\',\'' + escJsAttr(p._dbId||'') + '\')">이 통역사에게 직접 견적 의뢰</button>' +
             '</div>';
 
             document.getElementById('ipModalBody').innerHTML = html;
@@ -1004,9 +1004,34 @@
             document.body.style.overflow = 'hidden';
         }
 
-        function showDirectInquiry(name, lang, field, country, photo, role) {
+        // 로그인 안내 패널 (비로그인 시 직접 견적 폼 대신 표시)
+        function renderDirectLoginPanel(area) {
+            area.innerHTML =
+              '<div class="diq__success">' +
+                '<div class="diq__success-icon">&#128274;</div>' +
+                '<div class="diq__success-title">로그인이 필요합니다</div>' +
+                '<div class="diq__success-info">직접 견적 의뢰는 <strong>고객사 로그인</strong> 후 이용하실 수 있습니다.<br>로그인하시면 이 통역사를 지정해 바로 견적을 요청할 수 있어요.</div>' +
+                '<button class="ip-modal__cta-btn" onclick="location.href=\'client-auth.html\'" style="margin-top:16px;">로그인하기</button>' +
+              '</div>';
+            area.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        async function showDirectInquiry(name, lang, field, country, photo, role, interpId) {
             var area = document.getElementById('ipCtaArea');
             if (!area) return;
+
+            // 로그인 고객 전용 — 세션 확인
+            if (!window.sbClient) {
+                if (window.showToast) showToast('로그인 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요.', 'error');
+                return;
+            }
+            var prefillEmail = '';
+            try {
+                var sess = await window.sbClient.auth.getSession();
+                if (!sess || !sess.data || !sess.data.session) { renderDirectLoginPanel(area); return; }
+                prefillEmail = (sess.data.session.user && sess.data.session.user.email) || '';
+            } catch (e) { renderDirectLoginPanel(area); return; }
+
             area.innerHTML =
             '<div class="diq">' +
               '<div class="diq__head">' +
@@ -1039,21 +1064,24 @@
                   '<textarea id="diq-message" rows="4" placeholder="통역사에게 전달할 요청 사항을 자유롭게 작성해주세요."></textarea>' +
                 '</div>' +
                 '<div class="diq__actions">' +
-                  '<button class="diq__cancel" onclick="cancelDirectInquiry(\'' + escJsAttr(name) + '\',\'' + escJsAttr(lang) + '\',\'' + escJsAttr(field||'') + '\',\'' + escJsAttr(country) + '\',\'' + escJsAttr(photo||'') + '\',\'' + escJsAttr(role||'') + '\')">취소</button>' +
-                  '<button class="diq__submit" onclick="submitDirectInquiry(\'' + escJsAttr(name) + '\',\'' + escJsAttr(lang) + '\',\'' + escJsAttr(field||'') + '\')">견적 의뢰 보내기</button>' +
+                  '<button class="diq__cancel" onclick="cancelDirectInquiry(\'' + escJsAttr(name) + '\',\'' + escJsAttr(lang) + '\',\'' + escJsAttr(field||'') + '\',\'' + escJsAttr(country) + '\',\'' + escJsAttr(photo||'') + '\',\'' + escJsAttr(role||'') + '\',\'' + escJsAttr(interpId||'') + '\')">취소</button>' +
+                  '<button class="diq__submit" onclick="submitDirectInquiry(\'' + escJsAttr(name) + '\',\'' + escJsAttr(lang) + '\',\'' + escJsAttr(field||'') + '\',\'' + escJsAttr(interpId||'') + '\')">견적 의뢰 보내기</button>' +
                 '</div>' +
               '</div>' +
             '</div>';
+            // 로그인 고객 이메일 자동 채움
+            var emEl = document.getElementById('diq-email');
+            if (emEl && prefillEmail) emEl.value = prefillEmail;
             area.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        function cancelDirectInquiry(name, lang, field, country, photo, role) {
+        function cancelDirectInquiry(name, lang, field, country, photo, role, interpId) {
             var area = document.getElementById('ipCtaArea');
             if (!area) return;
-            area.innerHTML = '<button class="ip-modal__cta-btn" onclick="showDirectInquiry(\'' + escJsAttr(name) + '\',\'' + escJsAttr(lang) + '\',\'' + escJsAttr(field||'') + '\',\'' + escJsAttr(country) + '\',\'' + escJsAttr(photo||'') + '\',\'' + escJsAttr(role||'') + '\')">이 통역사에게 직접 견적 의뢰</button>';
+            area.innerHTML = '<button class="ip-modal__cta-btn" onclick="showDirectInquiry(\'' + escJsAttr(name) + '\',\'' + escJsAttr(lang) + '\',\'' + escJsAttr(field||'') + '\',\'' + escJsAttr(country) + '\',\'' + escJsAttr(photo||'') + '\',\'' + escJsAttr(role||'') + '\',\'' + escJsAttr(interpId||'') + '\')">이 통역사에게 직접 견적 의뢰</button>';
         }
 
-        function submitDirectInquiry(interpName, lang, field) {
+        async function submitDirectInquiry(interpName, lang, field, interpId) {
             // 더블클릭 방지 — 제출 버튼 즉시 비활성화
             var submitBtn = document.querySelector('.diq__submit');
             if (submitBtn && submitBtn.disabled) return;
@@ -1066,46 +1094,73 @@
             var message = document.getElementById('diq-message').value.trim();
 
             if (!company || !name || !email || !phone || !expo || !message) {
-                showToast('필수 항목(*)을 모두 입력해주세요.', 'error');
+                if (window.showToast) showToast('필수 항목(*)을 모두 입력해주세요.', 'error');
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                if (window.showToast) showToast('올바른 이메일 형식이 아닙니다.', 'error');
+                return;
+            }
+            if (!window.sbClient) {
+                if (window.showToast) showToast('로그인 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요.', 'error');
                 return;
             }
 
             if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '전송 중...'; }
 
-            var inquiry = {
-                id: 'DIQ-' + Date.now(),
-                interpreter: interpName, language: lang, field: field,
-                company: company, name: name, email: email, phone: phone, expo: expo,
-                location: document.getElementById('diq-location').value.trim(),
-                period: document.getElementById('diq-period').value.trim(),
-                type: document.getElementById('diq-type').value,
-                message: message, status: 'pending',
-                createdAt: new Date().toISOString(),
-                createdAtKR: new Date().toLocaleString('ko-KR')
-            };
+            try {
+                var sess = await window.sbClient.auth.getSession();
+                var token = (sess && sess.data && sess.data.session) ? sess.data.session.access_token : null;
+                if (!token) {
+                    renderDirectLoginPanel(document.getElementById('ipCtaArea'));
+                    return;
+                }
 
-            var inquiries = [];
-            try { inquiries = JSON.parse(localStorage.getItem('contentour_direct_inquiries') || '[]'); } catch(e) {}
-            inquiries.unshift(inquiry);
-            localStorage.setItem('contentour_direct_inquiries', JSON.stringify(inquiries));
-            localStorage.setItem('contentour_direct_inquiry_new', JSON.stringify(inquiry));
+                var res = await fetch('/api/direct-inquiry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({
+                        interpreterName: interpName,
+                        interpreterId: interpId || null,
+                        interpreterLang: lang,
+                        interpreterField: field || '',
+                        company: company,
+                        contactName: name,
+                        email: email,
+                        phone: phone,
+                        exhibitionName: expo,
+                        location: document.getElementById('diq-location').value.trim(),
+                        period: document.getElementById('diq-period').value.trim(),
+                        serviceType: document.getElementById('diq-type').value,
+                        message: message
+                    })
+                });
+                var result = await res.json();
+                if (!res.ok || !result.ok) {
+                    throw new Error(result.error || '전송에 실패했습니다.');
+                }
 
-            var area = document.getElementById('ipCtaArea');
-            area.innerHTML =
-              '<div class="diq__success">' +
-                '<div class="diq__success-icon">&#9989;</div>' +
-                '<div class="diq__success-title">견적 의뢰가 전송되었습니다!</div>' +
-                '<div class="diq__success-info">' +
-                  '<strong>' + escHtml(interpName) + '</strong> 통역사에게 직접 견적 의뢰가 전달되었습니다.<br>' +
-                  '확인 후 빠른 시일 내에 회신드리겠습니다.' +
-                '</div>' +
-                '<div class="diq__success-detail">' +
-                  '<div>문의번호: <strong>' + inquiry.id + '</strong></div>' +
-                  '<div>전시회: ' + expo + '</div>' +
-                  '<div>접수시간: ' + inquiry.createdAtKR + '</div>' +
-                '</div>' +
-                '<button class="ip-modal__cta-btn" onclick="closeIpModal()" style="margin-top:16px;">확인</button>' +
-              '</div>';
+                var area = document.getElementById('ipCtaArea');
+                area.innerHTML =
+                  '<div class="diq__success">' +
+                    '<div class="diq__success-icon">&#9989;</div>' +
+                    '<div class="diq__success-title">견적 의뢰가 접수되었습니다!</div>' +
+                    '<div class="diq__success-info">' +
+                      '<strong>' + escHtml(interpName) + '</strong> 통역사 지정 견적 의뢰가 콘텐츄어에 전달되었습니다.<br>' +
+                      (result.notified ? '해당 통역사에게도 알림이 전달되었습니다. ' : '') +
+                      '담당자 확인 후 빠른 시일 내에 회신드리겠습니다.' +
+                    '</div>' +
+                    '<div class="diq__success-detail">' +
+                      '<div>문의번호: <strong>' + escHtml(String(result.inquiryId || '')) + '</strong></div>' +
+                      '<div>전시회: ' + escHtml(expo) + '</div>' +
+                    '</div>' +
+                    '<button class="ip-modal__cta-btn" onclick="closeIpModal()" style="margin-top:16px;">확인</button>' +
+                  '</div>';
+            } catch (err) {
+                console.error('직접 견적 의뢰 전송 오류:', err);
+                if (window.showToast) showToast((err && err.message) ? err.message : '전송에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '견적 의뢰 보내기'; }
+            }
         }
 
         function closeIpModal() {
