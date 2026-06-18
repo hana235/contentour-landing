@@ -5058,7 +5058,7 @@
         if (c.balancePaid) p += c.balance;
         return sum + p;
       }, 0);
-      const done = contracts.filter(c => c.status === 'complete' || c.status === 'settled').length;
+      const done = contracts.filter(c => c.status === 'complete' || c.status === 'settled' || c.status === 'refunded').length;
       return { total, active, pending, paid, done };
     }
 
@@ -5181,7 +5181,7 @@
             renderContracts();
             checkExistingReviews();
             console.log('계약 DB 로드 완료:', data.length + '건');
-        } catch (e) { console.warn('계약 DB 로드 실패, 데모 데이터 유지:', e); }
+        } catch (e) { console.warn('계약 DB 로드 실패:', e); if (window.showToast) window.showToast('계약 정보를 불러오지 못했습니다. 잠시 후 새로고침해주세요.', 'error'); }
     }
 
     function renderContracts() {
@@ -5258,6 +5258,10 @@
         }
         else if (c.status === 'cancelled') {
           actionHtml = `<span class="contract-card__action label" style="background:#ffebee;color:#c62828;">취소됨</span>`;
+          actionHtml += `<button class="contract-card__action" onclick="event.stopPropagation();viewMyCancelCert('${c.id}')" style="background:#fff;color:#0a2a5e;border:1.5px solid #0a2a5e;font-weight:700;padding:7px 14px;border-radius:8px;font-size:0.78rem;cursor:pointer;margin-left:4px;">📄 취소 확인서</button>`;
+        }
+        else if (c.status === 'refunded') {
+          actionHtml = `<span class="contract-card__action label" style="background:#ffebee;color:#c62828;">환불 완료</span>`;
           actionHtml += `<button class="contract-card__action" onclick="event.stopPropagation();viewMyCancelCert('${c.id}')" style="background:#fff;color:#0a2a5e;border:1.5px solid #0a2a5e;font-weight:700;padding:7px 14px;border-radius:8px;font-size:0.78rem;cursor:pointer;margin-left:4px;">📄 취소 확인서</button>`;
         }
         return `<div class="contract-card" onclick="openContractDetail('${c.id}')">
@@ -7369,9 +7373,12 @@
       });
     }
 
+    var _scSelecting = false;
     async function customerSelectApplicant(postingId, interpreterId, name) {
       if (!postingId || !interpreterId) return;
+      if (_scSelecting) return; // 중복 클릭 방지
       if (!confirm((name || '이 통역사') + '님을 선택하시겠습니까?\n선택 후 콘텐츄어 관리자 확정을 거쳐 계약이 생성됩니다.')) return;
+      _scSelecting = true;
       try {
         var token = await __scGetToken();
         if (!token) { if (window.showToast) window.showToast('로그인이 만료되었습니다.', 'error'); return; }
@@ -7388,6 +7395,8 @@
       } catch (e) {
         console.error('customer-select failed:', e);
         if (window.showToast) window.showToast('네트워크 오류. 잠시 후 다시 시도해주세요.', 'error');
+      } finally {
+        _scSelecting = false;
       }
     }
 
