@@ -3,11 +3,6 @@
     var gate = document.getElementById('pwGate');
     if (!gate) return;
 
-    // === 2026-06-18 임시: 소개자료 작성용으로 게이트 일시 해제 ===
-    // 작업 끝나면 아래 2줄(이 주석~return)만 삭제하면 10개 페이지 비번 보호 즉시 복원.
-    gate.style.display = 'none'; return;
-    // === 임시 해제 끝 ===
-
     // Already authenticated in this session
     if (sessionStorage.getItem('_ct_auth') === '1') {
         gate.style.display = 'none';
