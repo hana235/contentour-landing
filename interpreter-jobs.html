@@ -1493,7 +1493,7 @@
                 ['기간', escapeHtml(fmtDate(req.startDate) + ' ~ ' + fmtDate(req.endDate))],
                 ['언어', escapeHtml(languages.join(' · ')) || '-'],
                 ['필요 인원', (req.needed || 0) + '명'],
-                ['조회수', (req.viewCount || 0) + '회']
+                ['조회수', '<span class="ij-vc" data-vc="' + escapeHtml(req.id || '') + '">' + (req.viewCount || 0) + '</span>회']
             ];
             if (!isRecruit && typeof req.daysLeft === 'number') {
                 detailRows.push(['파견 시작', 'D-' + req.daysLeft]);
@@ -1529,7 +1529,7 @@
                     '<td class="ij-td ij-td--date" data-label="기간">' + fmtDate(req.startDate) + ' ~ ' + fmtDate(req.endDate) + ddayHtml + '</td>' +
                     '<td class="ij-td ij-td--lang" data-label="언어 · 인원">' + escapeHtml(languages.join(' · ')) + ' · ' + (req.needed || 0) + '명</td>' +
                     '<td class="ij-td ij-td--memo" data-label="본문">' + memoHtml + '</td>' +
-                    '<td class="ij-td ij-td--interest" data-label="조회">👁 ' + (req.viewCount || 0) + '</td>' +
+                    '<td class="ij-td ij-td--interest" data-label="조회">👁 <span class="ij-vc" data-vc="' + escapeHtml(req.id || '') + '">' + (req.viewCount || 0) + '</span></td>' +
                 '</tr>' +
                 '<tr class="ij-tr-detail" id="ij-detail-' + escapeHtml(req.id || '') + '" data-detail-for="' + escapeHtml(req.id || '') + '" hidden>' +
                     '<td colspan="8" class="ij-detail-cell">' +
@@ -2143,11 +2143,14 @@
             } else {
                 detailRow.hidden = false;
                 triggerRow.setAttribute('aria-expanded', 'true');
-                // 조회수 +1 (펼쳐볼 때마다, 비로그인 포함) — 서버 RPC 백그라운드 처리, 새로고침 시 숫자 반영
+                // 조회수 +1: 서버 RPC + 화면 숫자 즉시 반영 (펼칠 때마다, 비로그인 포함)
                 try {
                     if (window.sbClient && id) {
                         window.sbClient.rpc('increment_showcase_view', { p_id: String(id) }).catch(function () {});
                     }
+                    document.querySelectorAll('.ij-vc[data-vc="' + id + '"]').forEach(function (el) {
+                        el.textContent = (parseInt(el.textContent, 10) || 0) + 1;
+                    });
                 } catch (e) { /* 무시 */ }
                 // 펼친 행이 화면에 보이도록 스크롤
                 setTimeout(function () {

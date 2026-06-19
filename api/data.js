@@ -249,7 +249,7 @@ async function handleShowcase(req, res) {
         if (viewerUserId) {
             res.setHeader('Cache-Control', 'no-store');
         } else {
-            res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
+            res.setHeader('Cache-Control', 'public, max-age=15, stale-while-revalidate=15');
         }
         return res.status(200).json(combined);
     } catch (e) {
