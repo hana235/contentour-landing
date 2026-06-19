@@ -1290,37 +1290,28 @@ const InterpreterApp = {
     },
 
     async declineAssignment(contractId, reason) {
-        const { error } = await window.sbClient
-            .from('42_통역계약')
-            .update({
-                interpreter_accepted: false,
-                rejected_at: new Date().toISOString(),
-                reject_reason: reason || '',
-                status: 'cancelled'
-            })
-            .eq('id', contractId)
-            .eq('interpreter_id', this.currentUser.id);
-
-        if (error) { this.showToast('배정 거절 실패: ' + error.message); return false; }
-        // 관리자 알림 (수락과 대칭 — 거절도 관리자에게 통지). best-effort
+        // 서버(service-role)에서 소유권 검증 + 거절 기록 + 관리자 알림을 한 번에 처리 (수락과 대칭).
+        // 기존 클라이언트 직접 UPDATE는 RLS에만 의존했으나, 서버 라우트로 통일해 무결성 강화.
         try {
             const { data: { session } } = await window.sbClient.auth.getSession();
             const token = session && session.access_token;
-            if (token) {
-                await fetch('/api/notify-admins', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                    body: JSON.stringify({
-                        notification_type: 'service',
-                        title: '❌ 통역사 배정 거절',
-                        message: '통역사가 배정을 거절했습니다. 재배정이 필요합니다.' + (reason ? ' 사유: ' + reason : ''),
-                        link: '/admin-dashboard.html'
-                    })
-                });
+            if (!token) { this.showToast('로그인이 필요합니다.'); return false; }
+            const res = await fetch('/api/decline-assignment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ contractId: contractId, reason: reason || '' })
+            });
+            const data = await res.json();
+            if (!res.ok || !data || data.success === false) {
+                this.showToast('배정 거절 실패: ' + ((data && data.error) || ''));
+                return false;
             }
-        } catch (e) { console.warn('배정 거절 관리자 알림 실패 (무시):', e); }
-        this.showToast('배정을 거절했습니다.');
-        return true;
+            this.showToast('배정을 거절했습니다.');
+            return true;
+        } catch (e) {
+            this.showToast('배정 거절 중 오류: ' + (e.message || ''));
+            return false;
+        }
     },
 
     async saveInterpreterProfile(profileData) {

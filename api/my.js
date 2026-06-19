@@ -355,6 +355,57 @@ async function handleAcceptAssignment(req, res) {
     }
 }
 
+// ────────────────────────── decline-assignment (통역사 배정 거절 + 관리자 알림) ──────────────────────────
+// accept-assignment와 대칭: 클라이언트 직접 UPDATE 대신 서버에서 소유권 검증 후 처리.
+async function handleDeclineAssignment(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
+    const auth = await authenticate(req);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+
+    const { data: profile } = await sb.from('01_회원').select('role, name').eq('id', auth.user.id).single();
+    if (!profile || profile.role !== 'interpreter') return res.status(403).json({ success: false, error: '통역사만 거절할 수 있습니다.' });
+
+    if (!await checkRateLimit(sb, 'decline-assign:' + auth.user.id, 20, 60)) {
+        return res.status(429).json({ success: false, error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    }
+
+    const contractId = req.body && req.body.contractId;
+    const reason = (req.body && req.body.reason) || '';
+    if (!contractId) return res.status(400).json({ success: false, error: '계약 ID가 필요합니다.' });
+
+    try {
+        const { data: c, error: cErr } = await sb.from('42_통역계약')
+            .select('id, customer_id, interpreter_id, exhibition_name, client_company, status')
+            .eq('id', contractId).single();
+        if (cErr || !c) return res.status(404).json({ success: false, error: '계약을 찾을 수 없습니다.' });
+        if (c.interpreter_id !== auth.user.id) return res.status(403).json({ success: false, error: '본인에게 배정된 계약만 거절할 수 있습니다.' });
+        if (c.status === 'cancelled') return res.status(200).json({ success: true, alreadyCancelled: true });
+
+        const { error: upErr } = await sb.from('42_통역계약')
+            .update({ interpreter_accepted: false, rejected_at: new Date().toISOString(), reject_reason: reason, status: 'cancelled' })
+            .eq('id', contractId);
+        if (upErr) { console.error('decline-assignment update 실패:', upErr); return res.status(500).json({ success: false, error: '거절 처리 실패' }); }
+
+        const interpName = profile.name || '통역사';
+        const expoLabel = c.exhibition_name || '계약';
+
+        // 관리자 전원 알림 (재배정 필요)
+        try {
+            const { data: admins } = await sb.from('01_회원').select('id').eq('role', 'admin');
+            if (admins && admins.length) {
+                await sb.from('24_알림').insert(admins.map(function (a) {
+                    return { user_id: a.id, notification_type: 'service', title: '❌ 통역사 배정 거절', message: interpName + '님이 "' + expoLabel + '" (' + (c.client_company || '고객사') + ') 배정을 거절했습니다. 재배정이 필요합니다.' + (reason ? ' 사유: ' + reason : ''), is_read: false };
+                }));
+            }
+        } catch (e) { console.error('관리자 알림 실패(무시):', e && e.message); }
+
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.error('decline-assignment 예외:', e);
+        return res.status(500).json({ success: false, error: '요청 처리 중 오류가 발생했습니다.' });
+    }
+}
+
 // ────────────────────────── accept-quote ──────────────────────────
 // 고객이 견적을 수락하면 서버가 admin_note(관리자 작성)에서 권위 금액을 읽어
 // 42_통역계약을 생성한다. 클라이언트가 보낸 금액을 신뢰하지 않음 → 가격 변조 차단.
@@ -461,6 +512,7 @@ module.exports = async function handler(req, res) {
         case 'my-showcase-applications': return handleMyShowcaseApplications(req, res);
         case 'my-showcase-applicants': return handleMyShowcaseApplicants(req, res);
         case 'accept-assignment': return handleAcceptAssignment(req, res);
+        case 'decline-assignment': return handleDeclineAssignment(req, res);
         case 'accept-quote': return handleAcceptQuote(req, res);
         default: return res.status(404).json({ error: 'Unknown route: ' + route });
     }

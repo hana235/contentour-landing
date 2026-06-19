@@ -3283,7 +3283,7 @@
                             '<button class="stl-action-btn reject" onclick="event.stopPropagation();openStlApproval(\'' + d.id + '\',true)">반려</button>' +
                         '</div>';
                     } else if (d.status === 'approved') {
-                        actionHtml = '<button class="stl-action-btn approve" onclick="event.stopPropagation();stlMarkPaid(\'' + d.id + '\')" style="background:var(--success);">입금 처리</button>';
+                        actionHtml = '<button class="stl-action-btn approve" onclick="event.stopPropagation();stlMarkPaid(\'' + d.id + '\', this)" style="background:var(--success);">입금 처리</button>';
                     } else {
                         actionHtml = '<button class="stl-action-btn detail" onclick="event.stopPropagation();openStlApproval(\'' + d.id + '\')">상세</button>';
                     }
@@ -3350,17 +3350,17 @@
                 // 액션 버튼
                 if (d.status === 'request') {
                     html += '<div class="stl-modal-actions">' +
-                        '<button class="stl-modal-btn approve" onclick="stlApprove(\'' + d.id + '\')">✅ 승인</button>' +
+                        '<button class="stl-modal-btn approve" onclick="stlApprove(\'' + d.id + '\', this)">✅ 승인</button>' +
                         '<button class="stl-modal-btn reject" onclick="stlShowReject()">반려</button>' +
                     '</div>' +
                     '<div class="stl-reject-box' + (showReject ? ' show' : '') + '" id="stlRejectBox">' +
                         '<label>반려 사유를 입력해주세요</label>' +
                         '<textarea id="stlRejectReason" placeholder="예: 상담일지가 미제출 상태입니다. 제출 후 재요청 바랍니다."></textarea>' +
-                        '<button onclick="stlReject(\'' + d.id + '\')">반려 확정</button>' +
+                        '<button onclick="stlReject(\'' + d.id + '\', this)">반려 확정</button>' +
                     '</div>';
                 } else if (d.status === 'approved') {
                     html += '<div class="stl-modal-actions">' +
-                        '<button class="stl-modal-btn paid" onclick="stlMarkPaid(\'' + d.id + '\')">💵 입금 완료 처리</button>' +
+                        '<button class="stl-modal-btn paid" onclick="stlMarkPaid(\'' + d.id + '\', this)">💵 입금 완료 처리</button>' +
                     '</div>';
                 }
 
@@ -3376,14 +3376,16 @@
                 document.getElementById('stlRejectBox').classList.add('show');
             }
 
-            async function stlApprove(id) {
+            async function stlApprove(id, btn) {
+                if (btn) { if (btn.disabled) return; btn.disabled = true; }
                 const d = stlAdminData.find(x => x.id === id);
-                if (!d) return;
+                if (!d) { if (btn) btn.disabled = false; return; }
 
                 // DB 동기화: dbId 있는 정산만 RPC 호출 (legacy 로컬 데이터는 skip)
                 if (d.dbId && typeof AdminData !== 'undefined' && AdminData.approveSettlement) {
                     const result = await AdminData.approveSettlement(d.dbId);
                     if (!result || result.success === false) {
+                        if (btn) btn.disabled = false;
                         showToast('❌ 정산 승인 실패: ' + ((result && result.error) || 'DB 오류'));
                         return;
                     }
@@ -3418,19 +3420,22 @@
                 } catch(e) {}
             }
 
-            async function stlReject(id) {
+            async function stlReject(id, btn) {
+                if (btn) { if (btn.disabled) return; btn.disabled = true; }
                 const reason = document.getElementById('stlRejectReason').value.trim();
                 if (!reason) {
+                    if (btn) btn.disabled = false;
                     showToast('⚠️ 반려 사유를 입력해주세요.');
                     return;
                 }
                 const d = stlAdminData.find(x => x.id === id);
-                if (!d) return;
+                if (!d) { if (btn) btn.disabled = false; return; }
 
                 // DB 동기화
                 if (d.dbId && typeof AdminData !== 'undefined' && AdminData.rejectSettlement) {
                     const result = await AdminData.rejectSettlement(d.dbId, reason);
                     if (!result || result.success === false) {
+                        if (btn) btn.disabled = false;
                         showToast('❌ 정산 반려 실패: ' + ((result && result.error) || 'DB 오류'));
                         return;
                     }
@@ -3466,14 +3471,16 @@
                 } catch(e) {}
             }
 
-            async function stlMarkPaid(id) {
+            async function stlMarkPaid(id, btn) {
+                if (btn) { if (btn.disabled) return; btn.disabled = true; }
                 const d = stlAdminData.find(x => x.id === id);
-                if (!d) return;
+                if (!d) { if (btn) btn.disabled = false; return; }
 
                 // DB 동기화
                 if (d.dbId && typeof AdminData !== 'undefined' && AdminData.completeSettlementPayment) {
                     const result = await AdminData.completeSettlementPayment(d.dbId);
                     if (!result || result.success === false) {
+                        if (btn) btn.disabled = false;
                         showToast('❌ 입금 완료 처리 실패: ' + ((result && result.error) || 'DB 오류'));
                         return;
                     }
