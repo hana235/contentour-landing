@@ -1191,7 +1191,7 @@
                     <select id="ijSortBy">
                         <option value="latest">최신 등록순</option>
                         <option value="urgent">파견 임박순</option>
-                        <option value="interest">관심 많은 순</option>
+                        <option value="interest">조회 많은 순</option>
                     </select>
                 </label>
             </div>
@@ -1208,7 +1208,7 @@
                             <th class="ij-th ij-th--date" scope="col">기간</th>
                             <th class="ij-th ij-th--lang" scope="col">언어 · 인원</th>
                             <th class="ij-th ij-th--memo" scope="col">본문</th>
-                            <th class="ij-th ij-th--interest" scope="col">관심</th>
+                            <th class="ij-th ij-th--interest" scope="col">조회</th>
                         </tr>
                     </thead>
                     <tbody id="ijGrid"></tbody>
@@ -1493,7 +1493,7 @@
                 ['기간', escapeHtml(fmtDate(req.startDate) + ' ~ ' + fmtDate(req.endDate))],
                 ['언어', escapeHtml(languages.join(' · ')) || '-'],
                 ['필요 인원', (req.needed || 0) + '명'],
-                ['관심', (req.interestCount || 0) + '회 조회됨']
+                ['조회수', (req.viewCount || 0) + '회']
             ];
             if (!isRecruit && typeof req.daysLeft === 'number') {
                 detailRows.push(['파견 시작', 'D-' + req.daysLeft]);
@@ -1529,7 +1529,7 @@
                     '<td class="ij-td ij-td--date" data-label="기간">' + fmtDate(req.startDate) + ' ~ ' + fmtDate(req.endDate) + ddayHtml + '</td>' +
                     '<td class="ij-td ij-td--lang" data-label="언어 · 인원">' + escapeHtml(languages.join(' · ')) + ' · ' + (req.needed || 0) + '명</td>' +
                     '<td class="ij-td ij-td--memo" data-label="본문">' + memoHtml + '</td>' +
-                    '<td class="ij-td ij-td--interest" data-label="관심">👁 ' + (req.interestCount || 0) + '</td>' +
+                    '<td class="ij-td ij-td--interest" data-label="조회">👁 ' + (req.viewCount || 0) + '</td>' +
                 '</tr>' +
                 '<tr class="ij-tr-detail" id="ij-detail-' + escapeHtml(req.id || '') + '" data-detail-for="' + escapeHtml(req.id || '') + '" hidden>' +
                     '<td colspan="8" class="ij-detail-cell">' +
@@ -1586,7 +1586,7 @@
                     return ad.localeCompare(bd);
                 });
             } else if (sortBy === 'interest') {
-                list.sort(function (a, b) { return (b.interestCount || 0) - (a.interestCount || 0); });
+                list.sort(function (a, b) { return (b.viewCount || 0) - (a.viewCount || 0); });
             }
 
             if (list.length === 0) {
@@ -2143,6 +2143,12 @@
             } else {
                 detailRow.hidden = false;
                 triggerRow.setAttribute('aria-expanded', 'true');
+                // 조회수 +1 (펼쳐볼 때마다, 비로그인 포함) — 서버 RPC 백그라운드 처리, 새로고침 시 숫자 반영
+                try {
+                    if (window.sbClient && id) {
+                        window.sbClient.rpc('increment_showcase_view', { p_id: String(id) }).catch(function () {});
+                    }
+                } catch (e) { /* 무시 */ }
                 // 펼친 행이 화면에 보이도록 스크롤
                 setTimeout(function () {
                     try {

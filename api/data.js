@@ -107,7 +107,7 @@ async function handleReviews(req, res) {
 //   2) direct_posting → review_status='approved'                                       (Phase 4)
 // 매칭 상태: contract_id IS NULL → recruiting, 아니면 matched.
 
-const SHOWCASE_COLUMNS = 'id, source_type, exhibition_name, location, venue, start_date, end_date, language_pair, headcount, contract_id, showcase_label, showcase_industry, showcase_country_code, showcase_published_at, reviewed_at, interest_count, company, company_name_disclosure, message, posted_by_user_id';
+const SHOWCASE_COLUMNS = 'id, source_type, exhibition_name, location, venue, start_date, end_date, language_pair, headcount, contract_id, showcase_label, showcase_industry, showcase_country_code, showcase_published_at, reviewed_at, interest_count, view_count, company, company_name_disclosure, message, posted_by_user_id';
 
 // Phase 4H — 매칭 후 카드 자동 hidden 기준일. 변경 시 한 줄만 수정.
 const SHOWCASE_HIDE_AFTER_DAYS = 14;
@@ -151,7 +151,8 @@ function rowToCard(r, viewerIsInterpreter, viewerUserId) {
         endDate: r.end_date || '',
         languages: parseLanguages(r.language_pair),
         needed: Number.isFinite(r.headcount) ? r.headcount : 1,
-        interestCount: r.interest_count || 0
+        interestCount: r.interest_count || 0,
+        viewCount: r.view_count || 0
     };
     // direct_posting의 메모만 노출 (admin_inquiry의 message는 customer 사적 요청이라 제외)
     if (isDirectPosting && r.message) {
