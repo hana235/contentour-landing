@@ -1129,6 +1129,9 @@
                     <!-- 💸 무통장 입금 확인 대기 -->
                     <div id="manualDepositPanel" style="display:none;"></div>
                     <div class="contract-summary" id="ctAdminSummary"></div>
+                    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                        <button onclick="openNewContractModal()" style="padding:10px 18px;background:#1565c0;color:#fff;border:none;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;">&#65291; 계약서 직접 작성</button>
+                    </div>
                     <div class="contract-filter-tabs" id="ctAdminFilterTabs" style="position:relative;">
                         <button class="contract-filter-tab active" onclick="ctAdminTabFilter('all')">전체 <span class="cft-count" id="ctf-all">0</span></button>
                         <button class="contract-filter-tab" onclick="ctAdminTabFilter('review')">승인 대기 <span class="cft-count" id="ctf-review">0</span></button>
@@ -1248,6 +1251,93 @@
                         <div class="qm-footer">
                             <button class="btn-ghost" onclick="closeQuoteModal()">취소</button>
                             <button class="btn-send" onclick="sendQuote()">&#128232; 견적 발송</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 계약서 직접 작성 모달 -->
+                <div class="quote-modal-overlay" id="newContractOverlay" onclick="if(event.target===this)closeNewContractModal()">
+                    <div class="quote-modal">
+                        <div class="quote-modal__head">
+                            <div>
+                                <h3>&#128221; 계약서 직접 작성</h3>
+                                <p>가입된 고객사를 선택해 계약을 생성합니다. 생성된 계약은 고객 대시보드에서 결제(온라인/무통장)됩니다.</p>
+                            </div>
+                            <button class="quote-modal__close" onclick="closeNewContractModal()">&#10005;</button>
+                        </div>
+                        <div class="quote-modal__body">
+                            <div class="qm-section">계약 당사자</div>
+                            <div class="qm-grid">
+                                <div class="qm-field">
+                                    <label>고객사 (가입 계정) *</label>
+                                    <select id="nc-company-select" onchange="onNcCompanyChange()">
+                                        <option value="">고객사 선택</option>
+                                    </select>
+                                </div>
+                                <div class="qm-field"><label>담당자명</label><input type="text" id="nc-contact" placeholder="고객 선택 시 자동 입력"></div>
+                                <div class="qm-field">
+                                    <label>배정 통역사 (선택)</label>
+                                    <select id="nc-interpreter">
+                                        <option value="">미배정 (나중에 배정)</option>
+                                    </select>
+                                </div>
+                                <div class="qm-field">
+                                    <label>서비스 유형</label>
+                                    <select id="nc-type">
+                                        <option value="">선택 안 함</option>
+                                        <option value="전시회 통역">전시회 통역</option>
+                                        <option value="비즈니스 상담">비즈니스 상담</option>
+                                        <option value="수행 통역">수행 통역</option>
+                                        <option value="기타">기타</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="qm-section">서비스 내용</div>
+                            <div class="qm-grid">
+                                <div class="qm-field"><label>전시회/행사명 *</label><input type="text" id="nc-expo" placeholder="예: CES 2026"></div>
+                                <div class="qm-field"><label>개최 장소·주소</label><input type="text" id="nc-location" placeholder="예: 미국 라스베이거스"></div>
+                                <div class="qm-field">
+                                    <label>통역 언어</label>
+                                    <select id="nc-lang">
+                                        <option value="">선택 안 함</option>
+                                        <option value="영어">영어</option>
+                                        <option value="일본어">일본어</option>
+                                        <option value="중국어">중국어</option>
+                                        <option value="독일어">독일어</option>
+                                        <option value="프랑스어">프랑스어</option>
+                                        <option value="스페인어">스페인어</option>
+                                        <option value="러시아어">러시아어</option>
+                                        <option value="베트남어">베트남어</option>
+                                        <option value="기타">기타</option>
+                                    </select>
+                                </div>
+                                <div class="qm-field"><label>시작일 *</label><input type="date" id="nc-start"></div>
+                                <div class="qm-field"><label>종료일 *</label><input type="date" id="nc-end"></div>
+                            </div>
+                            <div class="qm-grid">
+                                <div class="qm-field"><label>파견 일수 *</label><input type="number" id="nc-days" min="1" value="1" onchange="calcNewContract()" oninput="calcNewContract()"></div>
+                                <div class="qm-field"><label>일당 단가 (원) *</label><input type="number" id="nc-rate" min="0" placeholder="예: 400000" onchange="calcNewContract()" oninput="calcNewContract()"></div>
+                            </div>
+
+                            <div class="qm-section">계약 금액</div>
+                            <div class="qm-calc" id="ncCalc">
+                                <div class="qm-calc-row"><span class="label">통역 서비스 (공급가액)</span><span class="value" id="ncSubtotal">₩0</span></div>
+                                <div class="qm-calc-row"><span class="label">부가가치세 (10%)</span><span class="value" id="ncFee">₩0</span></div>
+                                <div class="qm-calc-row total"><span class="label">총 계약 금액 (VAT 포함)</span><span class="value" id="ncTotal">₩0</span></div>
+                                <div class="qm-calc-row sub"><span class="label">선결제 (100%)</span><span class="value" id="ncDeposit">₩0</span></div>
+                                <div class="qm-calc-row sub" style="display:none;"><span class="label">잔금</span><span class="value" id="ncBalance">₩0</span></div>
+                            </div>
+
+                            <div class="qm-field full" style="margin-top:12px;">
+                                <label>메모 (선택)</label>
+                                <textarea id="nc-memo" placeholder="내부 메모 — 계약 생성에는 저장되지 않습니다."></textarea>
+                            </div>
+                        </div>
+                        <div class="qm-footer">
+                            <button class="btn-ghost" onclick="previewNewContract()">미리보기</button>
+                            <button class="btn-ghost" onclick="closeNewContractModal()">취소</button>
+                            <button class="btn-send" onclick="submitNewContract()">&#128221; 계약 생성</button>
                         </div>
                     </div>
                 </div>
@@ -5358,20 +5448,62 @@
             }
 
             // ══════════════ 계약서 직접 작성 ══════════════
+            // 선택한 고객사 메타(담당자명 자동입력용) 캐시
+            var _ncCustomers = [];
+            function onNcCompanyChange() {
+                var id = document.getElementById('nc-company-select').value;
+                var c = _ncCustomers.find(function(x){ return x.id === id; });
+                var contactEl = document.getElementById('nc-contact');
+                if (c) { contactEl.value = c.name || ''; }
+            }
+            async function loadNcDropdowns() {
+                var sb = window.sbClient || supabase;
+                if (!sb) return;
+                // 고객사 목록 (가입 계정)
+                try {
+                    var custSel = document.getElementById('nc-company-select');
+                    var { data: customers } = await sb.from('01_회원')
+                        .select('id, name, company_name')
+                        .eq('role', 'customer')
+                        .order('company_name', { ascending: true });
+                    _ncCustomers = customers || [];
+                    var optsC = ['<option value="">고객사 선택</option>'];
+                    _ncCustomers.forEach(function(c) {
+                        var label = (c.company_name || c.name || '(이름없음)') + (c.name && c.company_name ? ' / ' + c.name : '');
+                        optsC.push('<option value="' + escapeHtml(c.id) + '">' + escapeHtml(label) + '</option>');
+                    });
+                    custSel.innerHTML = optsC.join('');
+                } catch (e) { console.warn('[계약작성] 고객 목록 로드 실패:', e); }
+                // 통역사 목록 (활성 프로필)
+                try {
+                    var intSel = document.getElementById('nc-interpreter');
+                    var { data: interps } = await sb.from('40_통역사프로필')
+                        .select('user_id, display_name, is_active')
+                        .eq('is_active', true)
+                        .order('display_name', { ascending: true });
+                    var optsI = ['<option value="">미배정 (나중에 배정)</option>'];
+                    (interps || []).forEach(function(p) {
+                        if (!p.user_id) return;
+                        optsI.push('<option value="' + escapeHtml(p.user_id) + '">' + escapeHtml(p.display_name || '(이름없음)') + '</option>');
+                    });
+                    intSel.innerHTML = optsI.join('');
+                } catch (e) { console.warn('[계약작성] 통역사 목록 로드 실패:', e); }
+            }
             function openNewContractModal() {
-                document.getElementById('nc-company').value = '';
                 document.getElementById('nc-contact').value = '';
                 document.getElementById('nc-expo').value = '';
                 document.getElementById('nc-start').value = '';
                 document.getElementById('nc-end').value = '';
                 document.getElementById('nc-location').value = '';
                 document.getElementById('nc-lang').value = '';
-                document.getElementById('nc-interpreter').value = '';
+                document.getElementById('nc-type').value = '';
                 document.getElementById('nc-days').value = '1';
                 document.getElementById('nc-rate').value = '';
                 document.getElementById('nc-memo').value = '';
-                document.getElementById('nc-status').value = 'contract_sign';
+                document.getElementById('nc-company-select').value = '';
+                document.getElementById('nc-interpreter').value = '';
                 calcNewContract();
+                loadNcDropdowns();
                 document.getElementById('newContractOverlay').classList.add('open');
             }
             function closeNewContractModal() {
@@ -5396,15 +5528,17 @@
 
             function previewNewContract() {
                 var expo = document.getElementById('nc-expo').value.trim();
-                var company = document.getElementById('nc-company').value.trim();
+                var companySel = document.getElementById('nc-company-select');
+                var company = companySel.value ? (companySel.options[companySel.selectedIndex].text || '') : '';
                 var contact = document.getElementById('nc-contact').value.trim();
                 var lang = document.getElementById('nc-lang').value;
-                var interpreter = document.getElementById('nc-interpreter').value;
+                var interpSel = document.getElementById('nc-interpreter');
+                var interpreter = interpSel.value ? (interpSel.options[interpSel.selectedIndex].text || '') : '(미배정)';
                 var startDate = document.getElementById('nc-start').value;
                 var endDate = document.getElementById('nc-end').value;
                 var days = parseInt(document.getElementById('nc-days').value) || 0;
                 var rate = parseInt(document.getElementById('nc-rate').value) || 0;
-                if (!expo || !company || !contact || !lang || !interpreter || !startDate || !endDate || !rate) {
+                if (!expo || !company || !startDate || !endDate || !rate) {
                     showToast('⚠️ 필수 항목(*)을 모두 입력해주세요.'); return;
                 }
                 var subtotal = days * rate;
@@ -5546,85 +5680,50 @@
                 w.document.write('</div></body></html>');
                 w.document.close();
             }
-            function submitNewContract() {
+            async function submitNewContract() {
+                var customerId = document.getElementById('nc-company-select').value;
+                var interpreterId = document.getElementById('nc-interpreter').value || null;
                 var expo = document.getElementById('nc-expo').value.trim();
-                var company = document.getElementById('nc-company').value.trim();
-                var contact = document.getElementById('nc-contact').value.trim();
                 var lang = document.getElementById('nc-lang').value;
-                var interpreter = document.getElementById('nc-interpreter').value;
+                var serviceType = document.getElementById('nc-type').value;
+                var location = document.getElementById('nc-location').value.trim();
                 var startDate = document.getElementById('nc-start').value;
                 var endDate = document.getElementById('nc-end').value;
                 var days = parseInt(document.getElementById('nc-days').value) || 0;
                 var rate = parseInt(document.getElementById('nc-rate').value) || 0;
-                var status = document.getElementById('nc-status').value;
+                if (!customerId) { showToast('⚠️ 고객사를 선택해주세요.'); return; }
                 if (!expo) { showToast('⚠️ 전시회명을 입력해주세요.'); return; }
-                if (!company) { showToast('⚠️ 고객사명을 입력해주세요.'); return; }
-                if (!contact) { showToast('⚠️ 담당자명을 입력해주세요.'); return; }
-                if (!lang) { showToast('⚠️ 통역 언어를 선택해주세요.'); return; }
-                if (!interpreter) { showToast('⚠️ 통역사를 선택해주세요.'); return; }
                 if (!startDate || !endDate) { showToast('⚠️ 시작일과 종료일을 입력해주세요.'); return; }
+                if (!days || days <= 0) { showToast('⚠️ 파견 일수를 입력해주세요.'); return; }
                 if (!rate) { showToast('⚠️ 일당 단가를 입력해주세요.'); return; }
 
-                var subtotal = days * rate;
-                var fee = CT.vatFromNet(subtotal);
-                var total = subtotal + fee;
-                var deposit = total; // A안: 100% 선결제
-                var balance = 0;
-                var todayStr = new Date().toISOString().split('T')[0];
-                var contractId = 'CT-' + Date.now().toString().slice(-7);
-                var interpColors = ['#ef6c00','#1565c0','#2e7d32','#6a1b9a','#c62828'];
-
-                var isSign = (status === 'contract_sign');
-                var newContract = {
-                    id: contractId,
-                    expo: expo,
-                    client: { name: contact, company: company, color: interpColors[ctAdminContracts.length % interpColors.length] },
-                    interpreter: { name: interpreter, color: interpColors[(ctAdminContracts.length + 1) % interpColors.length] },
-                    status: status,
-                    statusText: isSign ? '계약서 확인 대기' : '선결제 대기',
-                    dates: { start: startDate, end: endDate },
-                    lang: lang,
-                    dailyRate: rate, days: days,
-                    subtotal: subtotal, platformFee: fee, total: total,
-                    deposit: deposit, balance: balance,
-                    depositPaid: false, balancePaid: false,
-                    customerAgreed: !isSign, interpreterAgreed: !isSign,
-                    timeline: [
-                        { step:'계약서 작성', date: todayStr, done: true },
-                        { step:'계약서 확인', date: isSign ? '' : todayStr, done: !isSign, active: isSign },
-                        { step:'계약 체결', date: isSign ? '' : todayStr, done: !isSign },
-                        { step:'선결제', date: '', done: false, active: !isSign },
-                        { step:'관리자 승인', date: '', done: false },
-                        { step:'서비스 진행', date: '', done: false },
-                        { step:'완료 확인', date: '', done: false },
-                        { step:'정산 완료', date: '', done: false }
-                    ]
-                };
-                ctAdminContracts.push(newContract);
-                ctAdminInit();
-                closeNewContractModal();
-                showToast('✅ ' + expo + ' 계약서가 생성되었습니다. (ID: ' + contractId + ')');
-
-                // 고객사 & 통역사 대시보드에 계약 전달
+                var btn = event && event.target;
+                if (btn) btn.disabled = true;
                 try {
-                    localStorage.removeItem('contentour_admin_new_contract');
-                    setTimeout(function() {
-                        localStorage.setItem('contentour_admin_new_contract', JSON.stringify({
-                            contractId: contractId,
-                            contractData: {
-                                id: contractId, expo: expo, lang: lang,
-                                dates: { start: startDate, end: endDate },
-                                dailyRate: rate, days: days,
-                                subtotal: subtotal, platformFee: fee, total: total,
-                                deposit: deposit, balance: balance,
-                                company: company, contact: contact
-                            },
-                            interpreter: interpreter,
-                            status: status,
-                            ts: Date.now()
-                        }));
-                    }, 50);
-                } catch(e) {}
+                    // 서버에서 고객 검증·금액 재계산 후 42_통역계약 생성 (정상 계약과 동일 status='pending')
+                    var result = await callAdminAction({
+                        action: 'manualContractCreate',
+                        customerId: customerId,
+                        interpreterId: interpreterId,
+                        expo: expo,
+                        location: location,
+                        lang: lang,
+                        serviceType: serviceType,
+                        startDate: startDate,
+                        endDate: endDate,
+                        days: days,
+                        rate: rate
+                    });
+                    closeNewContractModal();
+                    showToast('✅ ' + expo + ' 계약이 생성되었습니다. 고객 대시보드에서 결제 가능합니다.');
+                    // 계약 목록 DB 재조회
+                    ctAdminContracts = [];
+                    await loadContractsFromDB();
+                } catch (e) {
+                    showToast('⚠️ 계약 생성 실패: ' + (e && e.message ? e.message : '알 수 없는 오류'));
+                } finally {
+                    if (btn) btn.disabled = false;
+                }
             }
 
             function onQuoteCountryChange() {

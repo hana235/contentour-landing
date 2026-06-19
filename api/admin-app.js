@@ -842,6 +842,76 @@ module.exports = async function handler(req, res) {
             await recordAudit(req, admin, { action: 'settle_contract', target_table: '42_통역계약', target_id: contractId, after: { status: 'settled' } });
             return res.status(200).json({ ok: true });
 
+        } else if (action === 'manualContractCreate') {
+            // 관리자 계약서 직접 작성 — handleAcceptQuote(api/my.js)의 INSERT 패턴을 미러링.
+            // 정상 계약과 동일하게 status='pending'·contract_signed=false로 생성 → 고객 대시보드에서
+            // 온라인 결제 또는 관리자 무통장 승인 둘 다 가능. 클라이언트가 보낸 금액은 신뢰하지 않고 서버 재계산.
+            const b = req.body || {};
+            const customerId = b.customerId;
+            const interpreterId = b.interpreterId || null;
+            const expo = (b.expo || '').toString().trim();
+            const venue = (b.location || b.venue || '').toString().trim();
+            const lang = (b.lang || '').toString().trim();
+            const serviceType = (b.serviceType || '').toString().trim();
+            const startDate = b.startDate;
+            const endDate = b.endDate;
+            const days = Number(b.days) || 0;
+            const rate = Number(b.rate) || 0;
+
+            // 필수값 검증
+            if (!customerId) return res.status(400).json({ error: '고객사를 선택해주세요.' });
+            if (!expo) return res.status(400).json({ error: '전시회명은 필수입니다.' });
+            if (!startDate || !endDate) return res.status(400).json({ error: '시작일·종료일은 필수입니다.' });
+            if (days <= 0) return res.status(400).json({ error: '파견 일수가 유효하지 않습니다.' });
+            if (rate <= 0) return res.status(400).json({ error: '일당 단가가 유효하지 않습니다.' });
+
+            // 고객사 존재·역할 확인 (01_회원에서 직접 조회, company_name 서버 채움)
+            const { data: cust, error: custErr } = await supabase.from('01_회원')
+                .select('id, role, company_name').eq('id', customerId).single();
+            if (custErr || !cust) return res.status(404).json({ error: '선택한 고객사를 찾을 수 없습니다.' });
+            if (cust.role !== 'customer') return res.status(403).json({ error: '선택한 계정은 고객사가 아닙니다.' });
+
+            // 서버측 금액 재계산 — VAT 10%, A안 100% 선결제 (handleAcceptQuote와 동일 원칙)
+            const subtotal = rate * days;                    // 공급가(net)
+            const tax = Math.round(subtotal * 0.1);          // 부가세
+            const total = subtotal + tax;                    // 총액
+            const deposit = total;                           // 100% 선결제
+            const balance = 0;
+            if (subtotal <= 0 || total <= 0) return res.status(400).json({ error: '계약 금액이 유효하지 않습니다.' });
+
+            const { data: ins, error: insErr } = await supabase.from('42_통역계약').insert({
+                customer_id: customerId,
+                interpreter_id: interpreterId,
+                exhibition_name: expo,
+                client_company: cust.company_name || '',
+                venue: venue,
+                start_date: startDate,
+                end_date: endDate,
+                working_days: days,
+                language_pair: lang,
+                service_type: serviceType,
+                daily_rate: rate,
+                total_amount: total,
+                tax_amount: tax,
+                net_amount: subtotal,
+                deposit_amount: deposit,
+                balance_amount: balance,
+                balance_status: (balance > 0) ? 'pending' : 'paid',
+                status: 'pending',
+                interpreter_accepted: null,
+                contract_signed: false
+            }).select('id').single();
+            if (insErr || !ins) { console.error('manualContractCreate insert 실패:', insErr); return res.status(500).json({ error: '계약 생성에 실패했습니다.' }); }
+
+            await recordAudit(req, admin, {
+                action: 'manual_contract_create',
+                target_table: '42_통역계약',
+                target_id: ins.id,
+                after: { customer_id: customerId, interpreter_id: interpreterId, exhibition_name: expo, total_amount: total }
+            });
+
+            return res.status(200).json({ ok: true, contractId: ins.id });
+
         } else {
             return res.status(400).json({ error: 'Unknown action' });
         }
