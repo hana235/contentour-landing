@@ -1,61 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://contentour-landing.vercel.app/</loc>
+    <loc>https://www.ctconfex.com/</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://contentour-landing.vercel.app/service</loc>
+    <loc>https://www.ctconfex.com/service</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://contentour-landing.vercel.app/interpreters</loc>
+    <loc>https://www.ctconfex.com/interpreters</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://contentour-landing.vercel.app/cases</loc>
+    <loc>https://www.ctconfex.com/cases</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://contentour-landing.vercel.app/interpreter-jobs</loc>
+    <loc>https://www.ctconfex.com/interpreter-jobs</loc>
     <lastmod>2026-05-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://contentour-landing.vercel.app/performance</loc>
+    <loc>https://www.ctconfex.com/performance</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://contentour-landing.vercel.app/support</loc>
+    <loc>https://www.ctconfex.com/support</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://contentour-landing.vercel.app/interpreter-apply</loc>
+    <loc>https://www.ctconfex.com/interpreter-apply</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://contentour-landing.vercel.app/client-auth</loc>
+    <loc>https://www.ctconfex.com/client-auth</loc>
     <lastmod>2026-05-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://contentour-landing.vercel.app/terms</loc>
+    <loc>https://www.ctconfex.com/terms</loc>
     <lastmod>2026-06-04</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

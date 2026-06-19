@@ -56,4 +56,4 @@ User-agent: *
 Disallow: /
 
 # 사이트맵 위치 (출시 후 활성화)
-Sitemap: https://contentour-landing.vercel.app/sitemap.xml
+Sitemap: https://www.ctconfex.com/sitemap.xml

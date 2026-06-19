@@ -109,7 +109,7 @@ async function sendApprovalEmail(email, name, tempPw) {
                             </table>
                         </div>
                         <p style="font-size:0.82rem;color:#e65100;margin-bottom:20px;">⚠️ 보안을 위해 첫 로그인 후 반드시 비밀번호를 변경해주세요.</p>
-                        <a href="https://contentour-landing.vercel.app/client-auth.html"
+                        <a href="https://www.ctconfex.com/client-auth.html"
                            style="display:inline-block;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.92rem;">
                             통역사 대시보드 로그인 →
                         </a>

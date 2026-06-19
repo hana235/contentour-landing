@@ -2,7 +2,7 @@
 // 운영 도메인에서만 console.log 무력화 (warn/error는 유지하여 진단성 보존)
 (function() {
     var host = location.hostname;
-    var isProd = host === 'contentour-landing.vercel.app' || host === 'contentour.co.kr' || host.endsWith('.contentour.co.kr');
+    var isProd = host === 'www.ctconfex.com' || host === 'ctconfex.com' || host === 'contentour-landing.vercel.app' || host === 'contentour.co.kr' || host.endsWith('.contentour.co.kr');
     if (isProd) {
         console.log = function() {};
     }
