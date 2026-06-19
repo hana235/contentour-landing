@@ -2169,86 +2169,8 @@
             return names[view] || view;
         }
 
-        // ══════════════ 홈 - 배정 수락/거절 ══════════════
-        function handleAccept(btn) {
-            const item = btn.closest('.assign-item');
-            const title = item.querySelector('.assign-item__title').textContent;
-            if (!confirm('"' + title + '" 배정을 수락하시겠습니까?\n수락 후에는 취소 시 패널티가 부과될 수 있습니다.')) return;
-            item.style.opacity = '0.5';
-            item.style.pointerEvents = 'none';
-            btn.textContent = '수락됨';
-            btn.style.background = 'var(--success)';
-            btn.nextElementSibling.style.display = 'none';
-            showToast('✅ "' + title + '" 배정을 수락했습니다.');
-            updateHomeBadge();
-        }
-
-        function handleDecline(btn) {
-            const item = btn.closest('.assign-item');
-            const title = item.querySelector('.assign-item__title').textContent;
-            if (!confirm('"' + title + '" 배정을 거절하시겠습니까?\n거절한 의뢰는 다시 받을 수 없습니다.')) return;
-            item.style.opacity = '0.5';
-            item.style.pointerEvents = 'none';
-            btn.textContent = '거절됨';
-            btn.style.borderColor = 'var(--error)';
-            btn.style.color = 'var(--error)';
-            btn.previousElementSibling.style.display = 'none';
-            showToast('❌ "' + title + '" 배정을 거절했습니다.');
-            updateHomeBadge();
-        }
-
-        function updateHomeBadge() {
-            const activeItems = document.querySelectorAll('#view-home .assign-item:not([style*="opacity: 0.5"])');
-            const badge = document.querySelector('.card__head-badge');
-            const kpiNum = document.querySelector('.kpi-grid .kpi-card:first-child .kpi-num');
-            const sidebarBadge = document.querySelector('.sb-item__badge');
-            const count = activeItems.length;
-            if (badge) badge.textContent = count;
-            if (kpiNum) kpiNum.textContent = count;
-            if (sidebarBadge) sidebarBadge.textContent = count;
-        }
-
-        // ══════════════ 배정 뷰 - 카드 수락/거절 ══════════════
-        function handleCardAccept(btn) {
-            const card = btn.closest('.assign-card');
-            const title = card.querySelector('.assign-card__title').textContent;
-            const id = card.dataset.id;
-
-            card.dataset.status = 'accepted';
-            card.querySelector('.assign-card__status-bar').className = 'assign-card__status-bar status-bar-accepted';
-            card.querySelector('.assign-card__status-badge').className = 'assign-card__status-badge asb-accepted';
-            card.querySelector('.assign-card__status-badge').textContent = '수락 완료';
-
-            // 수락/거절 버튼 제거
-            const acceptBtn = card.querySelector('.btn-accept-lg');
-            const declineBtn = card.querySelector('.btn-decline-lg');
-            if (acceptBtn) acceptBtn.remove();
-            if (declineBtn) declineBtn.remove();
-
-            if (assignData[id]) assignData[id].status = 'accepted';
-            updateFilterCounts();
-            showToast('✅ "' + title + '" 배정을 수락했습니다.');
-        }
-
-        function handleCardDecline(btn) {
-            const card = btn.closest('.assign-card');
-            const title = card.querySelector('.assign-card__title').textContent;
-            const id = card.dataset.id;
-
-            card.dataset.status = 'declined';
-            card.querySelector('.assign-card__status-bar').className = 'assign-card__status-bar status-bar-declined';
-            card.querySelector('.assign-card__status-badge').className = 'assign-card__status-badge asb-declined';
-            card.querySelector('.assign-card__status-badge').textContent = '거절됨';
-
-            const acceptBtn = card.querySelector('.btn-accept-lg');
-            const declineBtn = card.querySelector('.btn-decline-lg');
-            if (acceptBtn) acceptBtn.remove();
-            if (declineBtn) declineBtn.remove();
-
-            if (assignData[id]) assignData[id].status = 'declined';
-            updateFilterCounts();
-            showToast('❌ "' + title + '" 배정을 거절했습니다.');
-        }
+        // ══════════════ 배정 수락/거절: 실제 서버 경로는 InterpreterApp.handleCardAcceptDB/handleCardDeclineDB 사용 ══════════════
+        // (옛 데모용 handleAccept/handleDecline/handleCardAccept/handleCardDecline/updateHomeBadge는 미사용이라 제거됨)
 
         // ══════════════ 필터 ══════════════
         function filterAssign(status, btn) {

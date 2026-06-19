@@ -5266,7 +5266,7 @@
         }
         return `<div class="contract-card" onclick="openContractDetail('${c.id}')">
           <div style="flex:1;min-width:0;">
-            <div class="contract-card__id">${c.id}</div>
+            <div class="contract-card__id">${contractDisplayNumber(c)}</div>
             <div class="contract-card__expo">${escapeHtml(c.expo)}</div>
             <div class="contract-card__meta">
               <span>&#128100; ${escapeHtml(c.interpreter.name)}</span>
@@ -6504,10 +6504,8 @@
         <button class="pm-confirm-btn" onclick="pmVirtualDone()">확인</button>
       `;
 
-      // DB에 가상계좌 정보 저장 (결제 대기 상태)
-      if (typeof PaymentData !== 'undefined' && window.sbClient && c.dbId) {
-          PaymentData.verifyAndSavePayment(c.dbId, currentPayment.type, amount, 'virtual', 'VA_' + Date.now(), 'va_pending').catch(function(){});
-      }
+      // 가상계좌 입금 확정은 PortOne 웹훅(Transaction.Paid)에서 처리됨.
+      // (과거의 va_pending 더미 verify 호출은 서버가 502만 반환하던 무동작 코드라 제거)
     }
 
     function pmCopyAccount(account) {
