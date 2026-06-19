@@ -1772,9 +1772,9 @@
                         ? '<button class="action-btn" style="background:#1565c0;color:#fff;" onclick="event.stopPropagation();dirOpenDetail(\'' + d.id + '\')">상세</button>'
                         : '<button class="action-btn" style="background:#fff;border:1.5px solid #f57c00;color:#f57c00;" onclick="event.stopPropagation();dirRenotify(\'' + d.id + '\')">🔔 알림 재발송</button>';
                     return '<tr style="cursor:pointer;" onclick="dirOpenDetail(\'' + d.id + '\')">' +
-                        '<td><div class="company">' + (d.company || '-') + '</div><div class="sub-text">' + (d.contact || '') + '</div></td>' +
-                        '<td><div class="expo-name">' + (d.expo || '-') + '</div><div class="sub-text">' + (d.location || '') + '</div></td>' +
-                        '<td><strong style="color:#0a2a5e;">' + (d.requestedInterpreter || '-') + '</strong></td>' +
+                        '<td><div class="company">' + escapeHtml(d.company || '-') + '</div><div class="sub-text">' + escapeHtml(d.contact || '') + '</div></td>' +
+                        '<td><div class="expo-name">' + escapeHtml(d.expo || '-') + '</div><div class="sub-text">' + escapeHtml(d.location || '') + '</div></td>' +
+                        '<td><strong style="color:#0a2a5e;">' + escapeHtml(d.requestedInterpreter || '-') + '</strong></td>' +
                         '<td><span class="lang-tag">' + (d.lang || '-') + '</span></td>' +
                         '<td>' + (d.start || '-') + (d.end ? ' ~ ' + d.end : '') + '</td>' +
                         '<td>' + (d.received || '-') + '</td>' +
@@ -2701,9 +2701,9 @@
                 var interpExtraHtml = '';
                 if (isInterp) {
                     interpExtraHtml =
-                        (j.atmosphere ? '<div class="jv-sec">현장 분위기</div><div class="jv-text">' + j.atmosphere + '</div>' : '') +
-                        (j.difficulty ? '<div class="jv-sec">통역 난이도 / 어려웠던 점</div><div class="jv-text">' + j.difficulty + '</div>' : '') +
-                        (j.clientNote ? '<div class="jv-sec">고객사 전달 사항</div><div class="jv-text">' + j.clientNote + '</div>' : '') +
+                        (j.atmosphere ? '<div class="jv-sec">현장 분위기</div><div class="jv-text">' + escapeHtml(j.atmosphere) + '</div>' : '') +
+                        (j.difficulty ? '<div class="jv-sec">통역 난이도 / 어려웠던 점</div><div class="jv-text">' + escapeHtml(j.difficulty) + '</div>' : '') +
+                        (j.clientNote ? '<div class="jv-sec">고객사 전달 사항</div><div class="jv-text">' + escapeHtml(j.clientNote) + '</div>' : '') +
                         issueHtml;
                 }
 
@@ -3223,8 +3223,8 @@
 
                 let html = '<div class="stl-modal-grid">' +
                     '<div class="stl-modal-item"><span class="stl-modal-label">계약번호</span><span class="stl-modal-value">' + stlContractNo(d) + '</span></div>' +
-                    '<div class="stl-modal-item"><span class="stl-modal-label">통역사</span><span class="stl-modal-value">' + d.interpreter + '</span></div>' +
-                    '<div class="stl-modal-item"><span class="stl-modal-label">고객사</span><span class="stl-modal-value">' + d.client + '</span></div>' +
+                    '<div class="stl-modal-item"><span class="stl-modal-label">통역사</span><span class="stl-modal-value">' + escapeHtml(d.interpreter) + '</span></div>' +
+                    '<div class="stl-modal-item"><span class="stl-modal-label">고객사</span><span class="stl-modal-value">' + escapeHtml(d.client) + '</span></div>' +
                     '<div class="stl-modal-item"><span class="stl-modal-label">통역 언어</span><span class="stl-modal-value">' + d.lang + '</span></div>' +
                     '<div class="stl-modal-item"><span class="stl-modal-label">요청일</span><span class="stl-modal-value">' + d.requestDate + '</span></div>' +
                     '<div class="stl-modal-item"><span class="stl-modal-label">상담일지</span><span class="stl-modal-value" style="color:' + (d.journalSubmitted ? 'var(--success)' : 'var(--error)') + ';">' + (d.journalSubmitted ? '✅ 제출 완료' : '❌ 미제출') + '</span></div>' +
@@ -3235,7 +3235,7 @@
                 if (d.status === 'rejected' && d.rejectReason) {
                     html += '<div style="background:#fff5f5;border:1px solid #ffcdd2;border-radius:10px;padding:14px 16px;margin-bottom:16px;">' +
                         '<div style="font-size:0.78rem;font-weight:700;color:#e53935;margin-bottom:4px;">반려 사유</div>' +
-                        '<div style="font-size:0.82rem;color:#c62828;">' + d.rejectReason + '</div>' +
+                        '<div style="font-size:0.82rem;color:#c62828;">' + escapeHtml(d.rejectReason) + '</div>' +
                     '</div>';
                 }
 
@@ -4152,9 +4152,9 @@
                                 '<span style="background:' + (d.cancelled_by==='customer'?'#e3f0ff':'#fff3e0') + ';color:' + (d.cancelled_by==='customer'?'#1565c0':'#e65100') + ';padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;">' + typeLabel + ' 취소</span>' +
                                 '<span style="background:' + stColor + '15;color:' + stColor + ';padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;">' + stLabel + '</span>' +
                             '</div>' +
-                            '<div style="font-weight:700;font-size:0.92rem;margin-bottom:4px;">' + (d._expoName || '전시회') + '</div>' +
-                            '<div style="font-size:0.8rem;color:#666;">신청자: ' + d._userName + (d._company ? ' (' + d._company + ')' : '') + '</div>' +
-                            '<div style="font-size:0.8rem;color:#666;">사유: ' + d.cancel_reason + '</div>' +
+                            '<div style="font-weight:700;font-size:0.92rem;margin-bottom:4px;">' + escapeHtml(d._expoName || '전시회') + '</div>' +
+                            '<div style="font-size:0.8rem;color:#666;">신청자: ' + escapeHtml(d._userName) + (d._company ? ' (' + escapeHtml(d._company) + ')' : '') + '</div>' +
+                            '<div style="font-size:0.8rem;color:#666;">사유: ' + escapeHtml(d.cancel_reason) + '</div>' +
                             '<div style="font-size:0.78rem;color:#999;margin-top:4px;">남은 일수: ' + d.days_remaining + '일 | 위약금: ₩' + (d.penalty_amount||0).toLocaleString() + ' (' + d.penalty_rate + '%) | 환불: ₩' + (d.refund_amount||0).toLocaleString() + '</div>' +
                             // 분쟁 대비: 취소 당시 계약액 동결값(없으면 live 계약 폴백) + 상대방 통지 시각
                             '<div style="font-size:0.74rem;color:#aab1bf;margin-top:2px;">취소 당시 계약액: ₩' + ((d.amount_snapshot != null ? d.amount_snapshot : ((d.contract && d.contract.total_amount) || 0)) || 0).toLocaleString() + (d.notified_at ? ' | 상대방 통지: ' + String(d.notified_at).replace('T',' ').slice(0,16) : '') + '</div>' +
@@ -6073,8 +6073,8 @@
                     var certs = (p.certifications || []).join(', ');
                     var phone = p.phone || p.user?.phone || '';
                     var profileImg = p.profile_image_url
-                        ? '<img src="' + p.profile_image_url + '" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #e8ecf2;">'
-                        : '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1565c0,#1a3d7a);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;">' + (p.display_name || 'T').charAt(0) + '</div>';
+                        ? '<img src="' + escapeHtml(p.profile_image_url) + '" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #e8ecf2;">'
+                        : '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1565c0,#1a3d7a);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;">' + escapeHtml((p.display_name || 'T').charAt(0)) + '</div>';
 
                     var verifiedInfo = '';
                     if (p.is_verified && p.verified_at) {
@@ -6086,21 +6086,21 @@
                             '<div style="flex-shrink:0;">' + profileImg + '</div>' +
                             '<div style="flex:1;min-width:0;">' +
                                 '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">' +
-                                    '<span style="font-weight:800;color:#1a2a4a;font-size:0.92rem;">' + (p.display_name || p.user?.name || '통역사') + '</span>' +
+                                    '<span style="font-weight:800;color:#1a2a4a;font-size:0.92rem;">' + escapeHtml(p.display_name || p.user?.name || '통역사') + '</span>' +
                                     statusBadge + activeBadge + verifiedInfo +
                                 '</div>' +
                                 '<div style="display:flex;flex-wrap:wrap;gap:6px 14px;font-size:0.78rem;color:#666;margin-bottom:8px;">' +
-                                    '<span>📧 ' + (p.user?.email || '-') + '</span>' +
-                                    (phone ? '<span>📱 ' + phone + '</span>' : '') +
+                                    '<span>📧 ' + escapeHtml(p.user?.email || '-') + '</span>' +
+                                    (phone ? '<span>📱 ' + escapeHtml(phone) + '</span>' : '') +
                                     '<span>경력: <b>' + (p.experience_years || 0) + '년</b></span>' +
                                     '<span>기본단가: <b>₩' + (p.base_rate || 0).toLocaleString() + '</b></span>' +
                                     (p.rate_status === 'pending' ? '<span style="padding:2px 8px;background:#fff3e0;color:#e65100;border-radius:5px;font-size:0.7rem;font-weight:700;border:1px solid #ffcc02;">⏳ 단가 승인 대기</span>' : '') +
                                 '</div>' +
                                 '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">' +
-                                    (langs ? langs.split(', ').map(function(l) { return '<span style="padding:2px 8px;background:#e3f0ff;color:#1565c0;border-radius:5px;font-size:0.72rem;font-weight:600;">' + l + '</span>'; }).join('') : '') +
-                                    (specs ? specs.split(', ').map(function(s) { return '<span style="padding:2px 8px;background:#e8f5e9;color:#2e7d32;border-radius:5px;font-size:0.72rem;font-weight:600;">' + s + '</span>'; }).join('') : '') +
+                                    (langs ? langs.split(', ').map(function(l) { return '<span style="padding:2px 8px;background:#e3f0ff;color:#1565c0;border-radius:5px;font-size:0.72rem;font-weight:600;">' + escapeHtml(l) + '</span>'; }).join('') : '') +
+                                    (specs ? specs.split(', ').map(function(s) { return '<span style="padding:2px 8px;background:#e8f5e9;color:#2e7d32;border-radius:5px;font-size:0.72rem;font-weight:600;">' + escapeHtml(s) + '</span>'; }).join('') : '') +
                                 '</div>' +
-                                (certs ? '<div style="font-size:0.72rem;color:#7b1fa2;">🏅 ' + certs + '</div>' : '') +
+                                (certs ? '<div style="font-size:0.72rem;color:#7b1fa2;">🏅 ' + escapeHtml(certs) + '</div>' : '') +
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -6114,13 +6114,13 @@
 
                 var name = p.display_name || p.user?.name || '통역사';
                 var profileImg = p.profile_image_url
-                    ? '<img src="' + p.profile_image_url + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);">'
-                    : '<div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.3rem;">' + name.charAt(0) + '</div>';
+                    ? '<img src="' + escapeHtml(p.profile_image_url) + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);">'
+                    : '<div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.3rem;">' + escapeHtml(name.charAt(0)) + '</div>';
 
                 document.getElementById('interpModalHeader').innerHTML =
                     '<div style="display:flex;align-items:center;gap:14px;">' + profileImg +
-                    '<div><div style="font-size:1.1rem;font-weight:800;">' + name + '</div>' +
-                    '<div style="font-size:0.82rem;opacity:0.8;">' + (p.user?.email || '') + '</div></div></div>';
+                    '<div><div style="font-size:1.1rem;font-weight:800;">' + escapeHtml(name) + '</div>' +
+                    '<div style="font-size:0.82rem;opacity:0.8;">' + escapeHtml(p.user?.email || '') + '</div></div></div>';
 
                 var row = function(label, val) { return val ? '<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #f0f0f0;"><span style="min-width:110px;font-weight:700;font-size:0.82rem;color:#666;">' + label + '</span><span style="font-size:0.85rem;">' + val + '</span></div>' : ''; };
 
@@ -6294,7 +6294,7 @@
                 if (docs.length > 0) {
                     html += '<div style="margin-top:12px;">';
                     docs.forEach(function(d) {
-                        html += '<a href="#" onclick="event.preventDefault();viewInterpDoc(\'' + d.path + '\')" style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:0.78rem;color:#1565c0;text-decoration:none;padding:4px 10px;background:#e3f0ff;border-radius:6px;">📄 ' + d.name + '</a>';
+                        html += '<a href="#" onclick="event.preventDefault();viewInterpDoc(this.getAttribute(\'data-doc-path\'))" data-doc-path="' + escapeHtml(d.path) + '" style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:0.78rem;color:#1565c0;text-decoration:none;padding:4px 10px;background:#e3f0ff;border-radius:6px;">📄 ' + escapeHtml(d.name) + '</a>';
                     });
                     html += '</div>';
                 }
@@ -7159,13 +7159,13 @@
                         (isActive ? 'background:var(--blue-light);border:1.5px solid var(--blue);' : 'background:transparent;border:1.5px solid transparent;') + '">' +
                         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
                         '<div style="display:flex;align-items:center;gap:6px;">' + statusDot +
-                        '<span style="font-weight:800;font-size:0.82rem;color:' + (isActive ? 'var(--blue)' : 'var(--text)') + ';">' + ch.name + '</span></div>' +
+                        '<span style="font-weight:800;font-size:0.82rem;color:' + (isActive ? 'var(--blue)' : 'var(--text)') + ';">' + escapeHtml(ch.name) + '</span></div>' +
                         (unread > 0 ? '<span style="background:var(--danger);color:#fff;font-size:0.65rem;padding:2px 7px;border-radius:10px;font-weight:700;">' + unread + '</span>' : '<span style="font-size:0.68rem;color:var(--gray-400);">' + lastTime + '</span>') +
                         '</div>' +
-                        '<div style="font-size:0.72rem;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;">' + lastText + '</div>' +
+                        '<div style="font-size:0.72rem;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;">' + escapeHtml(lastText) + '</div>' +
                         '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
-                        '<span style="font-size:0.65rem;background:#e3f2fd;color:#1565c0;padding:2px 6px;border-radius:5px;">👤 ' + (ch.customer.match(/\(([^)]+)\)/) ? ch.customer.match(/\(([^)]+)\)/)[1] : ch.customer) + '</span>' +
-                        '<span style="font-size:0.65rem;background:#f3e5f5;color:#7b1fa2;padding:2px 6px;border-radius:5px;">🗣️ ' + ch.interpreter + '</span>' +
+                        '<span style="font-size:0.65rem;background:#e3f2fd;color:#1565c0;padding:2px 6px;border-radius:5px;">👤 ' + escapeHtml(ch.customer.match(/\(([^)]+)\)/) ? ch.customer.match(/\(([^)]+)\)/)[1] : ch.customer) + '</span>' +
+                        '<span style="font-size:0.65rem;background:#f3e5f5;color:#7b1fa2;padding:2px 6px;border-radius:5px;">🗣️ ' + escapeHtml(ch.interpreter) + '</span>' +
                         '</div>' +
                         '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;">' +
                         '<span style="font-size:0.62rem;color:var(--gray-300);">' + ch.lang + '</span>' +
@@ -7231,13 +7231,13 @@
                         (isActive ? 'background:var(--blue-light);border:1.5px solid var(--blue);' : 'background:transparent;border:1.5px solid transparent;') + '">' +
                         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
                         '<div style="display:flex;align-items:center;gap:6px;">' + statusDot +
-                        '<span style="font-weight:800;font-size:0.82rem;color:' + (isActive ? 'var(--blue)' : 'var(--text)') + ';">' + ch.name + '</span></div>' +
+                        '<span style="font-weight:800;font-size:0.82rem;color:' + (isActive ? 'var(--blue)' : 'var(--text)') + ';">' + escapeHtml(ch.name) + '</span></div>' +
                         (unread > 0 ? '<span style="background:var(--danger);color:#fff;font-size:0.65rem;padding:2px 7px;border-radius:10px;font-weight:700;">' + unread + '</span>' : '<span style="font-size:0.68rem;color:var(--gray-400);">' + lastTime + '</span>') +
                         '</div>' +
-                        '<div style="font-size:0.72rem;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;">' + lastText + '</div>' +
+                        '<div style="font-size:0.72rem;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;">' + escapeHtml(lastText) + '</div>' +
                         '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
-                        '<span style="font-size:0.65rem;background:#e3f2fd;color:#1565c0;padding:2px 6px;border-radius:5px;">👤 ' + (ch.customer.match(/\(([^)]+)\)/) ? ch.customer.match(/\(([^)]+)\)/)[1] : ch.customer) + '</span>' +
-                        '<span style="font-size:0.65rem;background:#f3e5f5;color:#7b1fa2;padding:2px 6px;border-radius:5px;">🗣️ ' + ch.interpreter + '</span>' +
+                        '<span style="font-size:0.65rem;background:#e3f2fd;color:#1565c0;padding:2px 6px;border-radius:5px;">👤 ' + escapeHtml(ch.customer.match(/\(([^)]+)\)/) ? ch.customer.match(/\(([^)]+)\)/)[1] : ch.customer) + '</span>' +
+                        '<span style="font-size:0.65rem;background:#f3e5f5;color:#7b1fa2;padding:2px 6px;border-radius:5px;">🗣️ ' + escapeHtml(ch.interpreter) + '</span>' +
                         '</div>' +
                         '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;">' +
                         '<span style="font-size:0.62rem;color:var(--gray-300);">' + ch.lang + '</span>' +
@@ -7337,9 +7337,9 @@
                 var ch = chatmonChannels.find(function(c) { return c.id === chatmonActiveChannel; });
                 if (!ch) return;
                 header.innerHTML = '<div style="display:flex;align-items:center;gap:12px;">' +
-                    '<span style="font-weight:800;font-size:0.9rem;color:var(--text);">💬 ' + ch.name + '</span>' +
-                    '<span style="font-size:0.72rem;color:var(--gray-400);background:var(--gray-100);padding:3px 10px;border-radius:8px;">👤 ' + ch.customer + '</span>' +
-                    '<span style="font-size:0.72rem;color:var(--gray-400);background:var(--gray-100);padding:3px 10px;border-radius:8px;">🗣️ ' + ch.interpreter + '</span>' +
+                    '<span style="font-weight:800;font-size:0.9rem;color:var(--text);">💬 ' + escapeHtml(ch.name) + '</span>' +
+                    '<span style="font-size:0.72rem;color:var(--gray-400);background:var(--gray-100);padding:3px 10px;border-radius:8px;">👤 ' + escapeHtml(ch.customer) + '</span>' +
+                    '<span style="font-size:0.72rem;color:var(--gray-400);background:var(--gray-100);padding:3px 10px;border-radius:8px;">🗣️ ' + escapeHtml(ch.interpreter) + '</span>' +
                     '</div>' +
                     '<div style="font-size:0.7rem;color:var(--gray-400);">총 ' + (chatmonLogs[ch.id] || []).length + '건</div>';
 
@@ -7366,16 +7366,16 @@
                     html += '<div style="margin-bottom:12px;">' +
                         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">' +
                         '<span style="font-size:0.68rem;font-weight:700;color:' + (isAdmin ? '#e65100' : (isCustomer ? 'var(--blue)' : '#7b1fa2')) + ';background:' + bubbleColor + ';padding:2px 8px;border-radius:6px;">' + roleLabel + '</span>' +
-                        '<span style="font-size:0.72rem;font-weight:700;color:var(--text);">' + roleName + '</span>' +
+                        '<span style="font-size:0.72rem;font-weight:700;color:var(--text);">' + escapeHtml(roleName) + '</span>' +
                         '<span style="font-size:0.65rem;color:var(--gray-400);">' + m.time + '</span>' +
                         '</div>' +
                         '<div style="background:' + bubbleColor + ';border:1px solid ' + borderColor + ';border-radius:12px;padding:10px 14px;margin-left:4px;max-width:85%;display:inline-block;">';
                     if (m.text) {
-                        html += '<div style="font-size:0.82rem;color:var(--text);line-height:1.6;">' + m.text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+                        html += '<div style="font-size:0.82rem;color:var(--text);line-height:1.6;">' + escapeHtml(m.text) + '</div>';
                     }
                     if (m.files && m.files.length) {
                         m.files.forEach(function(f) {
-                            html += '<div style="margin-top:6px;font-size:0.75rem;color:var(--blue);"><span>📎 ' + f.name + '</span></div>';
+                            html += '<div style="margin-top:6px;font-size:0.75rem;color:var(--blue);"><span>📎 ' + escapeHtml(f.name) + '</span></div>';
                         });
                     }
                     html += '</div></div>';

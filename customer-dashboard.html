@@ -5763,9 +5763,9 @@
       w.document.write('<div class="party-box">' +
         '<div class="party">' +
           '<div class="party-title">' + _cpPartyTitle + '</div>' +
-          (_cpHasCompany ? '<div class="party-row"><span class="label">회사명</span><span class="value">' + _cpCompanyRaw + '</span></div>' : '') +
-          '<div class="party-row"><span class="label">' + (_cpHasCompany ? '담당자' : '성명') + '</span><span class="value">' + (_cpName || '-') + (_currentUserProfile.position ? ' ' + _currentUserProfile.position : '') + '</span></div>' +
-          '<div class="party-row"><span class="label">연락처</span><span class="value">' + (_currentUserProfile.phone || '-') + '</span></div>' +
+          (_cpHasCompany ? '<div class="party-row"><span class="label">회사명</span><span class="value">' + esc(_cpCompanyRaw) + '</span></div>' : '') +
+          '<div class="party-row"><span class="label">' + (_cpHasCompany ? '담당자' : '성명') + '</span><span class="value">' + esc(_cpName || '-') + (_currentUserProfile.position ? ' ' + esc(_currentUserProfile.position) : '') + '</span></div>' +
+          '<div class="party-row"><span class="label">연락처</span><span class="value">' + esc(_currentUserProfile.phone || '-') + '</span></div>' +
           '<div class="party-row"><span class="label">이메일</span><span class="value">' + (_currentUserProfile.email || '-') + '</span></div>' +
         '</div>' +
         '<div class="party">' +
@@ -5791,7 +5791,7 @@
         '<div class="section-title">제1조 서비스 내용</div>' +
         '<table class="info-table">' +
           '<tr><th>전시회/행사명</th><td>' + safe.expo + '</td></tr>' +
-          '<tr><th>개최 장소·주소</th><td>' + (c.location || c.venue || '-') + '</td></tr>' +
+          '<tr><th>개최 장소·주소</th><td>' + esc(c.location || c.venue || '-') + '</td></tr>' +
           '<tr><th>서비스 기간</th><td>' + safe.startDate + ' ~ ' + safe.endDate + ' (' + safe.days + '일간)</td></tr>' +
           '<tr><th>일별 근무 시간</th><td>1일 8시간 기준 (휴게 시간 포함, 세부 시간은 별도 협의)</td></tr>' +
           '<tr><th>휴게 시간</th><td>4시간 근무당 30분 (1일 8시간 기준 총 1시간)</td></tr>' +
@@ -5799,7 +5799,7 @@
           '<tr><th>통역사</th><td>' + safe.interpName + '</td></tr>' +
           '<tr><th>서비스 유형</th><td>전시회 부스 통역 (비즈니스 상담 통역 포함)</td></tr>' +
           '<tr><th>복장 규정</th><td>비즈니스 캐주얼 (행사 주최 측 별도 지정 시 우선 적용)</td></tr>' +
-          '<tr><th>특이사항</th><td>' + (c.notes || c.specialRequests || '없음') + '</td></tr>' +
+          '<tr><th>특이사항</th><td>' + esc(c.notes || c.specialRequests || '없음') + '</td></tr>' +
         '</table>' +
       '</div>');
 
