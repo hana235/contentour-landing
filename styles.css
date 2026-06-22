@@ -220,10 +220,12 @@ body {
     font-family: 'Inter', sans-serif;
     font-size: 1.08rem;
     font-weight: 800;
-    font-style: italic;
+    font-style: normal;
     letter-spacing: 0.04em;
     color: #0d2a52;
     line-height: 1;
+    display: inline-block;
+    transform: skewX(-6deg);
 }
 
 @media (max-width: 480px) {
