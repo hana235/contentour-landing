@@ -384,7 +384,7 @@ const InterpreterApp = {
             .select('*')
             .eq('user_id', this.currentUser.id)
             .order('created_at', { ascending: false })
-            .limit(20);
+            .limit(100);
 
         return error ? [] : (data || []);
     },

@@ -249,6 +249,9 @@
             <a class="sb-item" href="#profile" onclick="switchView('profile', event)">
                 <span class="sb-item__icon">👤</span> 내 프로필
             </a>
+            <a class="sb-item" href="#notifications" onclick="switchView('notifications', event)">
+                <span class="sb-item__icon">🔔</span> 전체 알림
+            </a>
         </nav>
 
         <div class="sb-footer">
@@ -286,7 +289,7 @@
                             </div>
                             <div class="notif-panel__body" id="notifPanelBody"></div>
                             <div class="notif-panel__footer">
-                                <button onclick="switchView('chat'); closeNotifPanel();">채팅으로 이동 →</button>
+                                <button onclick="switchView('notifications'); closeNotifPanel();">전체 알림 보기 →</button>
                             </div>
                         </div>
                     </div>
@@ -1387,6 +1390,18 @@
 
                 </div><!-- /view-contracts -->
 
+                <!-- ══════════════ 전체 알림 뷰 ══════════════ -->
+                <div class="view" id="view-notifications">
+                    <div class="assign-view__header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                        <div>
+                            <h2 style="font-size:1.15rem;font-weight:800;color:#0d1b3e;margin:0;">🔔 전체 알림</h2>
+                            <p style="font-size:0.82rem;color:#8a95a8;margin:4px 0 0;">받은 모든 알림을 확인할 수 있습니다.</p>
+                        </div>
+                        <button onclick="markAllNotificationsReadFull()" style="padding:8px 16px;background:#eef2f8;border:1px solid #d7deea;border-radius:8px;font-size:0.8rem;font-weight:700;color:#3a4a66;cursor:pointer;">모두 읽음 처리</button>
+                    </div>
+                    <div id="allNotifsList" style="margin-top:16px;max-width:760px;">불러오는 중...</div>
+                </div>
+
                 <!-- ══════════════ 채팅 뷰 ══════════════ -->
                 <div class="view" id="view-chat">
                     <div class="chat-layout">
@@ -2097,7 +2112,8 @@
                     chat: '고객사 채팅',
                     settlement: '정산 내역',
                     reviews: '고객 후기',
-                    profile: '내 프로필'
+                    profile: '내 프로필',
+                    notifications: '전체 알림'
                 };
                 document.querySelector('.topbar__page-title').textContent = names[view] || '통역사 대시보드';
 
@@ -2113,6 +2129,10 @@
                 // 홈 뷰 진입 시 D-day 컨펌 배너 갱신
                 if (view === 'home') {
                     loadConfirmationBanner();
+                }
+                // 전체 알림 뷰 진입 시 목록 렌더링
+                if (view === 'notifications' && typeof renderAllNotifications === 'function') {
+                    renderAllNotifications();
                 }
                 // 스케줄 뷰 진입 시 캘린더 초기화 (매번 최신 데이터 반영)
                 if (view === 'schedule') {
@@ -6304,6 +6324,42 @@
             showToast('✅ 모든 알림을 읽음 처리했습니다.');
         }
 
+        // ══════════════ 전체 알림 뷰 ══════════════
+        function renderAllNotifications() {
+            var list = document.getElementById('allNotifsList');
+            if (!list) return;
+            var dbNotifs = (window.InterpreterApp && InterpreterApp._notifications) || [];
+            if (!dbNotifs.length) {
+                list.innerHTML = '<div style="text-align:center;padding:48px 20px;color:#9aa7bd;font-size:0.9rem;line-height:1.8;">🔔<br>받은 알림이 없습니다.</div>';
+                return;
+            }
+            var sorted = dbNotifs.slice().sort(function(a, b) { return String(b.created_at || '').localeCompare(String(a.created_at || '')); });
+            var iconMap = { rate_approved:'✅', rate_rejected:'❌', rate_admin_edit:'✏️', rate_change:'💰', assignment:'📋', contract:'📄', settlement:'💰', chat:'💬', service:'📋', system:'🔔' };
+            var esc = function(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+            list.innerHTML = sorted.map(function(n) {
+                var d = n.created_at ? new Date(n.created_at) : null;
+                var when = d ? (d.toLocaleDateString('ko-KR') + ' ' + d.toTimeString().slice(0, 5)) : '';
+                var unread = !n.is_read;
+                var icon = iconMap[n.notification_type] || '🔔';
+                return '<div onclick="markNotifReadFromList(\'' + n.id + '\')" style="display:flex;gap:12px;padding:14px 16px;border:1px solid ' + (unread ? '#cfe0ff' : '#eceff4') + ';background:' + (unread ? '#f5f9ff' : '#fff') + ';border-radius:12px;margin-bottom:10px;cursor:pointer;">' +
+                    '<div style="font-size:1.2rem;line-height:1.4;">' + icon + '</div>' +
+                    '<div style="flex:1;min-width:0;">' +
+                        '<div style="font-weight:700;font-size:0.86rem;color:#0d1b3e;margin-bottom:3px;">' + esc(n.title || '알림') + (unread ? ' <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#e53935;vertical-align:middle;margin-left:4px;"></span>' : '') + '</div>' +
+                        '<div style="font-size:0.82rem;color:#5a6678;line-height:1.6;white-space:pre-wrap;word-break:break-word;">' + esc(n.message || '') + '</div>' +
+                        '<div style="font-size:0.72rem;color:#a3acbd;margin-top:6px;">' + when + '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+        async function markNotifReadFromList(id) {
+            if (typeof markNotifRead === 'function') { try { await markNotifRead(id); } catch(e) {} }
+            renderAllNotifications();
+        }
+        async function markAllNotificationsReadFull() {
+            if (typeof markAllNotifsRead === 'function') { try { await markAllNotifsRead(); } catch(e) {} }
+            renderAllNotifications();
+        }
+
         document.addEventListener('click', function(e) {
             const panel = document.getElementById('notifPanel');
             const wrap = document.querySelector('.notif-panel-wrap');
@@ -7289,7 +7345,7 @@
     <script src="review-filter.js?v=20260518c"></script>
     <script src="shared-constants.js"></script>
     <script src="chat-data.js?v=20260507-cancelled-at"></script>
-    <script src="interpreter-app.js?v=20260622b"></script>
+    <script src="interpreter-app.js?v=20260622c"></script>
     <script src="script.js"></script>
 
     <script>

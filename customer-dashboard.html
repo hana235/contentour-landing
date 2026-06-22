@@ -249,7 +249,7 @@
             </div>
             <div class="notif-panel__body" id="notifPanelBody"></div>
             <div class="notif-panel__footer">
-              <button onclick="switchView('chat'); closeNotifPanel();">채팅으로 이동 &#8594;</button>
+              <button onclick="switchView('notifications'); closeNotifPanel();">전체 알림 보기 &#8594;</button>
             </div>
           </div>
         </div>
@@ -664,6 +664,18 @@
             <div class="sc-empty">불러오는 중...</div>
           </div>
         </div>
+      </div>
+
+      <!-- VIEW: 전체 알림 -->
+      <div class="view" id="view-notifications">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+          <div>
+            <h2 style="font-size:1.15rem;font-weight:800;color:#0a2a5e;margin:0;">🔔 전체 알림</h2>
+            <p style="font-size:0.82rem;color:#9daec8;margin:4px 0 0;">받은 모든 알림을 확인할 수 있습니다.</p>
+          </div>
+          <button onclick="markAllNotificationsReadFull()" style="padding:8px 16px;background:#eef2f8;border:1px solid #d7deea;border-radius:8px;font-size:0.8rem;font-weight:700;color:#3a4a66;cursor:pointer;">모두 읽음 처리</button>
+        </div>
+        <div id="allNotifsList" style="max-width:760px;">불러오는 중...</div>
       </div>
 
       <!-- VIEW: 통역사 채팅 -->
@@ -1868,7 +1880,7 @@
       var tabEl = document.getElementById('ptab-' + v);
       if (viewEl) viewEl.classList.add('active');
       if (tabEl) tabEl.classList.add('active');
-      const titles = { home:'홈', inquiry:'통역 문의 접수', list:'나의 문의 현황', contract:'계약·결제 관리', showcase:'내 구인공고', schedule:'파견 일정 확인', chat:'통역사 채팅', journal:'상담일지 작성', mypage:'마이페이지' };
+      const titles = { home:'홈', inquiry:'통역 문의 접수', list:'나의 문의 현황', contract:'계약·결제 관리', showcase:'내 구인공고', schedule:'파견 일정 확인', chat:'통역사 채팅', journal:'상담일지 작성', mypage:'마이페이지', notifications:'전체 알림' };
       document.getElementById('topbarTitle').textContent = titles[v] || '';
       // 의뢰 현황 카드: 의뢰 접수/문의 현황 뷰에서만 표시
       const inquiryCards = document.getElementById('inquirySummaryCards');
@@ -1884,6 +1896,7 @@
       if (v === 'contract') { _contractsDbLoaded = false; renderContracts(); contractsLoadFromDB(); }
       if (v === 'list') { loadMyInquiries(); }
       if (v === 'showcase') { loadMyShowcasePostings(); }
+      if (v === 'notifications') { renderAllNotifications(); }
       if (v === 'mypage') {
         (async function() {
           await loyMigrateFromLocalStorage();
@@ -4444,6 +4457,47 @@
       if (typeof ChatData !== 'undefined' && window.sbClient) {
           ChatData.markAllNotificationsRead();
       }
+    }
+
+    // ══════════════ 전체 알림 뷰 ══════════════
+    async function renderAllNotifications() {
+      var list = document.getElementById('allNotifsList');
+      if (!list) return;
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:#9daec8;">불러오는 중...</div>';
+      if (typeof ChatData === 'undefined' || !window.sbClient) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:#9daec8;">로그인이 필요합니다.</div>';
+        return;
+      }
+      var notifs = await ChatData.loadNotifications(100);
+      if (!notifs || !notifs.length) {
+        list.innerHTML = '<div style="text-align:center;padding:48px 20px;color:#9daec8;font-size:0.9rem;line-height:1.8;">🔔<br>받은 알림이 없습니다.</div>';
+        return;
+      }
+      var iconMap = { chat:'💬', payment:'💰', service:'📋', contract:'📄', settlement:'💰', system:'🔔' };
+      list.innerHTML = notifs.map(function(n) {
+        var d = n.created_at ? new Date(n.created_at) : null;
+        var when = d ? (d.toLocaleDateString('ko-KR') + ' ' + d.toTimeString().slice(0, 5)) : '';
+        var unread = !n.is_read;
+        var icon = iconMap[n.notification_type] || '🔔';
+        return '<div onclick="custNotifReadFromList(\'' + n.id + '\')" style="display:flex;gap:12px;padding:14px 16px;border:1px solid ' + (unread ? '#cfe0ff' : '#eceff4') + ';background:' + (unread ? '#f5f9ff' : '#fff') + ';border-radius:12px;margin-bottom:10px;cursor:pointer;">' +
+          '<div style="font-size:1.2rem;line-height:1.4;">' + icon + '</div>' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-weight:700;font-size:0.86rem;color:#0a2a5e;margin-bottom:3px;">' + escapeHtml(n.title || '알림') + (unread ? ' <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#e53935;vertical-align:middle;margin-left:4px;"></span>' : '') + '</div>' +
+            '<div style="font-size:0.82rem;color:#5a6678;line-height:1.6;white-space:pre-wrap;word-break:break-word;">' + escapeHtml(n.message || '') + '</div>' +
+            '<div style="font-size:0.72rem;color:#a3acbd;margin-top:6px;">' + when + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+    async function custNotifReadFromList(id) {
+      if (typeof ChatData !== 'undefined') { try { await ChatData.markNotificationRead(id); } catch(e) {} }
+      renderAllNotifications();
+      if (typeof renderNotifPanel === 'function') { try { renderNotifPanel(); } catch(e) {} }
+    }
+    async function markAllNotificationsReadFull() {
+      if (typeof ChatData !== 'undefined') { try { await ChatData.markAllNotificationsRead(); } catch(e) {} }
+      renderAllNotifications();
+      if (typeof renderNotifPanel === 'function') { try { renderNotifPanel(); } catch(e) {} }
     }
 
     // 패널 외부 클릭 시 닫기
