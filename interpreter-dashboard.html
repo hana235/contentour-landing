@@ -6890,7 +6890,7 @@
                 banner.style.display = 'block';
                 banner.innerHTML = '<div style="background:#fce4ec;border:1.5px solid #ef9a9a;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:0.82rem;color:#c62828;line-height:1.7;">' +
                     '<strong>❌ 단가 변경이 반려되었습니다.</strong>' +
-                    (reason ? '<br>사유: ' + reason : '') +
+                    (reason ? '<br>사유: ' + String(reason).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '') +
                     '<br><span style="font-size:0.78rem;color:#666;">단가를 수정 후 다시 신청할 수 있습니다.</span>' +
                     '</div>';
                 setRateInputsDisabled(false);
