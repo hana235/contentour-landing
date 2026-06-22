@@ -207,6 +207,23 @@ async function handleApplication(req, res) {
             var langList = (payload.language_pairs || []).map(function(l) { return l && l.to ? l.to : null; })
                 .filter(function(v) { return !!v; });
             langList = langList.filter(function(v, i, a) { return a.indexOf(v) === i; });
+
+            // 도착/출발 언어 기반 country_code 자동 추정 (통역사 정보 페이지 국가 탭 노출용)
+            // 관리자가 검수 모달에서 언제든 수정 가능. 한국어는 무시하고 첫 외국어로 매핑.
+            var LANG_TO_COUNTRY = {
+                '일본어': 'jp', '중국어': 'cn', '독일어': 'de', '베트남어': 'vn',
+                '영어': 'us', '프랑스어': 'fr', '아랍어': 'ae', '태국어': 'th',
+                '인도네시아어': 'id', '힌디어': 'in'
+            };
+            var allLangs = [];
+            (payload.language_pairs || []).forEach(function(l) {
+                if (l) { if (l.from) allLangs.push(l.from); if (l.to) allLangs.push(l.to); }
+            });
+            var derivedCountry = null;
+            for (var li = 0; li < allLangs.length; li++) {
+                if (LANG_TO_COUNTRY[allLangs[li]]) { derivedCountry = LANG_TO_COUNTRY[allLangs[li]]; break; }
+            }
+
             try {
                 await sb.from('40_통역사프로필').insert({
                     user_id: userId,
@@ -217,6 +234,7 @@ async function handleApplication(req, res) {
                     experience_years: parseInt(payload.total_experience) || 0,
                     intro: payload.intro || '',
                     certifications: (payload.certifications || []).map(function(c) { return c && c.name ? c.name : (typeof c === 'string' ? c : ''); }).filter(Boolean),
+                    country_code: derivedCountry,
                     is_active: false
                 });
             } catch (pErr) {

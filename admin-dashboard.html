@@ -6250,6 +6250,18 @@
                 html += row('통역 언어', (p.languages || []).join(', ') || '-');
                 html += row('전문 분야', (p.specialties || []).join(', ') || '-');
 
+                // 노출 국가 — 통역사 정보 페이지 국가 탭에 어느 국가로 표시할지 (admin 지정/수정)
+                var COUNTRY_OPTS = [['us','미국'],['jp','일본'],['cn','중국'],['de','독일'],['vn','베트남'],['ae','아랍에미리트'],['th','태국'],['fr','프랑스'],['in','인도'],['id','인도네시아'],['sg','싱가포르']];
+                html += '<div style="margin-top:16px;font-weight:800;font-size:0.9rem;margin-bottom:8px;color:var(--navy);">🌍 노출 국가 <span style="font-weight:500;font-size:0.74rem;color:#999;">(통역사 정보 페이지 국가 탭)</span></div>';
+                html += '<div style="display:flex;gap:10px;align-items:center;background:#f8f9fb;padding:12px 14px;border-radius:10px;">';
+                html += '<select id="interpCountrySelect" style="flex:1;padding:8px 10px;border:1.5px solid #d0d7e3;border-radius:8px;font-size:0.84rem;">';
+                html += '<option value="">미지정 (국가 탭에 표시 안 됨)</option>';
+                COUNTRY_OPTS.forEach(function(o){ html += '<option value="' + o[0] + '"' + (p.country_code === o[0] ? ' selected' : '') + '>' + o[1] + ' (' + o[0] + ')</option>'; });
+                html += '</select>';
+                html += '<button onclick="saveInterpCountry(\'' + userId + '\')" style="padding:8px 18px;border:none;color:#fff;background:linear-gradient(135deg,#1565c0,#0d47a1);border-radius:8px;cursor:pointer;font-weight:700;font-size:0.82rem;white-space:nowrap;">국가 저장</button>';
+                html += '</div>';
+                if (!p.country_code) html += '<p style="font-size:0.74rem;color:#e65100;margin-top:6px;">⚠️ 국가 미지정 상태 — 통역사 정보 페이지에 노출되지 않습니다.</p>';
+
                 // 자격증
                 if (p.certifications && p.certifications.length > 0) {
                     html += '<div style="margin-top:16px;font-weight:800;font-size:0.9rem;margin-bottom:12px;color:var(--navy);">🏅 자격증</div>';
@@ -6512,6 +6524,25 @@
             function showRejectRateInput(userId) {
                 var area = document.getElementById('rejectRateInputArea');
                 if (area) area.style.display = 'block';
+            }
+
+            // 통역사 노출 국가(country_code) 저장 — 통역사 정보 페이지 국가 탭 매핑
+            async function saveInterpCountry(userId) {
+                if (!supabase) return;
+                var sel = document.getElementById('interpCountrySelect');
+                var code = sel ? sel.value : '';
+                try {
+                    var { error } = await supabase.from('40_통역사프로필')
+                        .update({ country_code: code || null })
+                        .eq('user_id', userId);
+                    if (error) throw error;
+                    var p = _interpAllData.find(function(x) { return x.user_id === userId; });
+                    if (p) p.country_code = code || null;
+                    showToast(code ? '✅ 노출 국가가 저장되었습니다.' : '국가 미지정으로 저장되었습니다.');
+                } catch (e) {
+                    console.error('국가 저장 실패:', e);
+                    showToast('⚠️ 국가 저장 실패: ' + (e.message || ''));
+                }
             }
 
             async function approveRate(userId) {
