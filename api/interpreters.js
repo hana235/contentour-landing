@@ -18,7 +18,8 @@ module.exports = async function handler(req, res) {
 
         if (error) throw error;
 
-        res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+        // 브라우저는 매번 재검증(저장 직후 반영), CDN만 짧게 캐시해 성능 유지
+        res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=120');
         return res.status(200).json(data || []);
     } catch (e) {
         console.error('Interpreter query error:', e);

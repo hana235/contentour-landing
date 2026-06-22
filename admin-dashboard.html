@@ -6532,10 +6532,15 @@
                 var sel = document.getElementById('interpCountrySelect');
                 var code = sel ? sel.value : '';
                 try {
-                    var { error } = await supabase.from('40_통역사프로필')
+                    var { data, error } = await supabase.from('40_통역사프로필')
                         .update({ country_code: code || null })
-                        .eq('user_id', userId);
+                        .eq('user_id', userId)
+                        .select('user_id, country_code');
                     if (error) throw error;
+                    if (!data || data.length === 0) {
+                        showToast('⚠️ 저장되지 않았습니다(권한 또는 대상 없음). 새로고침 후 다시 시도해주세요.');
+                        return;
+                    }
                     var p = _interpAllData.find(function(x) { return x.user_id === userId; });
                     if (p) p.country_code = code || null;
                     showToast(code ? '✅ 노출 국가가 저장되었습니다.' : '국가 미지정으로 저장되었습니다.');
