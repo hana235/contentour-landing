@@ -195,14 +195,45 @@ const InterpreterApp = {
                     const newRow = payload.new || {};
                     const verifyChanged = oldRow.is_verified !== newRow.is_verified
                         || (oldRow.verification_note || '') !== (newRow.verification_note || '');
-                    if (!verifyChanged) return; // 검수 외 프로필 수정은 무시
-                    console.log('[Realtime] 검수 상태 변경:', newRow.is_verified);
+                    // 단가 승인/반려 변경 감지 (admin approveRate/rejectRate → 실시간 반영)
+                    const rateChanged = (oldRow.rate_status || '') !== (newRow.rate_status || '')
+                        || JSON.stringify(oldRow.rate_by_type || {}) !== JSON.stringify(newRow.rate_by_type || {})
+                        || JSON.stringify(oldRow.rate_by_language || {}) !== JSON.stringify(newRow.rate_by_language || {});
+                    if (!verifyChanged && !rateChanged) return; // 그 외 본인 프로필 수정은 무시
+
                     if (this.interpProfile) {
-                        this.interpProfile.is_verified = newRow.is_verified;
-                        this.interpProfile.verification_note = newRow.verification_note;
+                        if (verifyChanged) {
+                            this.interpProfile.is_verified = newRow.is_verified;
+                            this.interpProfile.verification_note = newRow.verification_note;
+                        }
+                        if (rateChanged) {
+                            this.interpProfile.rate_status = newRow.rate_status;
+                            this.interpProfile.rate_by_type = newRow.rate_by_type;
+                            this.interpProfile.rate_by_language = newRow.rate_by_language;
+                            this.interpProfile.pending_rate_by_type = newRow.pending_rate_by_type;
+                            this.interpProfile.pending_rate_by_language = newRow.pending_rate_by_language;
+                            this.interpProfile.rate_rejected_reason = newRow.rate_rejected_reason;
+                            this.interpProfile.base_rate = newRow.base_rate;
+                        }
                     }
-                    if (typeof loadVerifyDocs === 'function') { try { loadVerifyDocs(); } catch (e) {} }
-                    this.showToast(newRow.is_verified ? '✅ 통역사 인증이 승인되었습니다.' : '📋 검수 상태가 업데이트되었습니다.');
+
+                    if (verifyChanged) {
+                        console.log('[Realtime] 검수 상태 변경:', newRow.is_verified);
+                        if (typeof loadVerifyDocs === 'function') { try { loadVerifyDocs(); } catch (e) {} }
+                        this.showToast(newRow.is_verified ? '✅ 통역사 인증이 승인되었습니다.' : '📋 검수 상태가 업데이트되었습니다.');
+                    }
+
+                    if (rateChanged) {
+                        console.log('[Realtime] 단가 상태 변경:', newRow.rate_status);
+                        // 단가 입력칸·승인 배너 즉시 재렌더 (loadProfileView가 pending/approved 분기 처리)
+                        try { this.loadProfileView(); } catch (e) {}
+                        if (typeof updateRatePreview === 'function') { try { updateRatePreview(); } catch (e) {} }
+                        if (newRow.rate_status === 'approved') {
+                            this.showToast('✅ 단가 변경이 승인되어 적용되었습니다.');
+                        } else if (newRow.rate_status === 'rejected') {
+                            this.showToast('❌ 단가 변경이 반려되었습니다.' + (newRow.rate_rejected_reason ? ' 사유: ' + newRow.rate_rejected_reason : ''));
+                        }
+                    }
                 })
                 .subscribe();
             this._realtimeChannels.push(ch3);
