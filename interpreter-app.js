@@ -1180,20 +1180,23 @@ const InterpreterApp = {
             });
         }
 
-        // 단가 정보 (승인된 단가 표시)
-        const rates = p.rate_by_type || {};
-        setVal('rate-booth', rates.booth);
-        setVal('rate-meeting', rates.meeting);
-        setVal('rate-conference', rates.conference);
-        setVal('rate-operation', rates.operation);
-
-        const langRates = p.rate_by_language || {};
-        setVal('lrate-en', langRates.en);
-        setVal('lrate-jp', langRates.jp);
-        setVal('lrate-cn', langRates.cn);
-        setVal('lrate-de', langRates.de);
-        setVal('lrate-vn', langRates.vn);
-        setVal('lrate-ar', langRates.ar);
+        // 단가 정보: 승인 대기 중이면 통역사가 '신청한' 단가(pending)를 표시해
+        // "내가 고친 값이 사라졌다"처럼 보이는 문제 방지. 그 외에는 승인된 단가 표시.
+        const isPending = p.rate_status === 'pending' && p.pending_rate_by_type;
+        const rates = (isPending ? p.pending_rate_by_type : p.rate_by_type) || {};
+        const langRates = (isPending ? p.pending_rate_by_language : p.rate_by_language) || {};
+        // 0도 정상값이므로 falsy 스킵 없이 명시적으로 채움
+        const setRate = (id, val) => { const el = document.getElementById(id); if (el) el.value = (val != null ? val : 0); };
+        setRate('rate-booth', rates.booth);
+        setRate('rate-meeting', rates.meeting);
+        setRate('rate-conference', rates.conference);
+        setRate('rate-operation', rates.operation);
+        setRate('lrate-en', langRates.en);
+        setRate('lrate-jp', langRates.jp);
+        setRate('lrate-cn', langRates.cn);
+        setRate('lrate-de', langRates.de);
+        setRate('lrate-vn', langRates.vn);
+        setRate('lrate-ar', langRates.ar);
 
         // 프로필 사진 로드
         if (p.profile_image_url) {
