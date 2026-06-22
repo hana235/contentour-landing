@@ -212,6 +212,28 @@ body {
     padding-bottom: 2px;
 }
 
+/* 로고 옆 플랫폼명 병기 (콘텐츄어 로고 + CONFEX) */
+.nav__logo-confex {
+    margin-left: 12px;
+    padding-left: 12px;
+    border-left: 1.5px solid #d5dbe3;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #0d2a52;
+    line-height: 1;
+}
+
+@media (max-width: 480px) {
+    .nav__logo-confex {
+        margin-left: 8px;
+        padding-left: 8px;
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+    }
+}
+
 /* 데스크톱 기본: 메뉴 가로 */
 .nav__menu {
     display: flex;
