@@ -3557,6 +3557,9 @@
                     if (now > end) return { status:'balance_pay', statusText:'잔금 결제 대기' };
                     return { status:'in_progress', statusText:'서비스 진행중' };
                 }
+                // 잔금까지 결제 완료(레거시 10:90 / 잔금 분리 결제) — 고객·통역사 대시보드와 동일하게 진행중 처리
+                // (명시 분기 없으면 default '검토중'으로 폴백돼 관리자에게만 어긋남)
+                if (s === 'balance_paid' || s === 'paid') return { status:'in_progress', statusText:'서비스 진행중' };
                 if (c.contract_signed && c.deposit_status === 'pending') return { status:'deposit_pay', statusText:'선결제 대기' };
                 if (c.interpreter_accepted === true && !c.contract_signed) return { status:'contract_sign', statusText:'계약 체결 대기' };
                 if (c.interpreter_accepted === null && s === 'pending') return { status:'quote_review', statusText:'배정 확인 대기' };
