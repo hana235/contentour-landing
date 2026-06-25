@@ -763,6 +763,19 @@
                 <span class="j-tag" onclick="toggleJTag(this)">&#127481;&#127469; 동남아</span>
                 <span class="j-tag" onclick="toggleJTag(this)">기타</span>
               </div>
+
+              <!-- ══════════════ 현장 바이어 수집 (명함) ══════════════ -->
+              <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <span>🤝 현장 바이어 수집</span>
+                <span style="display:flex;gap:6px;">
+                  <button type="button" class="jbtn-ghost" onclick="loadBuyersIntoList('j-buyer-collect-list','contentour')" style="font-size:0.74rem;padding:5px 10px;">⤓ 수집 바이어 불러오기</button>
+                  <button type="button" class="jbtn-ghost" onclick="exportBuyersCsv('j-buyer-collect-list','j-expo')" style="font-size:0.74rem;padding:5px 10px;">📊 엑셀 내보내기</button>
+                </span>
+              </div>
+              <div class="j-notice">💡 미팅에서 교환한 명함 정보를 입력해두면 전시회별 바이어 명단으로 모이고, 엑셀로 내려받을 수 있습니다. (일지 저장 시 함께 저장됩니다)</div>
+              <div id="j-buyer-collect-list"></div>
+              <button type="button" class="jbtn-ghost" onclick="addBuyerToList('j-buyer-collect-list','contentour')" style="margin:4px 0 18px;font-size:0.78rem;">+ 바이어 추가</button>
+
               <div class="j-section">주요 상담 내용 & 성과</div>
               <div class="j-grid">
                 <div class="j-field span2"><label>오늘의 상담 내용 요약 *</label><textarea id="j-summary" rows="4" placeholder="예: 오전에 독일 유통사 A사와 제품 시연 진행. 오후에는 미국 바이어 2팀과 가격 협의."></textarea></div>
@@ -960,20 +973,15 @@
               </div>
 
               <div class="j-section-card">
-                <div class="j-section">상담 바이어 정보</div>
-                <div id="bp-buyer-list">
-                  <div class="j-grid" style="margin-bottom:12px;padding:14px;background:var(--gray-100);border-radius:10px;">
-                    <div class="j-field"><label>바이어 회사명</label><input type="text" placeholder="회사명"></div>
-                    <div class="j-field"><label>바이어 국가</label><input type="text" placeholder="국가"></div>
-                    <div class="j-field"><label>담당자명 / 직위</label><input type="text" placeholder="예: John Smith / Manager"></div>
-                    <div class="j-field"><label>연락처 (이메일)</label><input type="email" placeholder="이메일"></div>
-                    <div class="j-field span2"><label>상담 내용 요약</label><textarea rows="2" placeholder="상담 내용을 간략히 기록해주세요."></textarea></div>
-                    <div class="j-field"><label>상담 결과</label>
-                      <select><option value="">선택</option><option>계약 체결</option><option>샘플 발송 합의</option><option>추가 협의 예정</option><option>관심 표명</option><option>불발</option></select>
-                    </div>
-                    <div class="j-field"><label>예상 계약 금액 (USD)</label><input type="text" placeholder="예: $50,000"></div>
-                  </div>
+                <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                  <span>🤝 상담 바이어 정보</span>
+                  <span style="display:flex;gap:6px;">
+                    <button type="button" class="jbtn-ghost" onclick="loadBuyersIntoList('bp-buyer-list','busan')" style="font-size:0.72rem;padding:5px 10px;">⤓ 불러오기</button>
+                    <button type="button" class="jbtn-ghost" onclick="exportBuyersCsv('bp-buyer-list','bp-expo')" style="font-size:0.72rem;padding:5px 10px;">📊 엑셀</button>
+                  </span>
                 </div>
+                <div class="j-notice">💡 교환한 명함 정보를 입력해두면 전시회별 바이어 명단으로 모이고 엑셀로 내려받을 수 있습니다.</div>
+                <div id="bp-buyer-list"></div>
                 <button class="jbtn-ghost" onclick="addBusanBuyer()" style="margin-top:8px;font-size:0.78rem;">+ 바이어 추가</button>
               </div>
 
@@ -1055,22 +1063,15 @@
               </div>
 
               <div class="j-section-card">
-                <div class="j-section">주요 상담 바이어 기록</div>
-                <div id="kt-buyer-list">
-                  <div class="j-grid" style="margin-bottom:12px;padding:14px;background:var(--gray-100);border-radius:10px;">
-                    <div class="j-field"><label>바이어 업체명</label><input type="text" placeholder="업체명"></div>
-                    <div class="j-field"><label>국가</label><input type="text" placeholder="국가"></div>
-                    <div class="j-field"><label>바이어 유형</label>
-                      <select><option value="">선택</option><option>수입상</option><option>도매상</option><option>소매상</option><option>제조업체</option><option>에이전트</option><option>기타</option></select>
-                    </div>
-                    <div class="j-field"><label>관심 품목</label><input type="text" placeholder="관심 품목"></div>
-                    <div class="j-field span2"><label>상담 내용</label><textarea rows="2" placeholder="구체적 상담 내용을 기록해주세요."></textarea></div>
-                    <div class="j-field"><label>상담 결과</label>
-                      <select><option value="">선택</option><option>계약 체결</option><option>MOU 체결</option><option>샘플 발송</option><option>견적 요청</option><option>추후 협의</option><option>불발</option></select>
-                    </div>
-                    <div class="j-field"><label>예상 수출 금액 (USD)</label><input type="text" placeholder="예: $30,000"></div>
-                  </div>
+                <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                  <span>🤝 주요 상담 바이어 기록</span>
+                  <span style="display:flex;gap:6px;">
+                    <button type="button" class="jbtn-ghost" onclick="loadBuyersIntoList('kt-buyer-list','kita')" style="font-size:0.72rem;padding:5px 10px;">⤓ 불러오기</button>
+                    <button type="button" class="jbtn-ghost" onclick="exportBuyersCsv('kt-buyer-list','kt-expo')" style="font-size:0.72rem;padding:5px 10px;">📊 엑셀</button>
+                  </span>
                 </div>
+                <div class="j-notice">💡 교환한 명함 정보를 입력해두면 전시회별 바이어 명단으로 모이고 엑셀로 내려받을 수 있습니다.</div>
+                <div id="kt-buyer-list"></div>
                 <button class="jbtn-ghost" onclick="addKitaBuyer()" style="margin-top:8px;font-size:0.78rem;">+ 바이어 추가</button>
               </div>
 
@@ -2383,6 +2384,10 @@
       document.getElementById('j-summary').value = j.summary || '';
       document.getElementById('jeditorSavedAt').textContent = '마지막 저장: ' + j.date;
 
+      // 이 전시회로 수집된 바이어 자동 불러오기 (조용히)
+      var bclL = document.getElementById('j-buyer-collect-list'); if (bclL) bclL.innerHTML = '';
+      loadBuyersIntoList('j-buyer-collect-list', 'contentour', true);
+
       // 국가 태그 복원
       document.querySelectorAll('#countryTags .j-tag').forEach(function(el) {
         var tagText = el.textContent.trim();
@@ -2458,6 +2463,7 @@
       document.querySelectorAll('.j-tag').forEach(t => t.classList.remove('selected'));
       document.querySelectorAll('.cs-scale__opt').forEach(t => t.classList.remove('selected'));
       var cmemo = document.getElementById('cs-consult-memo'); if (cmemo) cmemo.value = '';
+      var bcl = document.getElementById('j-buyer-collect-list'); if (bcl) bcl.innerHTML = '';
       Object.keys(starValues).forEach(k => { starValues[k] = 0; renderStars(k); });
       document.getElementById('jeditorSavedAt').textContent = '마지막 저장: —';
     }
@@ -2567,6 +2573,9 @@
                 } catch(revE) { console.warn('통역사 평가 저장 예외:', revE); }
               }
             }
+
+            // 현장 수집 바이어(명함) 저장 → 53_현장바이어
+            await saveBuyersFromList('j-buyer-collect-list', 'contentour');
           }
         } catch(e) { console.error('상담일지 DB 저장 실패:', e); showJToast('&#9888;&#65039; 저장 중 네트워크 오류가 발생했습니다. 잠시 후 저장 버튼을 다시 눌러주세요.'); }
       }
@@ -2840,39 +2849,148 @@
       document.getElementById('fmt-' + fmt).classList.add('active');
     }
 
-    // 부산테크노파크 바이어 추가
-    function addBusanBuyer() {
-      const list = document.getElementById('bp-buyer-list');
-      const row = document.createElement('div');
-      row.className = 'j-grid';
+    // ══════════════ 현장 바이어 수집 (명함) — 세 양식 공통 카드 ══════════════
+    function _bEsc(v) { return (v == null ? '' : String(v)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    // 양식별 추가필드 (공통 카드 뒤에 조건부로 붙음)
+    var BUYER_FORM_EXTRAS = {
+      contentour: [],
+      busan: [
+        { bf: 'deal_result', label: '상담 결과', type: 'select', opts: ['', '계약 체결', '샘플 발송 합의', '추가 협의 예정', '관심 표명', '불발'] },
+        { bf: 'expected_amount', label: '예상 계약 금액 (USD)', type: 'text', ph: '예: $50,000' }
+      ],
+      kita: [
+        { bf: 'buyer_type', label: '바이어 유형', type: 'select', opts: ['', '수입상', '도매상', '소매상', '제조업체', '에이전트', '기타'] },
+        { bf: 'interest_items', label: '관심 품목', type: 'text', ph: '관심 품목' },
+        { bf: 'deal_result', label: '상담 결과', type: 'select', opts: ['', '계약 체결', 'MOU 체결', '샘플 발송', '견적 요청', '추후 협의', '불발'] },
+        { bf: 'expected_amount', label: '예상 수출 금액 (USD)', type: 'text', ph: '예: $30,000' }
+      ]
+    };
+
+    function _buyerExtraHtml(formType, b) {
+      var extras = BUYER_FORM_EXTRAS[formType] || [];
+      return extras.map(function(f) {
+        if (f.type === 'select') {
+          var opts = f.opts.map(function(o) { return '<option value="' + _bEsc(o) + '"' + (b[f.bf] === o ? ' selected' : '') + '>' + (o ? o : '선택') + '</option>'; }).join('');
+          return '<div class="j-field"><label>' + f.label + '</label><select data-bf="' + f.bf + '">' + opts + '</select></div>';
+        }
+        return '<div class="j-field"><label>' + f.label + '</label><input type="text" data-bf="' + f.bf + '" value="' + _bEsc(b[f.bf]) + '" placeholder="' + _bEsc(f.ph || '') + '"></div>';
+      }).join('');
+    }
+
+    // 바이어 입력행 추가 (b: DB값으로 prefill 가능)
+    function addBuyerToList(listId, formType, b) {
+      b = b || {};
+      var list = document.getElementById(listId); if (!list) return;
+      var row = document.createElement('div');
+      row.className = 'j-grid jbuyer-row';
       row.style.cssText = 'margin-bottom:12px;padding:14px;background:var(--gray-100);border-radius:10px;position:relative;';
-      row.innerHTML = '<div class="j-field"><label>바이어 회사명</label><input type="text" placeholder="회사명"></div>' +
-        '<div class="j-field"><label>바이어 국가</label><input type="text" placeholder="국가"></div>' +
-        '<div class="j-field"><label>담당자명 / 직위</label><input type="text" placeholder="예: John Smith / Manager"></div>' +
-        '<div class="j-field"><label>연락처 (이메일)</label><input type="email" placeholder="이메일"></div>' +
-        '<div class="j-field span2"><label>상담 내용 요약</label><textarea rows="2" placeholder="상담 내용을 간략히 기록해주세요."></textarea></div>' +
-        '<div class="j-field"><label>상담 결과</label><select><option value="">선택</option><option>계약 체결</option><option>샘플 발송 합의</option><option>추가 협의 예정</option><option>관심 표명</option><option>불발</option></select></div>' +
-        '<div class="j-field"><label>예상 계약 금액 (USD)</label><input type="text" placeholder="예: $50,000"></div>' +
-        '<button class="jbtn-ghost" onclick="this.parentElement.remove()" style="position:absolute;top:8px;right:8px;padding:4px 8px;font-size:0.7rem;color:var(--error);">삭제</button>';
+      if (b.id) row.dataset.buyerId = b.id;
+      row.dataset.formType = formType;
+      var statuses = ['미연락', '견적발송', '협의중', '계약', '보류'];
+      var statusOpts = statuses.map(function(s) { return '<option' + (b.follow_up_status === s ? ' selected' : '') + '>' + s + '</option>'; }).join('');
+      row.innerHTML =
+        '<div class="j-field"><label>회사명</label><input type="text" data-bf="company" value="' + _bEsc(b.company) + '" placeholder="회사명"></div>' +
+        '<div class="j-field"><label>국가</label><input type="text" data-bf="country" value="' + _bEsc(b.country) + '" placeholder="국가"></div>' +
+        '<div class="j-field"><label>담당자명</label><input type="text" data-bf="contact_name" value="' + _bEsc(b.contact_name) + '" placeholder="예: John Smith"></div>' +
+        '<div class="j-field"><label>직책</label><input type="text" data-bf="title" value="' + _bEsc(b.title) + '" placeholder="예: Manager"></div>' +
+        '<div class="j-field"><label>이메일</label><input type="email" data-bf="email" value="' + _bEsc(b.email) + '" placeholder="email@company.com"></div>' +
+        '<div class="j-field"><label>전화</label><input type="text" data-bf="phone" value="' + _bEsc(b.phone) + '" placeholder="+82 ..."></div>' +
+        '<div class="j-field"><label>웹사이트</label><input type="text" data-bf="website" value="' + _bEsc(b.website) + '" placeholder="company.com"></div>' +
+        _buyerExtraHtml(formType, b) +
+        '<div class="j-field"><label>팔로업 상태</label><select data-bf="follow_up_status">' + statusOpts + '</select></div>' +
+        '<div class="j-field span2"><label>상담 메모</label><textarea data-bf="memo" rows="2" placeholder="상담 내용을 간략히 기록">' + _bEsc(b.memo) + '</textarea></div>' +
+        '<button type="button" class="jbtn-ghost" onclick="this.closest(\'.jbuyer-row\').remove()" style="position:absolute;top:8px;right:8px;padding:4px 8px;font-size:0.7rem;color:var(--error);">삭제</button>';
       list.appendChild(row);
     }
 
-    // 한국무역협회 바이어 추가
-    function addKitaBuyer() {
-      const list = document.getElementById('kt-buyer-list');
-      const row = document.createElement('div');
-      row.className = 'j-grid';
-      row.style.cssText = 'margin-bottom:12px;padding:14px;background:var(--gray-100);border-radius:10px;position:relative;';
-      row.innerHTML = '<div class="j-field"><label>바이어 업체명</label><input type="text" placeholder="업체명"></div>' +
-        '<div class="j-field"><label>국가</label><input type="text" placeholder="국가"></div>' +
-        '<div class="j-field"><label>바이어 유형</label><select><option value="">선택</option><option>수입상</option><option>도매상</option><option>소매상</option><option>제조업체</option><option>에이전트</option><option>기타</option></select></div>' +
-        '<div class="j-field"><label>관심 품목</label><input type="text" placeholder="관심 품목"></div>' +
-        '<div class="j-field span2"><label>상담 내용</label><textarea rows="2" placeholder="구체적 상담 내용을 기록해주세요."></textarea></div>' +
-        '<div class="j-field"><label>상담 결과</label><select><option value="">선택</option><option>계약 체결</option><option>MOU 체결</option><option>샘플 발송</option><option>견적 요청</option><option>추후 협의</option><option>불발</option></select></div>' +
-        '<div class="j-field"><label>예상 수출 금액 (USD)</label><input type="text" placeholder="예: $30,000"></div>' +
-        '<button class="jbtn-ghost" onclick="this.parentElement.remove()" style="position:absolute;top:8px;right:8px;padding:4px 8px;font-size:0.7rem;color:var(--error);">삭제</button>';
-      list.appendChild(row);
+    // 입력된 바이어행 → 객체 배열 (빈 행 제외)
+    function collectBuyersFromList(listId) {
+      var rows = [];
+      document.querySelectorAll('#' + listId + ' .jbuyer-row').forEach(function(row) {
+        var o = {};
+        row.querySelectorAll('[data-bf]').forEach(function(el) { o[el.dataset.bf] = (el.value || '').trim(); });
+        if (row.dataset.buyerId) o.id = row.dataset.buyerId;
+        if (o.company || o.contact_name || o.email || o.phone || o.memo) rows.push(o);
+      });
+      return rows;
     }
+
+    // 양식별 컨텍스트(전시명/계약/통역사)
+    function _buyerCtx(formType) {
+      if (formType === 'busan') return { exhibition: (document.getElementById('bp-expo') || {}).value || '', contract_id: null, interpreter_id: null };
+      if (formType === 'kita') return { exhibition: (document.getElementById('kt-expo') || {}).value || '', contract_id: null, interpreter_id: null };
+      return { exhibition: (document.getElementById('j-expo') || {}).value || '', contract_id: document.getElementById('j-contract-id').value || null, interpreter_id: document.getElementById('j-interpreter-id').value || null };
+    }
+
+    // 53_현장바이어 저장 (소유=고객사 본인)
+    async function saveBuyersFromList(listId, formType) {
+      if (!window.sbClient) return;
+      var rows = collectBuyersFromList(listId);
+      if (!rows.length) return;
+      try {
+        var user = await ContentourAuth.getCurrentUser(); if (!user) return;
+        var ctx = _buyerCtx(formType);
+        for (var i = 0; i < rows.length; i++) {
+          var r = rows[i];
+          var rec = {
+            customer_id: user.id, interpreter_id: ctx.interpreter_id, contract_id: ctx.contract_id,
+            exhibition_name: ctx.exhibition || '', form_type: formType,
+            company: r.company || null, country: r.country || null, contact_name: r.contact_name || null,
+            title: r.title || null, email: r.email || null, phone: r.phone || null, website: r.website || null,
+            memo: r.memo || null, follow_up_status: r.follow_up_status || '미연락',
+            deal_result: r.deal_result || null, expected_amount: r.expected_amount || null,
+            buyer_type: r.buyer_type || null, interest_items: r.interest_items || null,
+            source: '수기', scanned_by: user.id
+          };
+          if (r.id) await window.sbClient.from('53_현장바이어').update(rec).eq('id', r.id);
+          else await window.sbClient.from('53_현장바이어').insert(rec);
+        }
+      } catch (e) { console.warn('현장 바이어 저장 실패:', e); }
+    }
+
+    // 이 전시/계약으로 수집된 바이어 불러오기
+    async function loadBuyersIntoList(listId, formType, silent) {
+      if (!window.sbClient) { if (!silent) showJToast('&#9888;&#65039; 로그인 후 이용해주세요.'); return; }
+      try {
+        var user = await ContentourAuth.getCurrentUser(); if (!user) { if (!silent) showJToast('&#9888;&#65039; 로그인 후 이용해주세요.'); return; }
+        var ctx = _buyerCtx(formType);
+        var q = window.sbClient.from('53_현장바이어').select('*').eq('customer_id', user.id);
+        if (ctx.contract_id) q = q.eq('contract_id', ctx.contract_id);
+        else if (ctx.exhibition) q = q.eq('exhibition_name', ctx.exhibition);
+        else { if (!silent) showJToast('&#9888;&#65039; 전시회를 먼저 입력해주세요.'); return; }
+        var res = await q.order('created_at', { ascending: true });
+        if (res.error) { console.warn('바이어 불러오기 실패:', res.error); if (!silent) showJToast('&#9888;&#65039; 불러오기 실패. 잠시 후 다시 시도해주세요.'); return; }
+        var list = document.getElementById(listId);
+        var shown = {};
+        list.querySelectorAll('.jbuyer-row[data-buyer-id]').forEach(function(r) { shown[r.dataset.buyerId] = true; });
+        var added = 0;
+        (res.data || []).forEach(function(b) { if (!shown[b.id]) { addBuyerToList(listId, formType, b); added++; } });
+        if (!silent) showJToast('📇 수집 바이어 ' + added + '건 불러왔습니다.');
+      } catch (e) { console.warn('바이어 불러오기 예외:', e); if (!silent) showJToast('&#9888;&#65039; 불러오기 중 오류가 발생했습니다.'); }
+    }
+
+    // 입력된 바이어 명단 CSV(엑셀) 내보내기
+    function exportBuyersCsv(listId, expoFieldId) {
+      var rows = collectBuyersFromList(listId);
+      if (!rows.length) { showJToast('&#9888;&#65039; 내보낼 바이어가 없습니다.'); return; }
+      var expoName = ((document.getElementById(expoFieldId) || {}).value || '전시회').trim();
+      var headers = ['회사명', '국가', '담당자', '직책', '이메일', '전화', '웹사이트', '유형', '관심품목', '상담결과', '예상금액', '팔로업상태', '메모'];
+      var keys = ['company', 'country', 'contact_name', 'title', 'email', 'phone', 'website', 'buyer_type', 'interest_items', 'deal_result', 'expected_amount', 'follow_up_status', 'memo'];
+      function cell(v) { v = (v == null ? '' : String(v)); return '"' + v.replace(/"/g, '""') + '"'; }
+      var csv = headers.map(cell).join(',') + '\r\n' + rows.map(function(r) { return keys.map(function(k) { return cell(r[k]); }).join(','); }).join('\r\n');
+      var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = expoName + '_바이어명단.csv';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showJToast('📊 ' + rows.length + '건 내보냈습니다.');
+    }
+
+    // 버튼 onclick 호환
+    function addBusanBuyer() { addBuyerToList('bp-buyer-list', 'busan'); }
+    function addKitaBuyer() { addBuyerToList('kt-buyer-list', 'kita'); }
 
     // 부산테크노파크 폼
     function clearBusanForm() {
@@ -2893,6 +3011,7 @@
       document.getElementById('bpSavedAt').textContent = '마지막 저장: ' + now;
       var msg = type === 'complete' ? '&#9989; 부산테크노파크 "' + expo + '" ' + date + ' 상담일지가 제출되었습니다!' : '&#128190; 부산테크노파크 "' + expo + '" ' + date + ' 상담일지가 임시저장되었습니다.';
       showJToast(msg);
+      saveBuyersFromList('bp-buyer-list', 'busan');  // 현장 바이어 → 53_현장바이어
     }
 
     // 한국무역협회 폼
@@ -2901,6 +3020,7 @@
       ['kt-staff','kt-total','kt-newbuyer','kt-existing','kt-contract'].forEach(function(id) { var el = document.getElementById(id); if(el) el.value = '0'; });
       document.getElementById('kt-date').value = new Date().toISOString().split('T')[0];
       ['kt-purpose','kt-score1','kt-score2'].forEach(function(id) { var el = document.getElementById(id); if(el) el.value = ''; });
+      var ktbl = document.getElementById('kt-buyer-list'); if (ktbl) ktbl.innerHTML = '';
       document.getElementById('ktSavedAt').textContent = '마지막 저장: —';
     }
     function saveKitaForm(type) {
@@ -2913,6 +3033,7 @@
       document.getElementById('ktSavedAt').textContent = '마지막 저장: ' + now;
       var msg = type === 'complete' ? '&#9989; 한국무역협회 "' + expo + '" ' + date + ' 상담일지가 제출되었습니다!' : '&#128190; 한국무역협회 "' + expo + '" ' + date + ' 상담일지가 임시저장되었습니다.';
       showJToast(msg);
+      saveBuyersFromList('kt-buyer-list', 'kita');  // 현장 바이어 → 53_현장바이어
     }
 
     // ===== 나만의 양식 (Custom Form Builder) =====
@@ -3330,9 +3451,9 @@
     function exportBusanPDF() {
       var v = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
       var buyers = [];
-      document.querySelectorAll('#bp-buyer-list .j-grid').forEach(function(row) {
-        var inputs = row.querySelectorAll('input, textarea, select');
-        buyers.push({ company: inputs[0]?inputs[0].value:'', country: inputs[1]?inputs[1].value:'', contact: inputs[2]?inputs[2].value:'', email: inputs[3]?inputs[3].value:'', summary: inputs[4]?inputs[4].value:'', result: inputs[5]?inputs[5].value:'', amount: inputs[6]?inputs[6].value:'' });
+      document.querySelectorAll('#bp-buyer-list .jbuyer-row').forEach(function(row) {
+        var g = function(bf) { var el = row.querySelector('[data-bf="' + bf + '"]'); return el ? el.value : ''; };
+        buyers.push({ company: g('company'), country: g('country'), contact: g('contact_name'), email: g('email'), summary: g('memo'), result: g('deal_result'), amount: g('expected_amount') });
       });
 
       var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>상담일지 - 부산테크노파크</title>' +
@@ -3389,9 +3510,9 @@
     function exportKitaPDF() {
       var v = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
       var buyers = [];
-      document.querySelectorAll('#kt-buyer-list .j-grid').forEach(function(row) {
-        var inputs = row.querySelectorAll('input, textarea, select');
-        buyers.push({ company: inputs[0]?inputs[0].value:'', country: inputs[1]?inputs[1].value:'', type: inputs[2]?inputs[2].value:'', items: inputs[3]?inputs[3].value:'', content: inputs[4]?inputs[4].value:'', result: inputs[5]?inputs[5].value:'', amount: inputs[6]?inputs[6].value:'' });
+      document.querySelectorAll('#kt-buyer-list .jbuyer-row').forEach(function(row) {
+        var g = function(bf) { var el = row.querySelector('[data-bf="' + bf + '"]'); return el ? el.value : ''; };
+        buyers.push({ company: g('company'), country: g('country'), type: g('buyer_type'), items: g('interest_items'), content: g('memo'), result: g('deal_result'), amount: g('expected_amount') });
       });
 
       var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>상담일지 - 한국무역협회</title>' +
