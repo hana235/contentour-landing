@@ -763,19 +763,6 @@
                 <span class="j-tag" onclick="toggleJTag(this)">&#127481;&#127469; 동남아</span>
                 <span class="j-tag" onclick="toggleJTag(this)">기타</span>
               </div>
-
-              <!-- ══════════════ 현장 바이어 수집 (명함) ══════════════ -->
-              <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                <span>🤝 현장 바이어 수집</span>
-                <span style="display:flex;gap:6px;">
-                  <button type="button" class="jbtn-ghost" onclick="loadCollectedBuyers()" style="font-size:0.74rem;padding:5px 10px;">⤓ 수집 바이어 불러오기</button>
-                  <button type="button" class="jbtn-ghost" onclick="exportBuyersExcel()" style="font-size:0.74rem;padding:5px 10px;">📊 엑셀 내보내기</button>
-                </span>
-              </div>
-              <div class="j-notice">💡 미팅에서 교환한 명함 정보를 입력해두면 전시회별 바이어 명단으로 모이고, 엑셀로 내려받을 수 있습니다. (저장 시 함께 저장됩니다)</div>
-              <div id="j-buyer-collect-list"></div>
-              <button type="button" class="jbtn-ghost" onclick="addCollectBuyer()" style="margin:4px 0 18px;font-size:0.78rem;">+ 바이어 추가</button>
-
               <div class="j-section">주요 상담 내용 & 성과</div>
               <div class="j-grid">
                 <div class="j-field span2"><label>오늘의 상담 내용 요약 *</label><textarea id="j-summary" rows="4" placeholder="예: 오전에 독일 유통사 A사와 제품 시연 진행. 오후에는 미국 바이어 2팀과 가격 협의."></textarea></div>
@@ -2396,10 +2383,6 @@
       document.getElementById('j-summary').value = j.summary || '';
       document.getElementById('jeditorSavedAt').textContent = '마지막 저장: ' + j.date;
 
-      // 이 전시회로 수집된 바이어 자동 불러오기 (조용히)
-      var bclL = document.getElementById('j-buyer-collect-list'); if (bclL) bclL.innerHTML = '';
-      loadCollectedBuyers(true);
-
       // 국가 태그 복원
       document.querySelectorAll('#countryTags .j-tag').forEach(function(el) {
         var tagText = el.textContent.trim();
@@ -2475,7 +2458,6 @@
       document.querySelectorAll('.j-tag').forEach(t => t.classList.remove('selected'));
       document.querySelectorAll('.cs-scale__opt').forEach(t => t.classList.remove('selected'));
       var cmemo = document.getElementById('cs-consult-memo'); if (cmemo) cmemo.value = '';
-      var bcl = document.getElementById('j-buyer-collect-list'); if (bcl) bcl.innerHTML = '';
       Object.keys(starValues).forEach(k => { starValues[k] = 0; renderStars(k); });
       document.getElementById('jeditorSavedAt').textContent = '마지막 저장: —';
     }
@@ -2585,40 +2567,6 @@
                 } catch(revE) { console.warn('통역사 평가 저장 예외:', revE); }
               }
             }
-
-            // 현장 수집 바이어(명함) 저장 → 53_현장바이어 (소유=고객사 본인)
-            try {
-              var buyerRows = collectBuyerRows();
-              if (buyerRows.length) {
-                var jContractIdB = document.getElementById('j-contract-id').value || null;
-                var jInterpIdB = document.getElementById('j-interpreter-id').value || null;
-                for (var bi = 0; bi < buyerRows.length; bi++) {
-                  var br = buyerRows[bi];
-                  var buyerRec = {
-                    customer_id: user.id,
-                    interpreter_id: jInterpIdB,
-                    contract_id: jContractIdB,
-                    exhibition_name: expoName || '',
-                    company: br.company || null,
-                    country: br.country || null,
-                    contact_name: br.contact_name || null,
-                    title: br.title || null,
-                    email: br.email || null,
-                    phone: br.phone || null,
-                    website: br.website || null,
-                    memo: br.memo || null,
-                    follow_up_status: br.follow_up_status || '미연락',
-                    source: '수기',
-                    scanned_by: user.id
-                  };
-                  if (br.id) {
-                    await window.sbClient.from('53_현장바이어').update(buyerRec).eq('id', br.id);
-                  } else {
-                    await window.sbClient.from('53_현장바이어').insert(buyerRec);
-                  }
-                }
-              }
-            } catch(be) { console.warn('현장 바이어 저장 실패:', be); }
           }
         } catch(e) { console.error('상담일지 DB 저장 실패:', e); showJToast('&#9888;&#65039; 저장 중 네트워크 오류가 발생했습니다. 잠시 후 저장 버튼을 다시 눌러주세요.'); }
       }
@@ -2890,88 +2838,6 @@
       var fmtMap = { contentour: 0, busan: 1, kita: 2 };
       document.querySelectorAll('.jformat-tab')[fmtMap[fmt]].classList.add('active');
       document.getElementById('fmt-' + fmt).classList.add('active');
-    }
-
-    // ══════════════ 현장 바이어 수집 (명함) ══════════════
-    function _bEsc(v) { return (v == null ? '' : String(v)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-
-    // 바이어 입력행 추가 (b: DB에서 불러온 기존 값으로 prefill 가능)
-    function addCollectBuyer(b) {
-      b = b || {};
-      var list = document.getElementById('j-buyer-collect-list');
-      if (!list) return;
-      var row = document.createElement('div');
-      row.className = 'j-grid jcb-row';
-      row.style.cssText = 'margin-bottom:12px;padding:14px;background:var(--gray-100);border-radius:10px;position:relative;';
-      if (b.id) row.dataset.buyerId = b.id;
-      var statuses = ['미연락', '견적발송', '협의중', '계약', '보류'];
-      var statusOpts = statuses.map(function(s) { return '<option' + (b.follow_up_status === s ? ' selected' : '') + '>' + s + '</option>'; }).join('');
-      row.innerHTML =
-        '<div class="j-field"><label>회사명</label><input type="text" data-bf="company" value="' + _bEsc(b.company) + '" placeholder="회사명"></div>' +
-        '<div class="j-field"><label>국가</label><input type="text" data-bf="country" value="' + _bEsc(b.country) + '" placeholder="국가"></div>' +
-        '<div class="j-field"><label>담당자명</label><input type="text" data-bf="contact_name" value="' + _bEsc(b.contact_name) + '" placeholder="예: John Smith"></div>' +
-        '<div class="j-field"><label>직책</label><input type="text" data-bf="title" value="' + _bEsc(b.title) + '" placeholder="예: Sales Manager"></div>' +
-        '<div class="j-field"><label>이메일</label><input type="email" data-bf="email" value="' + _bEsc(b.email) + '" placeholder="email@company.com"></div>' +
-        '<div class="j-field"><label>전화</label><input type="text" data-bf="phone" value="' + _bEsc(b.phone) + '" placeholder="+49 ..."></div>' +
-        '<div class="j-field"><label>웹사이트</label><input type="text" data-bf="website" value="' + _bEsc(b.website) + '" placeholder="company.com"></div>' +
-        '<div class="j-field"><label>팔로업 상태</label><select data-bf="follow_up_status">' + statusOpts + '</select></div>' +
-        '<div class="j-field span2"><label>상담 메모</label><textarea data-bf="memo" rows="2" placeholder="상담 내용을 간략히 기록">' + _bEsc(b.memo) + '</textarea></div>' +
-        '<button type="button" class="jbtn-ghost" onclick="this.closest(\'.jcb-row\').remove()" style="position:absolute;top:8px;right:8px;padding:4px 8px;font-size:0.7rem;color:var(--error);">삭제</button>';
-      list.appendChild(row);
-    }
-
-    // 현재 입력된 바이어행 → 객체 배열 (빈 행 제외)
-    function collectBuyerRows() {
-      var rows = [];
-      document.querySelectorAll('#j-buyer-collect-list .jcb-row').forEach(function(row) {
-        var o = {};
-        row.querySelectorAll('[data-bf]').forEach(function(el) { o[el.dataset.bf] = (el.value || '').trim(); });
-        if (row.dataset.buyerId) o.id = row.dataset.buyerId;
-        if (o.company || o.contact_name || o.email || o.phone || o.memo) rows.push(o);
-      });
-      return rows;
-    }
-
-    // 이 계약/전시회로 이미 수집된 바이어 불러오기 (소유=고객사 본인)
-    async function loadCollectedBuyers(silent) {
-      if (!window.sbClient) { if (!silent) showJToast('&#9888;&#65039; 로그인 후 이용해주세요.'); return; }
-      try {
-        var user = await ContentourAuth.getCurrentUser();
-        if (!user) { if (!silent) showJToast('&#9888;&#65039; 로그인 후 이용해주세요.'); return; }
-        var q = window.sbClient.from('53_현장바이어').select('*').eq('customer_id', user.id);
-        var cid = document.getElementById('j-contract-id').value;
-        var expoName = (document.getElementById('j-expo').value || '').trim();
-        if (cid) q = q.eq('contract_id', cid);
-        else if (expoName) q = q.eq('exhibition_name', expoName);
-        else { if (!silent) showJToast('&#9888;&#65039; 전시회를 먼저 선택해주세요.'); return; }
-        var res = await q.order('created_at', { ascending: true });
-        if (res.error) { console.warn('바이어 불러오기 실패:', res.error); if (!silent) showJToast('&#9888;&#65039; 불러오기 실패. 잠시 후 다시 시도해주세요.'); return; }
-        var list = document.getElementById('j-buyer-collect-list');
-        var shown = {};
-        list.querySelectorAll('.jcb-row[data-buyer-id]').forEach(function(r) { shown[r.dataset.buyerId] = true; });
-        var added = 0;
-        (res.data || []).forEach(function(b) { if (!shown[b.id]) { addCollectBuyer(b); added++; } });
-        if (!silent) showJToast('📇 수집 바이어 ' + added + '건 불러왔습니다.');
-      } catch (e) { console.warn('바이어 불러오기 예외:', e); if (!silent) showJToast('&#9888;&#65039; 불러오기 중 오류가 발생했습니다.'); }
-    }
-
-    // 현재 입력된 바이어 명단을 CSV(엑셀)로 내보내기
-    function exportBuyersExcel() {
-      var rows = collectBuyerRows();
-      if (!rows.length) { showJToast('&#9888;&#65039; 내보낼 바이어가 없습니다.'); return; }
-      var expoName = (document.getElementById('j-expo').value || '전시회').trim();
-      var headers = ['회사명', '국가', '담당자', '직책', '이메일', '전화', '웹사이트', '팔로업상태', '메모'];
-      var keys = ['company', 'country', 'contact_name', 'title', 'email', 'phone', 'website', 'follow_up_status', 'memo'];
-      function cell(v) { v = (v == null ? '' : String(v)); return '"' + v.replace(/"/g, '""') + '"'; }
-      var csv = headers.map(cell).join(',') + '\r\n' +
-        rows.map(function(r) { return keys.map(function(k) { return cell(r[k]); }).join(','); }).join('\r\n');
-      var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url; a.download = expoName + '_바이어명단.csv';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showJToast('📊 ' + rows.length + '건 내보냈습니다.');
     }
 
     // 부산테크노파크 바이어 추가
