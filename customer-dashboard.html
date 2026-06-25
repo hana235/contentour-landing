@@ -768,7 +768,7 @@
               <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                 <span>🤝 현장 바이어 수집</span>
                 <span style="display:flex;gap:6px;flex-wrap:wrap;">
-                  <button type="button" class="jbtn-primary" onclick="scanCard('j-buyer-collect-list','contentour')" style="font-size:0.74rem;padding:5px 10px;">📷 명함 스캔</button>
+                  <button type="button" class="jbtn-primary" onclick="uploadCard('j-buyer-collect-list','contentour')" style="font-size:0.74rem;padding:5px 10px;">📷 명함 저장</button>
                   <button type="button" class="jbtn-ghost" onclick="loadBuyersIntoList('j-buyer-collect-list','contentour')" style="font-size:0.74rem;padding:5px 10px;">⤓ 수집 바이어 불러오기</button>
                   <button type="button" class="jbtn-ghost" onclick="exportBuyersCsv('j-buyer-collect-list','j-expo')" style="font-size:0.74rem;padding:5px 10px;">📊 엑셀 내보내기</button>
                 </span>
@@ -977,7 +977,7 @@
                 <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                   <span>🤝 상담 바이어 정보</span>
                   <span style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button type="button" class="jbtn-primary" onclick="scanCard('bp-buyer-list','busan')" style="font-size:0.72rem;padding:5px 10px;">📷 명함 스캔</button>
+                    <button type="button" class="jbtn-primary" onclick="uploadCard('bp-buyer-list','busan')" style="font-size:0.72rem;padding:5px 10px;">📷 명함 저장</button>
                     <button type="button" class="jbtn-ghost" onclick="loadBuyersIntoList('bp-buyer-list','busan')" style="font-size:0.72rem;padding:5px 10px;">⤓ 불러오기</button>
                     <button type="button" class="jbtn-ghost" onclick="exportBuyersCsv('bp-buyer-list','bp-expo')" style="font-size:0.72rem;padding:5px 10px;">📊 엑셀</button>
                   </span>
@@ -1068,7 +1068,7 @@
                 <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                   <span>🤝 주요 상담 바이어 기록</span>
                   <span style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button type="button" class="jbtn-primary" onclick="scanCard('kt-buyer-list','kita')" style="font-size:0.72rem;padding:5px 10px;">📷 명함 스캔</button>
+                    <button type="button" class="jbtn-primary" onclick="uploadCard('kt-buyer-list','kita')" style="font-size:0.72rem;padding:5px 10px;">📷 명함 저장</button>
                     <button type="button" class="jbtn-ghost" onclick="loadBuyersIntoList('kt-buyer-list','kita')" style="font-size:0.72rem;padding:5px 10px;">⤓ 불러오기</button>
                     <button type="button" class="jbtn-ghost" onclick="exportBuyersCsv('kt-buyer-list','kt-expo')" style="font-size:0.72rem;padding:5px 10px;">📊 엑셀</button>
                   </span>
@@ -2903,6 +2903,8 @@
         _buyerExtraHtml(formType, b) +
         '<div class="j-field"><label>팔로업 상태</label><select data-bf="follow_up_status">' + statusOpts + '</select></div>' +
         '<div class="j-field span2"><label>상담 메모</label><textarea data-bf="memo" rows="2" placeholder="상담 내용을 간략히 기록">' + _bEsc(b.memo) + '</textarea></div>' +
+        '<input type="hidden" data-bf="card_image_url" value="' + _bEsc(b.card_image_url) + '">' +
+        (b.card_image_url ? '<div class="j-field span2"><button type="button" class="jbtn-ghost" onclick="viewCardImage(\'' + _bEsc(b.card_image_url) + '\')" style="font-size:0.74rem;padding:5px 10px;color:#1565c0;">📎 첨부된 명함 보기</button></div>' : '') +
         '<button type="button" class="jbtn-ghost" onclick="this.closest(\'.jbuyer-row\').remove()" style="position:absolute;top:8px;right:8px;padding:4px 8px;font-size:0.7rem;color:var(--error);">삭제</button>';
       list.appendChild(row);
     }
@@ -2914,7 +2916,7 @@
         var o = {};
         row.querySelectorAll('[data-bf]').forEach(function(el) { o[el.dataset.bf] = (el.value || '').trim(); });
         if (row.dataset.buyerId) o.id = row.dataset.buyerId;
-        if (o.company || o.contact_name || o.email || o.phone || o.memo) rows.push(o);
+        if (o.company || o.contact_name || o.email || o.phone || o.memo || o.card_image_url) rows.push(o);
       });
       return rows;
     }
@@ -2944,7 +2946,8 @@
             memo: r.memo || null, follow_up_status: r.follow_up_status || '미연락',
             deal_result: r.deal_result || null, expected_amount: r.expected_amount || null,
             buyer_type: r.buyer_type || null, interest_items: r.interest_items || null,
-            source: '수기', scanned_by: user.id
+            card_image_url: r.card_image_url || null,
+            source: r.card_image_url ? '명함저장' : '수기', scanned_by: user.id
           };
           if (r.id) await window.sbClient.from('53_현장바이어').update(rec).eq('id', r.id);
           else await window.sbClient.from('53_현장바이어').insert(rec);
@@ -3046,6 +3049,60 @@
         } catch (e) { console.warn('scanCard 오류:', e); showJToast('&#9888;&#65039; 명함 인식 중 오류가 발생했습니다.'); }
       };
       input.click();
+    }
+
+    // 명함 이미지 → Blob 다운스케일 (업로드용)
+    function _downscaleToBlob(file, maxDim, quality) {
+      return new Promise(function (resolve, reject) {
+        var img = new Image();
+        var url = URL.createObjectURL(file);
+        img.onload = function () {
+          URL.revokeObjectURL(url);
+          var w = img.width, h = img.height;
+          var scale = Math.min(1, maxDim / Math.max(w, h || 1));
+          var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement('canvas');
+          canvas.width = cw; canvas.height = ch;
+          canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+          canvas.toBlob(function (blob) { blob ? resolve(blob) : reject(new Error('이미지 변환 실패')); }, 'image/jpeg', quality);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('이미지 로드 실패')); };
+        img.src = url;
+      });
+    }
+
+    // 📷 명함 저장 → 비공개 Storage(buyer-cards) 업로드 → 바이어 카드에 첨부 (OCR 없음)
+    async function uploadCard(listId, formType) {
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.setAttribute('capture', 'environment');
+      input.onchange = async function () {
+        var file = input.files && input.files[0];
+        if (!file) return;
+        showJToast('📇 명함 업로드 중…');
+        try {
+          var user = await ContentourAuth.getCurrentUser();
+          if (!user) { showJToast('&#9888;&#65039; 로그인 후 이용해주세요.'); return; }
+          var blob = await _downscaleToBlob(file, 1600, 0.85);
+          var path = user.id + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.jpg';
+          var up = await window.sbClient.storage.from('buyer-cards').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+          if (up.error) { console.warn('명함 업로드 실패:', up.error); showJToast('&#9888;&#65039; 업로드 실패. 잠시 후 다시 시도해주세요.'); return; }
+          addBuyerToList(listId, formType, { card_image_url: path });
+          showJToast('✅ 명함 저장됨 — 바이어 정보를 입력해주세요.');
+        } catch (e) { console.warn('uploadCard 오류:', e); showJToast('&#9888;&#65039; 업로드 중 오류가 발생했습니다.'); }
+      };
+      input.click();
+    }
+
+    // 저장된 명함 이미지 보기 (서명 URL 발급 후 새 탭)
+    async function viewCardImage(path) {
+      if (!path) return;
+      try {
+        var r = await window.sbClient.storage.from('buyer-cards').createSignedUrl(path, 3600);
+        if (r.error || !r.data || !r.data.signedUrl) { showJToast('&#9888;&#65039; 명함 이미지를 불러올 수 없습니다.'); return; }
+        window.open(r.data.signedUrl, '_blank');
+      } catch (e) { console.warn('viewCardImage 오류:', e); showJToast('&#9888;&#65039; 명함 이미지 오류.'); }
     }
 
     // 부산테크노파크 폼
