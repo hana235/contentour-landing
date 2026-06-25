@@ -13,6 +13,7 @@
     { "source": "/api/accept-assignment", "destination": "/api/my?_route=accept-assignment" },
     { "source": "/api/decline-assignment", "destination": "/api/my?_route=decline-assignment" },
     { "source": "/api/accept-quote", "destination": "/api/my?_route=accept-quote" },
+    { "source": "/api/scan-card", "destination": "/api/my?_route=scan-card" },
     { "source": "/api/upload-application-file", "destination": "/api/submit?_route=upload-application-file" },
     { "source": "/api/notify-admins", "destination": "/api/submit?_route=notify-admins" },
     { "source": "/api/verify-payment", "destination": "/api/payment?_route=verify-payment" },

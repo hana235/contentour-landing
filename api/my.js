@@ -501,6 +501,82 @@ async function handleAcceptQuote(req, res) {
     }
 }
 
+// ────────────────────────── scan-card (명함 OCR — Claude Vision) ──────────────────────────
+// 로그인 사용자가 명함 이미지를 올리면 Claude Haiku 4.5로 구조화 필드 추출.
+// 키(ANTHROPIC_API_KEY) 미설정 시 503으로 그레이스풀 처리. 과금 보호 위해 레이트리밋.
+async function handleScanCard(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const auth = await authenticate(req);
+    if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return res.status(503).json({ error: '명함 인식 기능이 아직 활성화되지 않았습니다. (관리자: ANTHROPIC_API_KEY 등록 필요)' });
+
+    if (!await checkRateLimit(sb, 'scan-card:' + auth.user.id, 20, 60)) {
+        return res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    }
+
+    const image = req.body && req.body.image;
+    if (!image || typeof image !== 'string') return res.status(400).json({ error: '이미지가 필요합니다.' });
+
+    const m = image.match(/^data:(image\/(?:png|jpe?g|webp|gif));base64,(.+)$/i);
+    if (!m) return res.status(400).json({ error: '지원하지 않는 이미지 형식입니다.' });
+    const mediaType = m[1].toLowerCase().replace('image/jpg', 'image/jpeg');
+    const b64 = m[2];
+    if (b64.length > 8 * 1024 * 1024) return res.status(413).json({ error: '이미지가 너무 큽니다. 다시 촬영해주세요.' });
+
+    const prompt = '이 명함 이미지에서 정보를 추출해 JSON 객체로만 응답하세요. ' +
+        '설명·코드펜스 없이 순수 JSON만 출력합니다. 키: ' +
+        'company(회사명), contact_name(담당자 이름), title(직책), department(부서), ' +
+        'email, phone(유선/대표번호), mobile(휴대폰), fax, website, address(주소), country(국가). ' +
+        '값이 없으면 null. country는 주소·전화 국가번호·언어로 추론하세요. ' +
+        '같은 종류가 여러 개면 가장 대표적인 것 하나만. 이름·회사명은 명함에 적힌 언어 그대로 표기하세요.';
+
+    try {
+        const aResp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-haiku-4-5',
+                max_tokens: 1024,
+                messages: [{
+                    role: 'user',
+                    content: [
+                        { type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } },
+                        { type: 'text', text: prompt }
+                    ]
+                }]
+            })
+        });
+        if (!aResp.ok) {
+            const errTxt = await aResp.text();
+            console.error('Anthropic OCR 실패:', aResp.status, String(errTxt).slice(0, 300));
+            return res.status(502).json({ error: '명함 인식 서비스 오류. 잠시 후 다시 시도해주세요.' });
+        }
+        const aData = await aResp.json();
+        let text = '';
+        if (aData && Array.isArray(aData.content)) {
+            aData.content.forEach(function (b) { if (b && b.type === 'text') text += b.text; });
+        }
+        let jsonStr = String(text).trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+        let fields = {};
+        try { fields = JSON.parse(jsonStr); } catch (e) {
+            const mm = jsonStr.match(/\{[\s\S]*\}/);
+            if (mm) { try { fields = JSON.parse(mm[0]); } catch (e2) { fields = {}; } }
+        }
+        const keys = ['company', 'contact_name', 'title', 'department', 'email', 'phone', 'mobile', 'fax', 'website', 'address', 'country'];
+        const out = {};
+        keys.forEach(function (k) {
+            const v = fields[k];
+            out[k] = (v == null || v === '') ? null : String(v).slice(0, 300);
+        });
+        return res.status(200).json({ ok: true, fields: out });
+    } catch (e) {
+        console.error('scan-card 예외:', e);
+        return res.status(500).json({ error: '명함 인식 중 오류가 발생했습니다.' });
+    }
+}
+
 module.exports = async function handler(req, res) {
     if (!SERVICE_KEY) return res.status(500).json({ error: '서버 설정 오류' });
 
@@ -514,6 +590,7 @@ module.exports = async function handler(req, res) {
         case 'accept-assignment': return handleAcceptAssignment(req, res);
         case 'decline-assignment': return handleDeclineAssignment(req, res);
         case 'accept-quote': return handleAcceptQuote(req, res);
+        case 'scan-card': return handleScanCard(req, res);
         default: return res.status(404).json({ error: 'Unknown route: ' + route });
     }
 };

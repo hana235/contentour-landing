@@ -767,7 +767,8 @@
               <!-- ══════════════ 현장 바이어 수집 (명함) ══════════════ -->
               <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                 <span>🤝 현장 바이어 수집</span>
-                <span style="display:flex;gap:6px;">
+                <span style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button type="button" class="jbtn-primary" onclick="scanCard('j-buyer-collect-list','contentour')" style="font-size:0.74rem;padding:5px 10px;">📷 명함 스캔</button>
                   <button type="button" class="jbtn-ghost" onclick="loadBuyersIntoList('j-buyer-collect-list','contentour')" style="font-size:0.74rem;padding:5px 10px;">⤓ 수집 바이어 불러오기</button>
                   <button type="button" class="jbtn-ghost" onclick="exportBuyersCsv('j-buyer-collect-list','j-expo')" style="font-size:0.74rem;padding:5px 10px;">📊 엑셀 내보내기</button>
                 </span>
@@ -975,7 +976,8 @@
               <div class="j-section-card">
                 <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                   <span>🤝 상담 바이어 정보</span>
-                  <span style="display:flex;gap:6px;">
+                  <span style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button type="button" class="jbtn-primary" onclick="scanCard('bp-buyer-list','busan')" style="font-size:0.72rem;padding:5px 10px;">📷 명함 스캔</button>
                     <button type="button" class="jbtn-ghost" onclick="loadBuyersIntoList('bp-buyer-list','busan')" style="font-size:0.72rem;padding:5px 10px;">⤓ 불러오기</button>
                     <button type="button" class="jbtn-ghost" onclick="exportBuyersCsv('bp-buyer-list','bp-expo')" style="font-size:0.72rem;padding:5px 10px;">📊 엑셀</button>
                   </span>
@@ -1065,7 +1067,8 @@
               <div class="j-section-card">
                 <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                   <span>🤝 주요 상담 바이어 기록</span>
-                  <span style="display:flex;gap:6px;">
+                  <span style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button type="button" class="jbtn-primary" onclick="scanCard('kt-buyer-list','kita')" style="font-size:0.72rem;padding:5px 10px;">📷 명함 스캔</button>
                     <button type="button" class="jbtn-ghost" onclick="loadBuyersIntoList('kt-buyer-list','kita')" style="font-size:0.72rem;padding:5px 10px;">⤓ 불러오기</button>
                     <button type="button" class="jbtn-ghost" onclick="exportBuyersCsv('kt-buyer-list','kt-expo')" style="font-size:0.72rem;padding:5px 10px;">📊 엑셀</button>
                   </span>
@@ -2991,6 +2994,59 @@
     // 버튼 onclick 호환
     function addBusanBuyer() { addBuyerToList('bp-buyer-list', 'busan'); }
     function addKitaBuyer() { addBuyerToList('kt-buyer-list', 'kita'); }
+
+    // 명함 이미지 다운스케일 (전송 용량·OCR 비용 절감)
+    function _downscaleImage(file, maxDim, quality) {
+      return new Promise(function (resolve, reject) {
+        var img = new Image();
+        var url = URL.createObjectURL(file);
+        img.onload = function () {
+          URL.revokeObjectURL(url);
+          var w = img.width, h = img.height;
+          var scale = Math.min(1, maxDim / Math.max(w, h || 1));
+          var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement('canvas');
+          canvas.width = cw; canvas.height = ch;
+          canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('이미지 로드 실패')); };
+        img.src = url;
+      });
+    }
+
+    // 📷 명함 스캔 → Claude Vision OCR → 바이어 카드 자동 채움
+    async function scanCard(listId, formType) {
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.setAttribute('capture', 'environment');  // 모바일에서 후면 카메라
+      input.onchange = async function () {
+        var file = input.files && input.files[0];
+        if (!file) return;
+        showJToast('📇 명함 분석 중…');
+        try {
+          var dataUrl = await _downscaleImage(file, 1400, 0.82);
+          var sess = await window.sbClient.auth.getSession();
+          var token = sess && sess.data && sess.data.session ? sess.data.session.access_token : null;
+          if (!token) { showJToast('&#9888;&#65039; 로그인 후 이용해주세요.'); return; }
+          var resp = await fetch('/api/scan-card', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ image: dataUrl })
+          });
+          var data = await resp.json();
+          if (!resp.ok || !data.ok) { showJToast('&#9888;&#65039; ' + (data.error || '명함 인식 실패')); return; }
+          var f = data.fields || {};
+          addBuyerToList(listId, formType, {
+            company: f.company || '', country: f.country || '', contact_name: f.contact_name || '',
+            title: f.title || '', email: f.email || '', phone: f.mobile || f.phone || '', website: f.website || ''
+          });
+          showJToast('✅ 명함 인식 완료 — 내용을 확인해주세요.');
+        } catch (e) { console.warn('scanCard 오류:', e); showJToast('&#9888;&#65039; 명함 인식 중 오류가 발생했습니다.'); }
+      };
+      input.click();
+    }
 
     // 부산테크노파크 폼
     function clearBusanForm() {
