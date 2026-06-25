@@ -1575,10 +1575,16 @@
                             <p style="font-size:0.72rem;color:var(--gray-400);margin-top:4px;">고객사를 선택해 전용 상담일지 양식을 직접 만들어 배정합니다. (대상을 '전체 공통'으로 두면 모든 고객사에 제공)</p>
                         </div>
                         <div style="padding:20px 24px;">
-                            <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+                            <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
                                 <label style="font-size:0.8rem;font-weight:700;">대상 고객사</label>
                                 <select id="atTarget" onchange="atLoadTemplates()" style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;min-width:240px;font-size:0.84rem;"></select>
-                                <button onclick="atNewTemplate()" style="padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">+ 새 양식</button>
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+                                <span style="font-size:0.78rem;color:var(--gray-500);font-weight:700;">새 양식 시작:</span>
+                                <button onclick="atStartFrom('simple')" style="padding:8px 14px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">📋 간편 일지 복제</button>
+                                <button onclick="atStartFrom('basic')" style="padding:8px 14px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">📋 기본 양식 복제</button>
+                                <button onclick="atStartFrom('blank')" style="padding:8px 14px;background:var(--gray-100);color:var(--gray-600);border:1px solid var(--gray-300);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">빈 양식</button>
+                                <span style="font-size:0.72rem;color:var(--gray-400);">— 복제로 시작해 항목만 살짝 고치면 됩니다</span>
                             </div>
                             <div id="atList"></div>
 
@@ -7092,17 +7098,48 @@
                         '<div style="font-size:0.72rem;color:var(--gray-400);margin-top:2px;">' + (t.sections ? t.sections.length : 0) + '개 섹션 · ' + cnt + '개 항목' + (t.is_active === false ? ' · 비활성' : '') + '</div></div>' +
                         '<div style="display:flex;gap:6px;">' +
                         '<button onclick="atEditTemplate(\'' + t.id + '\')" style="padding:6px 12px;background:var(--gray-100);border:none;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer;">편집</button>' +
+                        '<button onclick="atCloneTemplate(\'' + t.id + '\')" style="padding:6px 12px;background:#e8f0fe;color:var(--blue);border:none;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer;">복제</button>' +
                         '<button onclick="atDeleteTemplate(\'' + t.id + '\')" style="padding:6px 12px;background:#fdecea;color:var(--error);border:none;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer;">삭제</button>' +
                         '</div></div>';
                 }).join('');
             }
 
-            function atNewTemplate() {
+            // 복제로 시작할 베이스 양식 (빈 화면에서 안 만들도록)
+            var AT_BASE_TEMPLATES = {
+                simple: { name: '간편 상담일지', sections: [
+                    { name: '기본 정보', fields: [{ name: '전시회명', type: 'text', required: true }, { name: '작성 날짜', type: 'date', required: true }, { name: '배정 통역사', type: 'text', required: false }] },
+                    { name: '상담 내용', fields: [{ name: '오늘 상담 요약', type: 'textarea', required: true }] },
+                    { name: '바이어 정보', fields: [{ name: '바이어 회사명', type: 'text', required: false }, { name: '담당자', type: 'text', required: false }, { name: '연락처', type: 'text', required: false }, { name: '상담 메모', type: 'textarea', required: false }] }
+                ] },
+                basic: { name: '콘텐츄어 기본 상담일지', sections: [
+                    { name: '기본 정보', fields: [{ name: '전시회명', type: 'text', required: true }, { name: '작성 날짜', type: 'date', required: true }, { name: '개최지', type: 'text', required: false }, { name: '배정 통역사', type: 'text', required: false }] },
+                    { name: '일별 상담 실적', fields: [{ name: '총 상담 건수', type: 'number', required: false }, { name: '계약 진행', type: 'number', required: false }, { name: '샘플 요청', type: 'number', required: false }, { name: '팔로업 예정', type: 'number', required: false }] },
+                    { name: '상담 내용 & 성과', fields: [{ name: '오늘 상담 요약', type: 'textarea', required: true }, { name: '주요 성과', type: 'textarea', required: false }, { name: '특이사항', type: 'textarea', required: false }] },
+                    { name: '바이어 정보', fields: [{ name: '바이어 회사명', type: 'text', required: false }, { name: '국가', type: 'text', required: false }, { name: '담당자', type: 'text', required: false }, { name: '연락처', type: 'text', required: false }, { name: '상담 메모', type: 'textarea', required: false }] }
+                ] },
+                blank: { name: '', sections: [{ name: '기본 정보', fields: [{ name: '전시회명', type: 'text', required: true }, { name: '작성 날짜', type: 'date', required: true }] }] }
+            };
+
+            // 베이스 복제로 새 양식 시작
+            function atStartFrom(baseKey) {
+                var base = AT_BASE_TEMPLATES[baseKey] || AT_BASE_TEMPLATES.blank;
                 atEditingId = null;
-                atSections = [{ name: '기본 정보', fields: [{ name: '전시회명', type: 'text', required: true }, { name: '작성 날짜', type: 'date', required: true }] }];
-                document.getElementById('atName').value = '';
+                atSections = JSON.parse(JSON.stringify(base.sections));
+                document.getElementById('atName').value = base.name || '';
                 document.getElementById('atBuilder').style.display = '';
                 atRenderBuilder();
+                document.getElementById('atBuilder').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            // 기존 양식 복제 후 수정 (새 양식으로 저장됨)
+            function atCloneTemplate(id) {
+                var t = atTemplates.find(function (x) { return x.id === id; }); if (!t) return;
+                atEditingId = null;
+                atSections = JSON.parse(JSON.stringify(t.sections || []));
+                document.getElementById('atName').value = (t.name || '양식') + ' (복사본)';
+                document.getElementById('atBuilder').style.display = '';
+                atRenderBuilder();
+                document.getElementById('atBuilder').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
 
             function atEditTemplate(id) {
