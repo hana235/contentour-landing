@@ -1568,6 +1568,33 @@
                         </div>
                     </div>
 
+                    <!-- ══ 업체별 맞춤 양식 빌더 ══ -->
+                    <div style="background:var(--white);border:1.5px solid var(--gray-200);border-radius:16px;margin-top:28px;overflow:hidden;">
+                        <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200);">
+                            <h3 style="font-size:0.95rem;font-weight:800;">🧩 업체별 맞춤 양식</h3>
+                            <p style="font-size:0.72rem;color:var(--gray-400);margin-top:4px;">고객사를 선택해 전용 상담일지 양식을 직접 만들어 배정합니다. (대상을 '전체 공통'으로 두면 모든 고객사에 제공)</p>
+                        </div>
+                        <div style="padding:20px 24px;">
+                            <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+                                <label style="font-size:0.8rem;font-weight:700;">대상 고객사</label>
+                                <select id="atTarget" onchange="atLoadTemplates()" style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;min-width:240px;font-size:0.84rem;"></select>
+                                <button onclick="atNewTemplate()" style="padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">+ 새 양식</button>
+                            </div>
+                            <div id="atList"></div>
+
+                            <!-- 빌더 (편집 시 표시) -->
+                            <div id="atBuilder" style="display:none;margin-top:18px;border-top:1px dashed var(--gray-200);padding-top:18px;">
+                                <input id="atName" placeholder="양식 이름 (예: ABC상사 전용 상담일지)" style="width:100%;padding:10px 12px;border:1px solid var(--gray-300);border-radius:8px;font-size:0.9rem;font-weight:700;margin-bottom:14px;">
+                                <div id="atSections"></div>
+                                <button onclick="atAddSection()" style="padding:8px 14px;background:var(--light-bg,#f0f5ff);color:var(--blue);border:1px dashed var(--blue);border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;margin-top:4px;">+ 섹션 추가</button>
+                                <div style="margin-top:18px;display:flex;gap:8px;">
+                                    <button onclick="atSaveTemplate()" style="padding:10px 20px;background:#2e7d32;color:#fff;border:none;border-radius:8px;font-size:0.84rem;font-weight:700;cursor:pointer;">&#128190; 양식 저장</button>
+                                    <button onclick="atCancelBuilder()" style="padding:10px 20px;background:var(--gray-100);color:var(--gray-600);border:none;border-radius:8px;font-size:0.84rem;font-weight:700;cursor:pointer;">취소</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div><!-- /view-format-perm -->
 
                 <!-- ══ 해외전시회 DB 관리 ══ -->
@@ -7022,8 +7049,140 @@
                 window._loadFpClients = async function() {
                     await orig.apply(this, arguments);
                     _subscribeFpClientsRealtime();
+                    if (typeof atPopulateTargets === 'function') atPopulateTargets();
                 };
             })();
+
+            // ══════════════ 🧩 업체별 맞춤 양식 빌더 (54_상담일지양식) ══════════════
+            var atTemplates = [];
+            var atSections = [];
+            var atEditingId = null;
+            function atEsc(v) { return (v == null ? '' : String(v)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+            function atPopulateTargets() {
+                var sel = document.getElementById('atTarget'); if (!sel) return;
+                var cur = sel.value;
+                sel.innerHTML = '<option value="">— 전체 공통 —</option>' +
+                    fpClients.map(function (c) {
+                        return '<option value="' + c.id + '">' + atEsc(c.name) + (c.manager && c.manager !== '-' ? ' (' + atEsc(c.manager) + ')' : '') + '</option>';
+                    }).join('');
+                sel.value = cur;
+                atLoadTemplates();
+            }
+
+            async function atLoadTemplates() {
+                var sb = window.sbClient || window.supabase; if (!sb) return;
+                var target = document.getElementById('atTarget').value || null;
+                var q = sb.from('54_상담일지양식').select('*');
+                q = target ? q.eq('customer_id', target) : q.is('customer_id', null);
+                var res = await q.order('created_at', { ascending: true });
+                atTemplates = res.error ? [] : (res.data || []);
+                if (res.error) console.warn('맞춤 양식 로드 실패:', res.error);
+                atRenderList();
+                var b = document.getElementById('atBuilder'); if (b) b.style.display = 'none';
+            }
+
+            function atRenderList() {
+                var el = document.getElementById('atList'); if (!el) return;
+                if (!atTemplates.length) { el.innerHTML = '<div style="color:var(--gray-400);font-size:0.8rem;padding:10px 0;">배정된 맞춤 양식이 없습니다. "+ 새 양식"으로 만들어보세요.</div>'; return; }
+                el.innerHTML = atTemplates.map(function (t) {
+                    var cnt = (t.sections || []).reduce(function (a, s) { return a + ((s.fields || []).length); }, 0);
+                    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border:1px solid var(--gray-200);border-radius:10px;margin-bottom:8px;">' +
+                        '<div><div style="font-weight:700;font-size:0.86rem;">' + atEsc(t.name) + '</div>' +
+                        '<div style="font-size:0.72rem;color:var(--gray-400);margin-top:2px;">' + (t.sections ? t.sections.length : 0) + '개 섹션 · ' + cnt + '개 항목' + (t.is_active === false ? ' · 비활성' : '') + '</div></div>' +
+                        '<div style="display:flex;gap:6px;">' +
+                        '<button onclick="atEditTemplate(\'' + t.id + '\')" style="padding:6px 12px;background:var(--gray-100);border:none;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer;">편집</button>' +
+                        '<button onclick="atDeleteTemplate(\'' + t.id + '\')" style="padding:6px 12px;background:#fdecea;color:var(--error);border:none;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer;">삭제</button>' +
+                        '</div></div>';
+                }).join('');
+            }
+
+            function atNewTemplate() {
+                atEditingId = null;
+                atSections = [{ name: '기본 정보', fields: [{ name: '전시회명', type: 'text', required: true }, { name: '작성 날짜', type: 'date', required: true }] }];
+                document.getElementById('atName').value = '';
+                document.getElementById('atBuilder').style.display = '';
+                atRenderBuilder();
+            }
+
+            function atEditTemplate(id) {
+                var t = atTemplates.find(function (x) { return x.id === id; }); if (!t) return;
+                atEditingId = id;
+                atSections = JSON.parse(JSON.stringify(t.sections || []));
+                if (!atSections.length) atSections = [{ name: '기본 정보', fields: [] }];
+                document.getElementById('atName').value = t.name || '';
+                document.getElementById('atBuilder').style.display = '';
+                atRenderBuilder();
+            }
+
+            function atRenderBuilder() {
+                var c = document.getElementById('atSections'); if (!c) return;
+                var TYPES = [['text', '텍스트'], ['number', '숫자'], ['date', '날짜'], ['textarea', '서술'], ['select', '선택']];
+                c.innerHTML = atSections.map(function (sec, si) {
+                    var fields = (sec.fields || []).map(function (f, fi) {
+                        var optRow = f.type === 'select'
+                            ? '<input value="' + atEsc((f.options || []).join(', ')) + '" oninput="atUpdateField(' + si + ',' + fi + ',\'options\',this.value)" placeholder="선택 옵션 (쉼표로 구분)" style="flex-basis:100%;margin-top:4px;padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:0.78rem;">'
+                            : '';
+                        return '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">' +
+                            '<input value="' + atEsc(f.name) + '" oninput="atUpdateField(' + si + ',' + fi + ',\'name\',this.value)" placeholder="항목명" style="flex:1;min-width:130px;padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:0.8rem;">' +
+                            '<select onchange="atUpdateField(' + si + ',' + fi + ',\'type\',this.value)" style="padding:6px 8px;border:1px solid var(--gray-300);border-radius:6px;font-size:0.78rem;">' +
+                            TYPES.map(function (o) { return '<option value="' + o[0] + '"' + (f.type === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
+                            '</select>' +
+                            '<label style="font-size:0.74rem;display:flex;align-items:center;gap:3px;cursor:pointer;"><input type="checkbox"' + (f.required ? ' checked' : '') + ' onchange="atUpdateField(' + si + ',' + fi + ',\'required\',this.checked)">필수</label>' +
+                            '<button onclick="atRemoveField(' + si + ',' + fi + ')" style="width:26px;height:26px;background:#fdecea;color:var(--error);border:none;border-radius:6px;cursor:pointer;font-weight:700;">×</button>' +
+                            optRow + '</div>';
+                    }).join('');
+                    return '<div style="border:1px solid var(--gray-200);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--gray-50,#fafbfc);">' +
+                        '<div style="display:flex;gap:6px;margin-bottom:10px;">' +
+                        '<input value="' + atEsc(sec.name) + '" oninput="atUpdateSection(' + si + ',this.value)" placeholder="섹션 이름" style="flex:1;padding:8px 10px;border:1px solid var(--gray-300);border-radius:7px;font-size:0.86rem;font-weight:700;">' +
+                        '<button onclick="atRemoveSection(' + si + ')" style="padding:6px 12px;background:#fdecea;color:var(--error);border:none;border-radius:7px;font-size:0.74rem;font-weight:700;cursor:pointer;white-space:nowrap;">섹션 삭제</button>' +
+                        '</div>' + fields +
+                        '<button onclick="atAddField(' + si + ')" style="padding:6px 12px;background:#fff;border:1px dashed var(--gray-300);border-radius:7px;font-size:0.76rem;color:var(--gray-600);cursor:pointer;margin-top:4px;">+ 항목 추가</button>' +
+                        '</div>';
+                }).join('');
+            }
+
+            function atAddSection() { atSections.push({ name: '새 섹션', fields: [] }); atRenderBuilder(); }
+            function atRemoveSection(si) { if (atSections.length <= 1) { showToast('⚠️ 최소 1개 섹션이 필요합니다.'); return; } atSections.splice(si, 1); atRenderBuilder(); }
+            function atUpdateSection(si, v) { atSections[si].name = v; }
+            function atAddField(si) { atSections[si].fields.push({ name: '', type: 'text', required: false }); atRenderBuilder(); }
+            function atRemoveField(si, fi) { atSections[si].fields.splice(fi, 1); atRenderBuilder(); }
+            function atUpdateField(si, fi, k, v) {
+                if (k === 'options') atSections[si].fields[fi].options = v.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+                else atSections[si].fields[fi][k] = v;
+                if (k === 'type') atRenderBuilder();
+            }
+            function atCancelBuilder() { document.getElementById('atBuilder').style.display = 'none'; }
+
+            async function atSaveTemplate() {
+                var sb = window.sbClient || window.supabase; if (!sb) return;
+                var name = (document.getElementById('atName').value || '').trim();
+                if (!name) { showToast('⚠️ 양식 이름을 입력하세요.'); return; }
+                var hasEmpty = false;
+                atSections.forEach(function (s) { (s.fields || []).forEach(function (f) { if (!f.name.trim()) hasEmpty = true; }); });
+                if (hasEmpty) { showToast('⚠️ 항목명이 비어 있는 칸이 있습니다.'); return; }
+                var target = document.getElementById('atTarget').value || null;
+                try {
+                    if (atEditingId) {
+                        var u = await sb.from('54_상담일지양식').update({ name: name, sections: atSections }).eq('id', atEditingId);
+                        if (u.error) throw u.error;
+                    } else {
+                        var i = await sb.from('54_상담일지양식').insert({ customer_id: target, name: name, sections: atSections, is_active: true });
+                        if (i.error) throw i.error;
+                    }
+                    showToast('✅ 맞춤 양식이 저장되었습니다.');
+                    atLoadTemplates();
+                } catch (e) { console.error('맞춤 양식 저장 실패:', e); showToast('⚠️ 저장 실패: ' + (e.message || '권한/네트워크 확인')); }
+            }
+
+            async function atDeleteTemplate(id) {
+                if (!confirm('이 맞춤 양식을 삭제하시겠습니까?')) return;
+                var sb = window.sbClient || window.supabase; if (!sb) return;
+                var d = await sb.from('54_상담일지양식').delete().eq('id', id);
+                if (d.error) { console.warn(d.error); showToast('⚠️ 삭제 실패'); return; }
+                showToast('🗑 삭제되었습니다.');
+                atLoadTemplates();
+            }
 
             // ═══════════════════════════════════════════════
             // ═══ 채팅 모니터링 시스템 ═══
