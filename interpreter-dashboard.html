@@ -3984,21 +3984,15 @@
             icfbAssignedTemplates = [];
             if (!window.sbClient) return;
             try {
-                var custIds = [];
-                (window._jnlContracts || []).forEach(function(c) { if (c.customerId && custIds.indexOf(c.customerId) < 0) custIds.push(c.customerId); });
-                var myId = (window.InterpreterApp && InterpreterApp.currentUser) ? InterpreterApp.currentUser.id : null;
-                if (!myId) { try { var u = await ContentourAuth.getCurrentUser(); myId = u ? u.id : null; } catch(e) {} }
-                // 전체공통(둘 다 NULL) + 본인 직접배정(interpreter_id) + 본인 계약 고객사 지정
-                var ors = ['and(customer_id.is.null,interpreter_id.is.null)'];
-                if (myId) ors.push('interpreter_id.eq.' + myId);
-                if (custIds.length) ors.push('customer_id.in.(' + custIds.join(',') + ')');
+                // RLS(template_select + template_select_interpreter)가 전체공통·본인 직접배정·
+                // 본인 계약 고객사 양식만 통과시키므로 is_active만 조회하면 정확히 걸러짐.
                 var res = await window.sbClient.from('54_상담일지양식')
                     .select('id, name, sections, customer_id, interpreter_id')
-                    .or(ors.join(','))
                     .eq('is_active', true)
                     .order('created_at', { ascending: true });
                 if (res.error) { console.warn('배정 양식 로드 실패:', res.error.message); return; }
                 icfbAssignedTemplates = res.data || [];
+                console.log('[배정양식] 통역사 로드:', icfbAssignedTemplates.length, '건');
             } catch(e) { console.warn('배정 양식 로드 예외:', e); }
         }
 
