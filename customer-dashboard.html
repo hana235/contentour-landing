@@ -765,6 +765,10 @@
               </div>
 
               <!-- ══════════════ 현장 바이어 수집 (명함) ══════════════ -->
+              <div style="margin:6px 0 12px;padding:11px 14px;background:#f6f9ff;border:1px solid #c5d4ec;border-radius:10px;">
+                <div style="font-size:0.84rem;font-weight:800;color:#1565c0;">🔒 고객사 전용 — 콘텐츄어 미열람</div>
+                <div style="font-size:0.74rem;color:#5b6b85;margin-top:3px;">아래 <strong>바이어 정보 · 상담 내용 · 성과 · 조치</strong>는 고객사 전용으로 저장되며, 콘텐츄어(관리자)는 열람할 수 없습니다.</div>
+              </div>
               <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                 <span>🤝 현장 바이어 수집</span>
                 <span style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -785,6 +789,10 @@
               </div>
               <div class="j-section">팔로업 액션 플랜</div>
               <div class="j-field" style="margin-bottom:18px;"><label>상담 후 조치 사항</label><textarea id="j-action" rows="3" placeholder="예: 1) A사 — 샘플 발송, 2) B사 — 가격표 수정본 이메일"></textarea></div>
+              <div style="margin:6px 0 12px;padding:11px 14px;background:#eef7ee;border:1px solid #c3e3c3;border-radius:10px;">
+                <div style="font-size:0.84rem;font-weight:800;color:#2e7d32;">📤 콘텐츄어 공유 — 서비스 품질 개선용</div>
+                <div style="font-size:0.74rem;color:#4b6b4b;margin-top:3px;">아래 <strong>통역사 평가 · 현장 소견</strong>은 콘텐츄어와 공유되어 통역 품질 관리에 사용됩니다.</div>
+              </div>
               <div class="j-section">통역사 현장 평가</div>
               <div class="j-grid">
                 <div class="j-field"><label>전문 용어 대응력</label><div class="star-group" id="stars-term"><button class="star-btn" onclick="setStars('term',1)">★</button><button class="star-btn" onclick="setStars('term',2)">★</button><button class="star-btn" onclick="setStars('term',3)">★</button><button class="star-btn" onclick="setStars('term',4)">★</button><button class="star-btn" onclick="setStars('term',5)">★</button></div></div>
@@ -2354,6 +2362,21 @@
             reviewedAt: j.reviewed_at || ''
           });
         });
+        // 🔒 비공개 본문 병합 (본인만 RLS 통과 → 44엔 비어있는 요약·성과·조치를 복원)
+        try {
+          var { data: priv } = await window.sbClient
+            .from('55_상담일지_비공개')
+            .select('journal_id, content')
+            .eq('customer_id', user.id);
+          if (priv && priv.length) {
+            var pmap = {};
+            priv.forEach(function(p) { pmap[p.journal_id] = (typeof p.content === 'string' ? JSON.parse(p.content) : p.content) || {}; });
+            journalData.forEach(function(j) {
+              var c = pmap[j.id];
+              if (c) { if (c.summary) j.summary = c.summary; if (c.result) j.result = c.result; if (c.issue) j.issue = c.issue; if (c.action) j.action = c.action; }
+            });
+          }
+        } catch(e) { console.warn('비공개 본문 병합 실패:', e); }
         _journalDbLoaded = true;
         renderJournalList();
       } catch(e) { console.error('상담일지 DB 로드 실패:', e); }
@@ -2388,6 +2411,9 @@
       document.getElementById('j-sample').value = j.sample;
       document.getElementById('j-follow').value = j.follow;
       document.getElementById('j-summary').value = j.summary || '';
+      if (document.getElementById('j-result')) document.getElementById('j-result').value = j.result || '';
+      if (document.getElementById('j-issue')) document.getElementById('j-issue').value = j.issue || '';
+      if (document.getElementById('j-action')) document.getElementById('j-action').value = j.action || '';
       document.getElementById('jeditorSavedAt').textContent = '마지막 저장: ' + j.date;
 
       // 이 전시회로 수집된 바이어 자동 불러오기 (조용히)
@@ -2529,14 +2555,15 @@
               buyer_company: _currentUserProfile.company || _currentUserProfile.name || '',
               buyer_contact: _currentUserProfile.name || '',
               buyer_country: location || '',
-              discussion_summary: summary,
-              buyer_interest: result || '',
+              // 🔒 상담 본문(요약·성과·특이·조치)은 콘텐츄어 미열람 → 55_상담일지_비공개로 분리. 44엔 빈 값.
+              discussion_summary: '',
+              buyer_interest: '',
               follow_up_needed: followCount > 0,
-              follow_up_notes: action || '',
+              follow_up_notes: '',
               status: type === 'complete' ? 'submitted' : 'draft',
               submitted_at: type === 'complete' ? new Date().toISOString() : null,
               attachments: JSON.stringify({
-                total: total, contract: contractCount, sample: sampleCount, follow: followCount, issue: issue,
+                total: total, contract: contractCount, sample: sampleCount, follow: followCount,
                 countries: selectedCountries, lang: lang || '',
                 customerSurvey: customerSurvey,
                 customerSurveyText: customerSurveyText
@@ -2552,6 +2579,24 @@
               var { data: newJ, error: insErr } = await window.sbClient.from('44_상담일지').insert(journalRecord).select('id').single();
               if (insErr) { console.error('상담일지 INSERT 실패:', insErr); showJToast('&#9888;&#65039; 저장 실패. 입력 내용은 유지됩니다. 잠시 후 저장 버튼을 다시 눌러주세요.'); }
               else if (newJ) activeJournalId = newJ.id;
+            }
+
+            // 🔒 고객사 전용 영역(상담 본문) → 55_상담일지_비공개 (콘텐츄어 미열람, RLS 강제)
+            if (activeJournalId && typeof activeJournalId === 'string' && activeJournalId.includes('-')) {
+              try {
+                var pv = await window.sbClient.from('55_상담일지_비공개').upsert({
+                  journal_id: activeJournalId,
+                  contract_id: (document.getElementById('j-contract-id') || {}).value || null,
+                  customer_id: user.id,
+                  interpreter_id: jInterpId || null,
+                  content: { summary: summary, result: result, issue: issue, action: action }
+                }, { onConflict: 'journal_id' });
+                if (pv.error) throw pv.error;
+              } catch (e) {
+                // 55 미가용(마이그레이션 미적용 등) 시 본문 유실 방지 → 44에 복원(임시)
+                console.warn('비공개 영역 저장 실패 → 44 폴백:', e);
+                try { await window.sbClient.from('44_상담일지').update({ discussion_summary: summary, buyer_interest: result, follow_up_notes: action }).eq('id', activeJournalId); } catch(_) {}
+              }
             }
 
             // 제출 시 통역사 현장 평가 → 49_통역사리뷰에 저장
