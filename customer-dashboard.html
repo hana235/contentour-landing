@@ -2893,6 +2893,7 @@
         document.querySelector('.cfb-add-tab').style.background = 'var(--light-bg)';
         document.getElementById('fmt-custom').classList.add('active');
         cfbRenderSavedList();
+        cfbLoadAssigned().then(cfbRenderSavedList);
         return;
       } else {
         var addTab = document.querySelector('.cfb-add-tab');
@@ -3298,12 +3299,33 @@
     var cfbEditingIdx = -1; // -1 = 새로 만들기
     var cfbSections = []; // 현재 빌더의 섹션 데이터
     var cfbWritingTplIdx = -1;
+    var cfbAssignedTemplates = []; // 콘텐츄어(admin)가 배정한 54_상담일지양식 (본인+공통)
+    var cfbWritingTpl = null;      // 현재 작성 중인 양식 객체 (배정 or 나만의)
+    var cfbWritingTemplateId = null; // 배정 양식이면 54_상담일지양식.id, 나만의 양식이면 null
+    var cfbActiveDbId = null;      // 작성 중 44_상담일지 row id (임시저장 후 update용)
+
+    function cfbEsc(v) { return (v==null?'':String(v)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
     function cfbLoadTemplates() {
       try { cfbTemplates = JSON.parse(localStorage.getItem('contentour_custom_templates_' + currentClientId) || '[]'); } catch(e) { cfbTemplates = []; }
     }
     function cfbSaveTemplates() {
       localStorage.setItem('contentour_custom_templates_' + currentClientId, JSON.stringify(cfbTemplates));
+    }
+
+    // 콘텐츄어가 배정한 맞춤 양식 로드 (본인 배정 + 전체공통). RLS가 customer_id=본인/NULL만 허용.
+    async function cfbLoadAssigned() {
+      cfbAssignedTemplates = [];
+      if (!window.sbClient || !currentClientId || currentClientId === 'guest') return;
+      try {
+        var res = await window.sbClient.from('54_상담일지양식')
+          .select('id, name, sections, customer_id')
+          .or('customer_id.eq.' + currentClientId + ',customer_id.is.null')
+          .eq('is_active', true)
+          .order('created_at', { ascending: true });
+        if (res.error) { console.warn('배정 양식 로드 실패:', res.error.message); return; }
+        cfbAssignedTemplates = res.data || [];
+      } catch(e) { console.warn('배정 양식 로드 예외:', e); }
     }
 
     function cfbRenderSavedList() {
@@ -3316,21 +3338,36 @@
       document.getElementById('cfb-mode-write').style.display = 'none';
       document.getElementById('cfbWriteFooter').style.display = 'none';
 
-      if (cfbTemplates.length === 0) {
-        container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--gray-400);"><div style="font-size:2rem;opacity:0.4;margin-bottom:8px;">&#128196;</div><div style="font-size:0.85rem;font-weight:600;">저장된 양식이 없습니다</div><div style="font-size:0.78rem;margin-top:4px;">위의 "새 양식 만들기" 버튼을 눌러 첫 양식을 만들어보세요.</div></div>';
-        return;
+      var html = '';
+      // 콘텐츄어가 배정한 양식 (읽기 전용, 작성만 가능)
+      if (cfbAssignedTemplates.length) {
+        html += '<div style="font-size:0.74rem;font-weight:800;color:var(--blue);margin:2px 2px 8px;">&#128204; 콘텐츄어 배정 양식</div>';
+        html += cfbAssignedTemplates.map(function(tpl, i) {
+          var fc = 0; (tpl.sections||[]).forEach(function(s) { fc += (s.fields||[]).length; });
+          return '<div class="cfb-saved-item" onclick="cfbUseAssigned(' + i + ')">' +
+            '<div class="cfb-saved-info"><div class="cfb-saved-name">&#128204; ' + cfbEsc(tpl.name) + '</div>' +
+            '<div class="cfb-saved-meta">' + (tpl.sections?tpl.sections.length:0) + '개 섹션 · ' + fc + '개 필드 · 작성하기</div></div>' +
+          '</div>';
+        }).join('');
+        html += '<div style="font-size:0.74rem;font-weight:800;color:var(--gray-500);margin:16px 2px 8px;">&#128196; 나만의 양식</div>';
       }
-      container.innerHTML = cfbTemplates.map(function(tpl, i) {
-        var fieldCount = 0;
-        tpl.sections.forEach(function(s) { fieldCount += s.fields.length; });
-        return '<div class="cfb-saved-item" onclick="cfbUseTemplate(' + i + ')">' +
-          '<div class="cfb-saved-info"><div class="cfb-saved-name">&#128196; ' + tpl.name + '</div>' +
-          '<div class="cfb-saved-meta">' + tpl.sections.length + '개 섹션 · ' + fieldCount + '개 필드 · ' + (tpl.updatedAt || tpl.createdAt) + '</div></div>' +
-          '<div class="cfb-saved-btns">' +
-            '<button class="cfb-saved-btn" onclick="event.stopPropagation();cfbEditTemplate(' + i + ')">&#9998; 편집</button>' +
-            '<button class="cfb-saved-btn del" onclick="event.stopPropagation();cfbDeleteTemplate(' + i + ')">&#128465; 삭제</button>' +
-          '</div></div>';
-      }).join('');
+
+      if (cfbTemplates.length === 0) {
+        html += '<div style="text-align:center;padding:32px 20px;color:var(--gray-400);"><div style="font-size:2rem;opacity:0.4;margin-bottom:8px;">&#128196;</div><div style="font-size:0.85rem;font-weight:600;">저장된 나만의 양식이 없습니다</div><div style="font-size:0.78rem;margin-top:4px;">위의 "새 양식 만들기" 버튼을 눌러 첫 양식을 만들어보세요.</div></div>';
+      } else {
+        html += cfbTemplates.map(function(tpl, i) {
+          var fieldCount = 0;
+          tpl.sections.forEach(function(s) { fieldCount += s.fields.length; });
+          return '<div class="cfb-saved-item" onclick="cfbUseTemplate(' + i + ')">' +
+            '<div class="cfb-saved-info"><div class="cfb-saved-name">&#128196; ' + cfbEsc(tpl.name) + '</div>' +
+            '<div class="cfb-saved-meta">' + tpl.sections.length + '개 섹션 · ' + fieldCount + '개 필드 · ' + (tpl.updatedAt || tpl.createdAt) + '</div></div>' +
+            '<div class="cfb-saved-btns">' +
+              '<button class="cfb-saved-btn" onclick="event.stopPropagation();cfbEditTemplate(' + i + ')">&#9998; 편집</button>' +
+              '<button class="cfb-saved-btn del" onclick="event.stopPropagation();cfbDeleteTemplate(' + i + ')">&#128465; 삭제</button>' +
+            '</div></div>';
+        }).join('');
+      }
+      container.innerHTML = html;
     }
 
     function cfbStartNew() {
@@ -3518,13 +3555,27 @@
       document.getElementById('cfb-mode-builder').style.display = '';
     }
 
-    // 저장된 양식으로 상담일지 작성
+    // 저장된 양식으로 상담일지 작성 (나만의 양식)
     function cfbUseTemplate(idx) {
       cfbLoadTemplates();
       cfbWritingTplIdx = idx;
       var tpl = cfbTemplates[idx];
-      document.getElementById('cfbWriteTitle').textContent = '&#128221; ' + tpl.name + ' — 상담일지 작성';
-      document.getElementById('cfbWriteBody').innerHTML = cfbRenderForm(tpl.sections, true);
+      cfbWritingTpl = tpl; cfbWritingTemplateId = null; cfbActiveDbId = null;
+      cfbOpenWrite('&#128196; ' + cfbEsc(tpl.name) + ' — 상담일지 작성', tpl.sections);
+    }
+
+    // 콘텐츄어 배정 양식으로 상담일지 작성
+    function cfbUseAssigned(idx) {
+      var tpl = cfbAssignedTemplates[idx];
+      if (!tpl) return;
+      cfbWritingTplIdx = -1;
+      cfbWritingTpl = tpl; cfbWritingTemplateId = tpl.id; cfbActiveDbId = null;
+      cfbOpenWrite('&#128204; ' + cfbEsc(tpl.name) + ' — 상담일지 작성', tpl.sections);
+    }
+
+    function cfbOpenWrite(title, sections) {
+      document.getElementById('cfbWriteTitle').innerHTML = title;
+      document.getElementById('cfbWriteBody').innerHTML = cfbRenderForm(sections, true);
       document.getElementById('cfb-mode-list').style.display = 'none';
       document.getElementById('cfb-mode-builder').style.display = 'none';
       document.getElementById('cfb-mode-preview').style.display = 'none';
@@ -3534,13 +3585,13 @@
     }
 
     function cfbClearWrite() {
-      if (cfbWritingTplIdx >= 0) cfbUseTemplate(cfbWritingTplIdx);
+      if (cfbWritingTpl) document.getElementById('cfbWriteBody').innerHTML = cfbRenderForm(cfbWritingTpl.sections, true);
     }
 
-    function cfbSaveWrite(type) {
-      if (cfbWritingTplIdx < 0) return;
-      var tpl = cfbTemplates[cfbWritingTplIdx];
-      // 필수 필드 체크
+    async function cfbSaveWrite(type) {
+      var tpl = cfbWritingTpl;
+      if (!tpl) return;
+      // 필수 필드 체크 (제출 시)
       if (type === 'complete') {
         var missing = false;
         tpl.sections.forEach(function(sec) {
@@ -3555,12 +3606,50 @@
         });
         if (missing) { showJToast('&#9888;&#65039; 필수 항목을 모두 입력해주세요.'); return; }
       }
-      var now = new Date().toLocaleString('ko-KR');
-      document.getElementById('cfbSavedAt').textContent = '마지막 저장: ' + now;
-      var msg = type === 'complete'
-        ? '&#9989; "' + tpl.name + '" 상담일지가 제출되었습니다!'
-        : '&#128190; "' + tpl.name + '" 상담일지가 임시저장되었습니다.';
-      showJToast(msg);
+
+      // 답변 수집 + 전시회명/날짜 추출
+      var answers = [], exhibitionName = '', consultDate = '';
+      tpl.sections.forEach(function(sec) {
+        sec.fields.forEach(function(f) {
+          var id = 'cfb-f-' + f.name.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+          var el = document.getElementById(id);
+          var v = el ? el.value : '';
+          answers.push({ section: sec.name, field: f.name, type: f.type, value: v });
+          if (!exhibitionName && f.type === 'text' && v && /전시|행사|박람/.test(f.name)) exhibitionName = v;
+          if (!consultDate && f.type === 'date' && v) consultDate = v;
+        });
+      });
+      if (!exhibitionName) exhibitionName = tpl.name || '맞춤 상담일지';
+      if (!consultDate) consultDate = new Date().toISOString().split('T')[0];
+
+      if (!window.sbClient) { showJToast('&#9888;&#65039; 로그인이 필요합니다.'); return; }
+      try {
+        var user = await ContentourAuth.getCurrentUser();
+        if (!user) { showJToast('&#9888;&#65039; 로그인이 필요합니다.'); return; }
+        var rec = {
+          interpreter_id: user.id,   // 고객사 작성: 본인 폴백 (기존 상담일지 패턴 동일)
+          customer_id: user.id,
+          exhibition_name: exhibitionName,
+          consultation_date: consultDate,
+          status: type === 'complete' ? 'submitted' : 'draft',
+          submitted_at: type === 'complete' ? new Date().toISOString() : null,
+          attachments: JSON.stringify({ formType: 'custom', templateId: cfbWritingTemplateId, templateName: tpl.name, answers: answers })
+        };
+        if (cfbActiveDbId) {
+          var u = await window.sbClient.from('44_상담일지').update(rec).eq('id', cfbActiveDbId);
+          if (u.error) throw u.error;
+        } else {
+          var ins = await window.sbClient.from('44_상담일지').insert(rec).select('id').single();
+          if (ins.error) throw ins.error;
+          if (ins.data) cfbActiveDbId = ins.data.id;
+        }
+        document.getElementById('cfbSavedAt').textContent = '마지막 저장: ' + new Date().toLocaleString('ko-KR');
+        showJToast(type === 'complete' ? '&#9989; "' + cfbEsc(tpl.name) + '" 상담일지가 제출되었습니다!' : '&#128190; 임시저장되었습니다.');
+        if (type === 'complete') { cfbActiveDbId = null; cfbRenderSavedList(); }
+      } catch(e) {
+        console.error('맞춤 상담일지 저장 실패:', e);
+        showJToast('&#9888;&#65039; 저장 실패: ' + (e.message || '권한/네트워크 확인'));
+      }
     }
 
     // ===== PDF Export =====

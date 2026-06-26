@@ -3421,6 +3421,7 @@
                 if (addTab) addTab.classList.add('active');
                 document.getElementById('jnl-fmt-custom').classList.add('active');
                 icfbRenderSavedList();
+                icfbLoadAssigned().then(icfbRenderSavedList);
                 return;
             }
             var fmtMap = { contentour: 0, busan: 1, kita: 2 };
@@ -3962,12 +3963,39 @@
         var icfbEditingIdx = -1;
         var icfbSections = [];
         var icfbWritingTplIdx = -1;
+        var icfbAssignedTemplates = []; // 콘텐츄어(admin)가 배정한 54_상담일지양식 (계약 고객사+공통)
+        var icfbWritingTpl = null;
+        var icfbWritingTemplateId = null;
+        var icfbWritingCustomerId = null; // 배정 양식의 고객사 id (44_상담일지.customer_id)
+        var icfbActiveDbId = null;
+
+        function icfbEsc(v) { return (v==null?'':String(v)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
         function icfbLoadTemplates() {
             try { icfbTemplates = JSON.parse(localStorage.getItem('contentour_custom_templates_interpreter') || '[]'); } catch(e) { icfbTemplates = []; }
         }
         function icfbSaveTemplates() {
             localStorage.setItem('contentour_custom_templates_interpreter', JSON.stringify(icfbTemplates));
+        }
+
+        // 콘텐츄어가 배정한 맞춤 양식 로드 (본인 계약 고객사 + 전체공통).
+        // 고객사 지정 양식은 54_상담일지양식의 통역사 조회 RLS(template_select_interpreter) 적용 후 노출됨.
+        async function icfbLoadAssigned() {
+            icfbAssignedTemplates = [];
+            if (!window.sbClient) return;
+            try {
+                var custIds = [];
+                (window._jnlContracts || []).forEach(function(c) { if (c.customerId && custIds.indexOf(c.customerId) < 0) custIds.push(c.customerId); });
+                var orFilter = 'customer_id.is.null';
+                if (custIds.length) orFilter += ',customer_id.in.(' + custIds.join(',') + ')';
+                var res = await window.sbClient.from('54_상담일지양식')
+                    .select('id, name, sections, customer_id')
+                    .or(orFilter)
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: true });
+                if (res.error) { console.warn('배정 양식 로드 실패:', res.error.message); return; }
+                icfbAssignedTemplates = res.data || [];
+            } catch(e) { console.warn('배정 양식 로드 예외:', e); }
         }
 
         function icfbRenderSavedList() {
@@ -3979,20 +4007,35 @@
             document.getElementById('icfbWriteFooter').style.display = 'none';
 
             var container = document.getElementById('icfbSavedList');
-            if (icfbTemplates.length === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--gray-400);"><div style="font-size:2rem;opacity:0.4;margin-bottom:8px;">📄</div><div style="font-size:0.85rem;font-weight:600;">저장된 양식이 없습니다</div><div style="font-size:0.78rem;margin-top:4px;">위의 "새 양식 만들기" 버튼을 눌러 첫 양식을 만들어보세요.</div></div>';
-                return;
+            var html = '';
+            // 콘텐츄어가 배정한 양식 (읽기 전용, 작성만 가능)
+            if (icfbAssignedTemplates.length) {
+                html += '<div style="font-size:0.74rem;font-weight:800;color:var(--blue,#1565c0);margin:2px 2px 8px;">📌 콘텐츄어 배정 양식</div>';
+                html += icfbAssignedTemplates.map(function(tpl, i) {
+                    var fc = 0; (tpl.sections||[]).forEach(function(s) { fc += (s.fields||[]).length; });
+                    return '<div class="icfb-saved-item" onclick="icfbUseAssigned(' + i + ')">' +
+                        '<div style="flex:1;"><div class="icfb-saved-name">📌 ' + icfbEsc(tpl.name) + '</div>' +
+                        '<div class="icfb-saved-meta">' + (tpl.sections?tpl.sections.length:0) + '개 섹션 · ' + fc + '개 필드 · 작성하기</div></div>' +
+                    '</div>';
+                }).join('');
+                html += '<div style="font-size:0.74rem;font-weight:800;color:var(--gray-500);margin:16px 2px 8px;">📄 나만의 양식</div>';
             }
-            container.innerHTML = icfbTemplates.map(function(tpl, i) {
-                var fc = 0; tpl.sections.forEach(function(s) { fc += s.fields.length; });
-                return '<div class="icfb-saved-item" onclick="icfbUseTemplate(' + i + ')">' +
-                    '<div style="flex:1;"><div class="icfb-saved-name">📄 ' + tpl.name + '</div>' +
-                    '<div class="icfb-saved-meta">' + tpl.sections.length + '개 섹션 · ' + fc + '개 필드 · ' + (tpl.updatedAt || tpl.createdAt) + '</div></div>' +
-                    '<div class="icfb-saved-btns">' +
-                        '<button class="icfb-saved-btn" onclick="event.stopPropagation();icfbEditTemplate(' + i + ')">✎ 편집</button>' +
-                        '<button class="icfb-saved-btn del" onclick="event.stopPropagation();icfbDeleteTemplate(' + i + ')">🗑 삭제</button>' +
-                    '</div></div>';
-            }).join('');
+
+            if (icfbTemplates.length === 0) {
+                html += '<div style="text-align:center;padding:32px 20px;color:var(--gray-400);"><div style="font-size:2rem;opacity:0.4;margin-bottom:8px;">📄</div><div style="font-size:0.85rem;font-weight:600;">저장된 나만의 양식이 없습니다</div><div style="font-size:0.78rem;margin-top:4px;">위의 "새 양식 만들기" 버튼을 눌러 첫 양식을 만들어보세요.</div></div>';
+            } else {
+                html += icfbTemplates.map(function(tpl, i) {
+                    var fc = 0; tpl.sections.forEach(function(s) { fc += s.fields.length; });
+                    return '<div class="icfb-saved-item" onclick="icfbUseTemplate(' + i + ')">' +
+                        '<div style="flex:1;"><div class="icfb-saved-name">📄 ' + icfbEsc(tpl.name) + '</div>' +
+                        '<div class="icfb-saved-meta">' + tpl.sections.length + '개 섹션 · ' + fc + '개 필드 · ' + (tpl.updatedAt || tpl.createdAt) + '</div></div>' +
+                        '<div class="icfb-saved-btns">' +
+                            '<button class="icfb-saved-btn" onclick="event.stopPropagation();icfbEditTemplate(' + i + ')">✎ 편집</button>' +
+                            '<button class="icfb-saved-btn del" onclick="event.stopPropagation();icfbDeleteTemplate(' + i + ')">🗑 삭제</button>' +
+                        '</div></div>';
+                }).join('');
+            }
+            container.innerHTML = html;
         }
 
         function icfbStartNew() {
@@ -4179,8 +4222,21 @@
             icfbLoadTemplates();
             icfbWritingTplIdx = idx;
             var tpl = icfbTemplates[idx];
-            document.getElementById('icfbWriteTitle').textContent = '📝 ' + tpl.name + ' — 상담일지 작성';
-            document.getElementById('icfbWriteBody').innerHTML = icfbRenderForm(tpl.sections, true);
+            icfbWritingTpl = tpl; icfbWritingTemplateId = null; icfbWritingCustomerId = null; icfbActiveDbId = null;
+            icfbOpenWrite('📝 ' + icfbEsc(tpl.name) + ' — 상담일지 작성', tpl.sections);
+        }
+
+        function icfbUseAssigned(idx) {
+            var tpl = icfbAssignedTemplates[idx];
+            if (!tpl) return;
+            icfbWritingTplIdx = -1;
+            icfbWritingTpl = tpl; icfbWritingTemplateId = tpl.id; icfbWritingCustomerId = tpl.customer_id || null; icfbActiveDbId = null;
+            icfbOpenWrite('📌 ' + icfbEsc(tpl.name) + ' — 상담일지 작성', tpl.sections);
+        }
+
+        function icfbOpenWrite(title, sections) {
+            document.getElementById('icfbWriteTitle').textContent = title;
+            document.getElementById('icfbWriteBody').innerHTML = icfbRenderForm(sections, true);
             document.getElementById('icfb-mode-list').style.display = 'none';
             document.getElementById('icfb-mode-builder').style.display = 'none';
             document.getElementById('icfb-mode-preview').style.display = 'none';
@@ -4190,12 +4246,13 @@
         }
 
         function icfbClearWrite() {
-            if (icfbWritingTplIdx >= 0) icfbUseTemplate(icfbWritingTplIdx);
+            if (icfbWritingTpl) document.getElementById('icfbWriteBody').innerHTML = icfbRenderForm(icfbWritingTpl.sections, true);
         }
 
-        function icfbSaveWrite(type) {
-            if (icfbWritingTplIdx < 0) return;
-            var tpl = icfbTemplates[icfbWritingTplIdx];
+        async function icfbSaveWrite(type) {
+            var tpl = icfbWritingTpl;
+            if (!tpl) return;
+            // 필수 필드 체크 (제출 시)
             if (type === 'submit') {
                 var missing = false;
                 tpl.sections.forEach(function(sec) {
@@ -4210,13 +4267,55 @@
                 });
                 if (missing) { showToast('⚠️ 필수 항목을 모두 입력해주세요.'); return; }
             }
-            var now = new Date();
-            var timeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('icfbSavedAt').textContent = '마지막 저장: 오늘 ' + timeStr;
-            var msg = type === 'submit'
-                ? '✅ "' + tpl.name + '" 상담일지가 제출되었습니다!'
-                : '💾 "' + tpl.name + '" 상담일지가 임시저장되었습니다.';
-            showToast(msg);
+
+            // 답변 수집 + 전시회명/날짜 추출
+            var answers = [], exhibitionName = '', consultDate = '';
+            tpl.sections.forEach(function(sec) {
+                sec.fields.forEach(function(f) {
+                    var id = 'icfb-f-' + f.name.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+                    var el = document.getElementById(id);
+                    var v = el ? el.value : '';
+                    answers.push({ section: sec.name, field: f.name, type: f.type, value: v });
+                    if (!exhibitionName && f.type === 'text' && v && /전시|행사|박람/.test(f.name)) exhibitionName = v;
+                    if (!consultDate && f.type === 'date' && v) consultDate = v;
+                });
+            });
+            if (!exhibitionName) exhibitionName = tpl.name || '맞춤 상담일지';
+            if (!consultDate) consultDate = new Date().toISOString().split('T')[0];
+
+            var sb = window.sbClient;
+            if (!sb) { showToast('⚠️ 로그인이 필요합니다.'); return; }
+            var user = null;
+            if (window.InterpreterApp && InterpreterApp.currentUser) user = InterpreterApp.currentUser;
+            else { try { user = await ContentourAuth.getCurrentUser(); } catch(e) {} }
+            if (!user || !user.id) { showToast('⚠️ 로그인이 필요합니다.'); return; }
+
+            try {
+                var rec = {
+                    interpreter_id: user.id,
+                    customer_id: icfbWritingCustomerId,
+                    exhibition_name: exhibitionName,
+                    consultation_date: consultDate,
+                    status: type === 'submit' ? 'submitted' : 'draft',
+                    submitted_at: type === 'submit' ? new Date().toISOString() : null,
+                    attachments: JSON.stringify({ formType: 'custom', templateId: icfbWritingTemplateId, templateName: tpl.name, answers: answers })
+                };
+                if (icfbActiveDbId) {
+                    var u = await sb.from('44_상담일지').update(rec).eq('id', icfbActiveDbId);
+                    if (u.error) throw u.error;
+                } else {
+                    var ins = await sb.from('44_상담일지').insert(rec).select('id').single();
+                    if (ins.error) throw ins.error;
+                    if (ins.data) icfbActiveDbId = ins.data.id;
+                }
+                var now = new Date();
+                document.getElementById('icfbSavedAt').textContent = '마지막 저장: 오늘 ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+                showToast(type === 'submit' ? '✅ "' + icfbEsc(tpl.name) + '" 상담일지가 제출되었습니다!' : '💾 임시저장되었습니다.');
+                if (type === 'submit') { icfbActiveDbId = null; if (typeof jnlLoadList === 'function') jnlLoadList(); }
+            } catch(e) {
+                console.error('맞춤 상담일지 저장 실패:', e);
+                showToast('⚠️ 저장 실패: ' + (e.message || '권한/네트워크 확인'));
+            }
         }
 
         // ══════════════ 정산 내역 ══════════════
