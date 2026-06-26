@@ -2562,7 +2562,12 @@
                     .eq('interpreter_id', userId)
                     .order('start_date', { ascending: false });
 
-                if (!contracts || contracts.length === 0) return;
+                if (!contracts || contracts.length === 0) {
+                    // 계약이 없어도 전체공통·본인 직접배정 양식은 기본탭에 적용되어야 함
+                    window._jnlContracts = [];
+                    try { icfbInitDefault(); } catch(e) {}
+                    return;
+                }
 
                 jnlExpoMap = {};
 
