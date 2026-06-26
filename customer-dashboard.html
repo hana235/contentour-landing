@@ -1784,6 +1784,8 @@
 
             // 나만의 양식 저장 키용 (브라우저별 per-user)
             currentClientId = user.id;
+            // 배정 양식이 있으면 콘텐츄어 기본 탭을 그 양식으로 대체
+            try { cfbInitDefault(); } catch(e) {}
 
             applyUserProfile(_currentUserProfile);
 
@@ -2899,6 +2901,14 @@
         var addTab = document.querySelector('.cfb-add-tab');
         addTab.style.borderColor = ''; addTab.style.color = ''; addTab.style.background = '';
       }
+      // 콘텐츄어 기본 탭: 배정 양식이 있으면 그 양식으로 대체 표시
+      if (fmt === 'contentour' && cfbDefaultOverride) {
+        document.querySelectorAll('.jformat-tab')[0].classList.add('active');
+        cfbEnsureOverrideContainer();
+        cfbRenderDefaultOverride();
+        document.getElementById('fmt-contentour-override').classList.add('active');
+        return;
+      }
       var fmtMap = { contentour: 0, busan: 1, kita: 2, simple: 3 };
       document.querySelectorAll('.jformat-tab')[fmtMap[fmt]].classList.add('active');
       document.getElementById('fmt-' + fmt).classList.add('active');
@@ -3303,6 +3313,7 @@
     var cfbWritingTpl = null;      // 현재 작성 중인 양식 객체 (배정 or 나만의)
     var cfbWritingTemplateId = null; // 배정 양식이면 54_상담일지양식.id, 나만의 양식이면 null
     var cfbActiveDbId = null;      // 작성 중 44_상담일지 row id (임시저장 후 update용)
+    var cfbDefaultOverride = null; // 콘텐츄어 기본 탭을 대체할 배정 양식 (있으면 기본 상담일지가 됨)
 
     function cfbEsc(v) { return (v==null?'':String(v)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -3327,6 +3338,50 @@
         cfbAssignedTemplates = res.data || [];
         console.log('[배정양식] 고객사 로드:', cfbAssignedTemplates.length, '건');
       } catch(e) { console.warn('배정 양식 로드 예외:', e); }
+    }
+
+    // ── 콘텐츄어 기본 탭 오버라이드: 배정 양식이 있으면 그 양식이 '기본 상담일지'가 됨 ──
+    function cfbPickDefaultOverride() {
+      var specific = cfbAssignedTemplates.filter(function(t) { return t.customer_id === currentClientId; });
+      var common = cfbAssignedTemplates.filter(function(t) { return !t.customer_id && !t.interpreter_id; });
+      var pool = specific.length ? specific : common; // 본인 지정 우선, 없으면 전체공통
+      cfbDefaultOverride = pool.length ? pool[pool.length - 1] : null; // 가장 최근 것
+    }
+    function cfbEnsureOverrideContainer() {
+      var existing = document.getElementById('fmt-contentour-override');
+      if (existing) return existing;
+      var base = document.getElementById('fmt-contentour');
+      if (!base) return null;
+      var div = document.createElement('div');
+      div.className = 'jformat-content';
+      div.id = 'fmt-contentour-override';
+      base.parentNode.insertBefore(div, base.nextSibling);
+      return div;
+    }
+    function cfbRenderDefaultOverride() {
+      var tpl = cfbDefaultOverride; if (!tpl) return;
+      var cont = cfbEnsureOverrideContainer(); if (!cont) return;
+      cfbWritingTpl = tpl; cfbWritingTemplateId = tpl.id || null; cfbActiveDbId = null;
+      cont.innerHTML =
+        '<div class="j-notice" style="background:#e8f0fe;color:#1565c0;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:0.85rem;">&#128204; <strong>' + cfbEsc(tpl.name) + '</strong> — 콘텐츄어가 배정한 전용 상담일지 양식입니다.</div>' +
+        cfbRenderForm(tpl.sections, true) +
+        '<div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">' +
+          '<button class="jbtn-ghost" onclick="cfbRenderDefaultOverride()">초기화</button>' +
+          '<button class="jbtn-primary" onclick="cfbSaveWrite(\'draft\')">&#128190; 임시저장</button>' +
+          '<button class="jbtn-complete" onclick="cfbSaveWrite(\'complete\')">&#9989; 제출하기</button>' +
+        '</div>';
+    }
+    async function cfbInitDefault() {
+      await cfbLoadAssigned();
+      cfbPickDefaultOverride();
+      if (!cfbDefaultOverride) return;
+      var base = document.getElementById('fmt-contentour');
+      if (base && base.classList.contains('active')) {
+        base.classList.remove('active');
+        cfbEnsureOverrideContainer();
+        cfbRenderDefaultOverride();
+        document.getElementById('fmt-contentour-override').classList.add('active');
+      }
     }
 
     function cfbRenderSavedList() {

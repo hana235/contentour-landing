@@ -2600,6 +2600,8 @@
                     });
                 });
                 console.log('[상담일지] 계약 ' + contracts.length + '건 로드');
+                // 배정 양식이 있으면 콘텐츄어 기본 탭을 그 양식으로 대체
+                try { icfbInitDefault(); } catch(e) {}
             } catch(e) {
                 console.error('[상담일지] 계약 로드 실패:', e);
             }
@@ -3424,6 +3426,14 @@
                 icfbLoadAssigned().then(icfbRenderSavedList);
                 return;
             }
+            // 콘텐츄어 기본 탭: 배정 양식이 있으면 그 양식으로 대체 표시
+            if (fmt === 'contentour' && icfbDefaultOverride) {
+                var t0 = document.querySelectorAll('.jnl-format-tab')[0]; if (t0) t0.classList.add('active');
+                icfbEnsureOverrideContainer();
+                icfbRenderDefaultOverride();
+                document.getElementById('jnl-fmt-contentour-override').classList.add('active');
+                return;
+            }
             var fmtMap = { contentour: 0, busan: 1, kita: 2 };
             document.querySelectorAll('.jnl-format-tab')[fmtMap[fmt]].classList.add('active');
             document.getElementById('jnl-fmt-' + fmt).classList.add('active');
@@ -3968,6 +3978,7 @@
         var icfbWritingTemplateId = null;
         var icfbWritingCustomerId = null; // 배정 양식의 고객사 id (44_상담일지.customer_id)
         var icfbActiveDbId = null;
+        var icfbDefaultOverride = null; // 콘텐츄어 기본 탭을 대체할 배정 양식
 
         function icfbEsc(v) { return (v==null?'':String(v)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -3994,6 +4005,54 @@
                 icfbAssignedTemplates = res.data || [];
                 console.log('[배정양식] 통역사 로드:', icfbAssignedTemplates.length, '건');
             } catch(e) { console.warn('배정 양식 로드 예외:', e); }
+        }
+
+        // ── 콘텐츄어 기본 탭 오버라이드: 배정 양식이 있으면 그 양식이 '기본 상담일지'가 됨 ──
+        function icfbPickDefaultOverride() {
+            var myId = (window.InterpreterApp && InterpreterApp.currentUser) ? InterpreterApp.currentUser.id : null;
+            var custIds = [];
+            (window._jnlContracts || []).forEach(function(c) { if (c.customerId) custIds.push(c.customerId); });
+            var direct = icfbAssignedTemplates.filter(function(t) { return myId && t.interpreter_id === myId; });
+            var byCust = icfbAssignedTemplates.filter(function(t) { return t.customer_id && custIds.indexOf(t.customer_id) >= 0; });
+            var common = icfbAssignedTemplates.filter(function(t) { return !t.customer_id && !t.interpreter_id; });
+            var pool = direct.length ? direct : (byCust.length ? byCust : common); // 본인 직접배정 > 계약 고객사 > 공통
+            icfbDefaultOverride = pool.length ? pool[pool.length - 1] : null;
+        }
+        function icfbEnsureOverrideContainer() {
+            var existing = document.getElementById('jnl-fmt-contentour-override');
+            if (existing) return existing;
+            var base = document.getElementById('jnl-fmt-contentour');
+            if (!base) return null;
+            var div = document.createElement('div');
+            div.className = 'jnl-format-content';
+            div.id = 'jnl-fmt-contentour-override';
+            base.parentNode.insertBefore(div, base.nextSibling);
+            return div;
+        }
+        function icfbRenderDefaultOverride() {
+            var tpl = icfbDefaultOverride; if (!tpl) return;
+            var cont = icfbEnsureOverrideContainer(); if (!cont) return;
+            icfbWritingTpl = tpl; icfbWritingTemplateId = tpl.id || null; icfbWritingCustomerId = tpl.customer_id || null; icfbActiveDbId = null;
+            cont.innerHTML =
+                '<div class="jnl-notice" style="background:#e8f0fe;color:#1565c0;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:0.85rem;">📌 <strong>' + icfbEsc(tpl.name) + '</strong> — 콘텐츄어가 배정한 전용 상담일지 양식입니다.</div>' +
+                icfbRenderForm(tpl.sections, true) +
+                '<div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">' +
+                    '<button class="btn-decline-lg" onclick="icfbRenderDefaultOverride()">초기화</button>' +
+                    '<button class="btn-accept-lg" style="background:var(--gray-400);" onclick="icfbSaveWrite(\'draft\')">임시저장</button>' +
+                    '<button class="btn-accept-lg" onclick="icfbSaveWrite(\'submit\')">제출하기</button>' +
+                '</div>';
+        }
+        async function icfbInitDefault() {
+            await icfbLoadAssigned();
+            icfbPickDefaultOverride();
+            if (!icfbDefaultOverride) return;
+            var base = document.getElementById('jnl-fmt-contentour');
+            if (base && base.classList.contains('active')) {
+                base.classList.remove('active');
+                icfbEnsureOverrideContainer();
+                icfbRenderDefaultOverride();
+                document.getElementById('jnl-fmt-contentour-override').classList.add('active');
+            }
         }
 
         function icfbRenderSavedList() {
