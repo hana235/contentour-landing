@@ -3363,12 +3363,14 @@
       var cont = cfbEnsureOverrideContainer(); if (!cont) return;
       cfbWritingTpl = tpl; cfbWritingTemplateId = tpl.id || null; cfbActiveDbId = null;
       cont.innerHTML =
-        '<div class="j-notice" style="background:#e8f0fe;color:#1565c0;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:0.85rem;">&#128204; <strong>' + cfbEsc(tpl.name) + '</strong> — 콘텐츄어가 배정한 전용 상담일지 양식입니다.</div>' +
-        cfbRenderForm(tpl.sections, true) +
-        '<div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">' +
-          '<button class="jbtn-ghost" onclick="cfbRenderDefaultOverride()">초기화</button>' +
-          '<button class="jbtn-primary" onclick="cfbSaveWrite(\'draft\')">&#128190; 임시저장</button>' +
-          '<button class="jbtn-complete" onclick="cfbSaveWrite(\'complete\')">&#9989; 제출하기</button>' +
+        '<div class="jeditor-body">' +
+          '<div class="j-notice" style="background:#e8f0fe;color:#1565c0;">&#128204; <strong>' + cfbEsc(tpl.name) + '</strong> — 콘텐츄어가 배정한 전용 상담일지 양식입니다.</div>' +
+          cfbRenderForm(tpl.sections, true) +
+          '<div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">' +
+            '<button class="jbtn-ghost" onclick="cfbRenderDefaultOverride()">초기화</button>' +
+            '<button class="jbtn-primary" onclick="cfbSaveWrite(\'draft\')">&#128190; 임시저장</button>' +
+            '<button class="jbtn-complete" onclick="cfbSaveWrite(\'complete\')">&#9989; 제출하기</button>' +
+          '</div>' +
         '</div>';
     }
     async function cfbInitDefault() {
@@ -3376,12 +3378,13 @@
       cfbPickDefaultOverride();
       if (!cfbDefaultOverride) return;
       var base = document.getElementById('fmt-contentour');
-      if (base && base.classList.contains('active')) {
-        base.classList.remove('active');
+      if (!base || !base.classList.contains('active')) return;
+      try {
         cfbEnsureOverrideContainer();
         cfbRenderDefaultOverride();
+        base.classList.remove('active');
         document.getElementById('fmt-contentour-override').classList.add('active');
-      }
+      } catch(e) { console.warn('기본탭 대체 실패:', e); }
     }
 
     function cfbRenderSavedList() {

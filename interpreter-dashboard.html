@@ -4034,12 +4034,14 @@
             var cont = icfbEnsureOverrideContainer(); if (!cont) return;
             icfbWritingTpl = tpl; icfbWritingTemplateId = tpl.id || null; icfbWritingCustomerId = tpl.customer_id || null; icfbActiveDbId = null;
             cont.innerHTML =
-                '<div class="jnl-notice" style="background:#e8f0fe;color:#1565c0;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:0.85rem;">📌 <strong>' + icfbEsc(tpl.name) + '</strong> — 콘텐츄어가 배정한 전용 상담일지 양식입니다.</div>' +
-                icfbRenderForm(tpl.sections, true) +
-                '<div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">' +
-                    '<button class="btn-decline-lg" onclick="icfbRenderDefaultOverride()">초기화</button>' +
-                    '<button class="btn-accept-lg" style="background:var(--gray-400);" onclick="icfbSaveWrite(\'draft\')">임시저장</button>' +
-                    '<button class="btn-accept-lg" onclick="icfbSaveWrite(\'submit\')">제출하기</button>' +
+                '<div class="jnl-editor__body">' +
+                    '<div class="jnl-notice">📌 <strong>' + icfbEsc(tpl.name) + '</strong> — 콘텐츄어가 배정한 전용 상담일지 양식입니다.</div>' +
+                    icfbRenderForm(tpl.sections, true) +
+                    '<div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">' +
+                        '<button class="btn-decline-lg" onclick="icfbRenderDefaultOverride()">초기화</button>' +
+                        '<button class="btn-accept-lg" style="background:var(--gray-400);" onclick="icfbSaveWrite(\'draft\')">임시저장</button>' +
+                        '<button class="btn-accept-lg" onclick="icfbSaveWrite(\'submit\')">제출하기</button>' +
+                    '</div>' +
                 '</div>';
         }
         async function icfbInitDefault() {
@@ -4047,12 +4049,13 @@
             icfbPickDefaultOverride();
             if (!icfbDefaultOverride) return;
             var base = document.getElementById('jnl-fmt-contentour');
-            if (base && base.classList.contains('active')) {
-                base.classList.remove('active');
+            if (!base || !base.classList.contains('active')) return;
+            try {
                 icfbEnsureOverrideContainer();
                 icfbRenderDefaultOverride();
+                base.classList.remove('active');
                 document.getElementById('jnl-fmt-contentour-override').classList.add('active');
-            }
+            } catch(e) { console.warn('기본탭 대체 실패:', e); }
         }
 
         function icfbRenderSavedList() {
