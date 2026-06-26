@@ -1564,10 +1564,17 @@
                             <p style="font-size:0.72rem;color:var(--gray-400);margin-top:4px;">고객사 또는 통역사를 선택해 전용 상담일지 양식을 직접 만들어 배정합니다. (대상을 '전체 공통'으로 두면 모든 고객사·통역사에 제공)</p>
                         </div>
                         <div style="padding:20px 24px;">
-                            <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
-                                <label style="font-size:0.8rem;font-weight:700;">배정 대상</label>
-                                <select id="atTarget" onchange="atLoadTemplates()" style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;min-width:240px;font-size:0.84rem;"></select>
+                            <div style="display:flex;gap:14px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <label style="font-size:0.8rem;font-weight:700;">🏢 대상 고객사</label>
+                                    <select id="atTargetCustomer" onchange="atOnTargetChange('customer')" style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;min-width:200px;font-size:0.84rem;"></select>
+                                </div>
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <label style="font-size:0.8rem;font-weight:700;">🧑‍💼 대상 통역사</label>
+                                    <select id="atTargetInterpreter" onchange="atOnTargetChange('interpreter')" style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;min-width:180px;font-size:0.84rem;"></select>
+                                </div>
                             </div>
+                            <div style="font-size:0.7rem;color:var(--gray-400);margin-bottom:14px;">고객사 또는 통역사 중 <b>한쪽만</b> 선택하세요. 둘 다 비우면 '전체 공통'으로 배정됩니다.</div>
                             <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
                                 <span style="font-size:0.78rem;color:var(--gray-500);font-weight:700;">새 양식 시작:</span>
                                 <button onclick="atStartFrom('simple')" style="padding:8px 14px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">📋 간편 일지 복제</button>
@@ -7064,26 +7071,37 @@
             function atEsc(v) { return (v == null ? '' : String(v)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
             function atPopulateTargets() {
-                var sel = document.getElementById('atTarget'); if (!sel) return;
-                var cur = sel.value;
-                var custOpts = fpClients.map(function (c) {
-                    return '<option value="c:' + c.id + '">' + atEsc(c.name) + (c.manager && c.manager !== '-' ? ' (' + atEsc(c.manager) + ')' : '') + '</option>';
-                }).join('');
-                var interpOpts = atInterpreters.map(function (p) {
-                    return '<option value="i:' + p.id + '">' + atEsc(p.name) + '</option>';
-                }).join('');
-                sel.innerHTML = '<option value="">— 전체 공통 —</option>' +
-                    (custOpts ? '<optgroup label="고객사">' + custOpts + '</optgroup>' : '') +
-                    (interpOpts ? '<optgroup label="통역사">' + interpOpts + '</optgroup>' : '');
-                sel.value = cur;
+                var selC = document.getElementById('atTargetCustomer');
+                var selI = document.getElementById('atTargetInterpreter');
+                if (!selC || !selI) return;
+                var curC = selC.value, curI = selI.value;
+                selC.innerHTML = '<option value="">— 선택 안 함 —</option>' +
+                    fpClients.map(function (c) {
+                        return '<option value="' + c.id + '">' + atEsc(c.name) + (c.manager && c.manager !== '-' ? ' (' + atEsc(c.manager) + ')' : '') + '</option>';
+                    }).join('');
+                selI.innerHTML = '<option value="">— 선택 안 함 —</option>' +
+                    atInterpreters.map(function (p) {
+                        return '<option value="' + p.id + '">' + atEsc(p.name) + '</option>';
+                    }).join('');
+                selC.value = curC; selI.value = curI;
                 atLoadTemplates();
             }
 
-            // 배정 대상 값 파싱: 'c:<id>'=고객사, 'i:<id>'=통역사, ''=전체공통
+            // 고객사·통역사 배타 선택: 한쪽 고르면 다른쪽 해제
+            function atOnTargetChange(which) {
+                var selC = document.getElementById('atTargetCustomer');
+                var selI = document.getElementById('atTargetInterpreter');
+                if (which === 'customer' && selC.value) selI.value = '';
+                if (which === 'interpreter' && selI.value) selC.value = '';
+                atLoadTemplates();
+            }
+
+            // 배정 대상 파싱: 고객사 선택=고객사 지정, 통역사 선택=통역사 지정, 둘 다 비움=전체공통
             function atParseTarget() {
-                var raw = (document.getElementById('atTarget') || {}).value || '';
-                if (raw.indexOf('c:') === 0) return { customer_id: raw.slice(2), interpreter_id: null };
-                if (raw.indexOf('i:') === 0) return { customer_id: null, interpreter_id: raw.slice(2) };
+                var c = (document.getElementById('atTargetCustomer') || {}).value || '';
+                var i = (document.getElementById('atTargetInterpreter') || {}).value || '';
+                if (c) return { customer_id: c, interpreter_id: null };
+                if (i) return { customer_id: null, interpreter_id: i };
                 return { customer_id: null, interpreter_id: null };
             }
             function atTargetLabel(t) {
