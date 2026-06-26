@@ -3401,11 +3401,12 @@
               '<option value="text"' + (f.type==='text'?' selected':'') + '>&#128221; 텍스트</option>' +
               '<option value="number"' + (f.type==='number'?' selected':'') + '>&#128290; 숫자</option>' +
               '<option value="date"' + (f.type==='date'?' selected':'') + '>&#128197; 날짜</option>' +
-              '<option value="select"' + (f.type==='select'?' selected':'') + '>&#128203; 선택</option>' +
+              '<option value="select"' + (f.type==='select'?' selected':'') + '>&#128203; 객관식(단일)</option>' +
+              '<option value="multiselect"' + (f.type==='multiselect'?' selected':'') + '>&#9745; 복수선택</option>' +
               '<option value="textarea"' + (f.type==='textarea'?' selected':'') + '>&#128196; 긴 글</option>' +
             '</select>' +
             '<label class="cfb-field-req"><input type="checkbox"' + (f.required?' checked':'') + ' onchange="cfbUpdateField(' + si + ',' + fi + ',\'required\',this.checked)"> 필수</label>' +
-            (f.type==='select' ? '<input type="text" style="flex:1;min-width:140px;" value="' + (f.options||'') + '" placeholder="선택지 (쉼표 구분)" onchange="cfbUpdateField(' + si + ',' + fi + ',\'options\',this.value)">' : '') +
+            ((f.type==='select'||f.type==='multiselect') ? '<input type="text" style="flex:1;min-width:140px;" value="' + (Array.isArray(f.options)?f.options.join(', '):(f.options||'')) + '" placeholder="선택지 쉼표 구분 (&#39;기타&#39; 입력 시 직접입력 제공)" onchange="cfbUpdateField(' + si + ',' + fi + ',\'options\',this.value)">' : '') +
             '<button class="cfb-field-del" onclick="cfbRemoveField(' + si + ',' + fi + ')" title="삭제">&#10005;</button>' +
           '</div>';
         }).join('');
@@ -3533,11 +3534,59 @@
       else if (f.type === 'number') input = '<input type="number" id="' + id + '" min="0" value="0"' + disabled + '>';
       else if (f.type === 'date') input = '<input type="date" id="' + id + '"' + disabled + '>';
       else if (f.type === 'textarea') input = '<textarea id="' + id + '" rows="3" placeholder="' + f.name + ' 입력"' + disabled + '></textarea>';
-      else if (f.type === 'select') {
-        var opts = (f.options || '').split(',').map(function(o) { return o.trim(); }).filter(function(o) { return o; });
-        input = '<select id="' + id + '"' + disabled + '><option value="">선택해주세요</option>' + opts.map(function(o) { return '<option value="' + o + '">' + o + '</option>'; }).join('') + '</select>';
+      else if (f.type === 'select' || f.type === 'multiselect') {
+        input = cfbRenderChips(f, id, disabled);
       }
       return '<div class="' + cls + '"><label>' + f.name + req + '</label>' + input + '</div>';
+    }
+
+    // 객관식(select=단일) / 복수선택(multiselect) → 클릭 칩 + 숨은 input 동기화. '기타' 옵션은 직접입력 칸 제공.
+    function cfbRenderChips(f, id, disabled) {
+      var multi = f.type === 'multiselect';
+      var opts = Array.isArray(f.options) ? f.options : String(f.options || '').split(',').map(function(o) { return o.trim(); }).filter(function(o) { return o; });
+      var hasEtc = false;
+      var chips = opts.map(function(o) {
+        var isEtc = /^기타/.test(o); if (isEtc) hasEtc = true;
+        return '<button type="button" class="cfb-chip" data-val="' + cfbEsc(o) + '"' + (isEtc ? ' data-etc="1"' : '') +
+          ' onclick="cfbToggleChip(this,' + (multi ? 'true' : 'false') + ')"' +
+          ' style="padding:7px 14px;margin:3px 4px 3px 0;border-radius:18px;font-size:0.85rem;cursor:pointer;font-family:inherit;border:1.5px solid #d8dde6;background:#fff;color:#444;"' + disabled + '>' + cfbEsc(o) + '</button>';
+      }).join('');
+      return '<div class="cfb-chipwrap">' + chips +
+        '<input type="hidden" id="' + id + '">' +
+        (hasEtc ? '<input class="cfb-chip-etc" placeholder="기타 직접입력" oninput="cfbSyncChips(this.closest(\'.cfb-chipwrap\'))" style="display:none;margin-top:6px;width:100%;padding:8px 12px;border:1.5px solid #d8dde6;border-radius:8px;font-family:inherit;box-sizing:border-box;"' + disabled + '>' : '') +
+        (multi ? '<div style="font-size:0.68rem;color:var(--gray-400);margin-top:4px;">복수 선택 가능</div>' : '') +
+        '</div>';
+    }
+    function cfbChipSet(btn, on) {
+      btn.dataset.on = on ? '1' : '';
+      btn.style.cssText = 'padding:7px 14px;margin:3px 4px 3px 0;border-radius:18px;font-size:0.85rem;cursor:pointer;font-family:inherit;' +
+        (on ? 'border:1.5px solid var(--blue,#1565c0);background:var(--blue,#1565c0);color:#fff;' : 'border:1.5px solid #d8dde6;background:#fff;color:#444;');
+    }
+    function cfbToggleChip(btn, multi) {
+      var wrap = btn.closest('.cfb-chipwrap'); if (!wrap) return;
+      var turnOn = btn.dataset.on !== '1';
+      if (!multi) wrap.querySelectorAll('.cfb-chip').forEach(function(c) { cfbChipSet(c, false); });
+      cfbChipSet(btn, multi ? turnOn : true);
+      var etc = wrap.querySelector('.cfb-chip-etc');
+      if (etc) {
+        var etcChip = wrap.querySelector('.cfb-chip[data-etc="1"]');
+        etc.style.display = (etcChip && etcChip.dataset.on === '1') ? '' : 'none';
+        if (etc.style.display !== 'none') etc.focus();
+      }
+      cfbSyncChips(wrap);
+    }
+    function cfbSyncChips(wrap) {
+      if (!wrap) return;
+      var hidden = wrap.querySelector('input[type=hidden]'); if (!hidden) return;
+      var etc = wrap.querySelector('.cfb-chip-etc');
+      var vals = [];
+      wrap.querySelectorAll('.cfb-chip').forEach(function(c) {
+        if (c.dataset.on === '1') {
+          if (c.dataset.etc === '1') { var t = etc ? etc.value.trim() : ''; if (t) vals.push(t); }
+          else vals.push(c.dataset.val);
+        }
+      });
+      hidden.value = vals.join(', ');
     }
 
     function cfbPreview() {

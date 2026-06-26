@@ -7143,11 +7143,11 @@
 
             function atRenderBuilder() {
                 var c = document.getElementById('atSections'); if (!c) return;
-                var TYPES = [['text', '텍스트'], ['number', '숫자'], ['date', '날짜'], ['textarea', '서술'], ['select', '선택']];
+                var TYPES = [['text', '텍스트'], ['number', '숫자'], ['date', '날짜'], ['textarea', '서술'], ['select', '객관식(단일)'], ['multiselect', '복수선택']];
                 c.innerHTML = atSections.map(function (sec, si) {
                     var fields = (sec.fields || []).map(function (f, fi) {
-                        var optRow = f.type === 'select'
-                            ? '<input value="' + atEsc((f.options || []).join(', ')) + '" oninput="atUpdateField(' + si + ',' + fi + ',\'options\',this.value)" placeholder="선택 옵션 (쉼표로 구분)" style="flex-basis:100%;margin-top:4px;padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:0.78rem;">'
+                        var optRow = (f.type === 'select' || f.type === 'multiselect')
+                            ? '<input value="' + atEsc((f.options || []).join(', ')) + '" oninput="atUpdateField(' + si + ',' + fi + ',\'options\',this.value)" placeholder="선택 옵션 쉼표 구분 (&#39;기타&#39; 입력 시 직접입력 제공)" style="flex-basis:100%;margin-top:4px;padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:0.78rem;">'
                             : '';
                         return '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">' +
                             '<input value="' + atEsc(f.name) + '" oninput="atUpdateField(' + si + ',' + fi + ',\'name\',this.value)" placeholder="항목명" style="flex:1;min-width:130px;padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:0.8rem;">' +
