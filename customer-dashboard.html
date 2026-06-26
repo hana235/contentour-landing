@@ -719,7 +719,6 @@
               <button class="jformat-tab active" onclick="switchFormat('contentour')">&#128221; 콘텐츄어 기본 <span class="ftab-badge">기본</span></button>
               <button class="jformat-tab" onclick="switchFormat('busan')">&#127963;&#65039; 부산테크노파크</button>
               <button class="jformat-tab" onclick="switchFormat('kita')">&#127760; 한국무역협회</button>
-              <button class="jformat-tab" onclick="switchFormat('simple')">&#10024; 간편 일지 <span class="ftab-badge" style="background:#1565c0;">NEW</span></button>
               <button class="cfb-add-tab" onclick="switchFormat('custom')">+ 나만의 양식</button>
             </div>
 
@@ -1123,55 +1122,6 @@
             </div>
             </div><!-- end fmt-kita -->
 
-            <!-- ✨ 간편 상담일지 (프라이버시형) -->
-            <div class="jformat-content" id="fmt-simple">
-            <div class="jeditor-body">
-              <div class="j-notice">✨ <strong>간편 일지:</strong> 핵심만 빠르게 기록합니다. 바이어 정보는 🔒 <strong>고객사 전용</strong>으로, 콘텐츄어는 열람하지 않습니다.</div>
-
-              <div class="j-section">기본 정보</div>
-              <div class="j-grid">
-                <div class="j-field span2"><label>전시회 / 계약 *</label>
-                  <select id="sj-expo-select" onchange="sjSyncExpo()"><option value="">전시회를 선택하세요</option></select>
-                  <input type="hidden" id="sj-contract-id">
-                  <input type="hidden" id="sj-interpreter-id">
-                  <input type="hidden" id="sj-expo-name">
-                </div>
-                <div class="j-field"><label>작성 날짜 *</label><input type="date" id="sj-date"></div>
-                <div class="j-field"><label>배정 통역사</label><input type="text" id="sj-interp" readonly style="background:#f0f5ff;" placeholder="전시회 선택 시 자동"></div>
-              </div>
-
-              <!-- ── 공유 영역 ── -->
-              <div class="j-section" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📤 콘텐츄어와 공유 <span style="font-weight:400;font-size:0.74rem;color:var(--gray-500);">— 전시·통역 품질 피드백용</span></div>
-              <div class="j-field span2" style="margin-bottom:14px;"><label>오늘 상담 한 줄 요약 *</label><textarea id="sj-summary" rows="3" placeholder="예: 독일 A사와 제품 시연, 미국 바이어 2팀과 가격 협의."></textarea></div>
-              <div class="j-grid">
-                <div class="j-field"><label>통역사 현장 평가</label>
-                  <div class="star-group" id="sj-stars">
-                    <button class="star-btn" type="button" onclick="sjSetStars(1)">★</button><button class="star-btn" type="button" onclick="sjSetStars(2)">★</button><button class="star-btn" type="button" onclick="sjSetStars(3)">★</button><button class="star-btn" type="button" onclick="sjSetStars(4)">★</button><button class="star-btn" type="button" onclick="sjSetStars(5)">★</button>
-                  </div>
-                </div>
-                <div class="j-field span2"><label>통역사 종합 의견 (선택)</label><textarea id="sj-eval" rows="2" placeholder="예: 의료기기 전문 용어 처리 우수."></textarea></div>
-              </div>
-
-              <!-- ── 🔒 고객사 전용 영역 ── -->
-              <div class="j-section" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:2px solid #e8eef7;padding-top:16px;margin-top:6px;">
-                <span>🔒 내 바이어 <span style="font-weight:400;font-size:0.74rem;color:#1565c0;">— 콘텐츄어 미열람</span></span>
-                <span style="display:flex;gap:6px;flex-wrap:wrap;">
-                  <button type="button" class="jbtn-primary" onclick="uploadCard('sj-buyer-list','simple')" style="font-size:0.74rem;padding:5px 10px;">📷 명함 저장</button>
-                  <button type="button" class="jbtn-ghost" onclick="loadBuyersIntoList('sj-buyer-list','simple')" style="font-size:0.74rem;padding:5px 10px;">⤓ 불러오기</button>
-                  <button type="button" class="jbtn-ghost" onclick="exportBuyersCsv('sj-buyer-list','sj-expo-name')" style="font-size:0.74rem;padding:5px 10px;">📊 엑셀</button>
-                </span>
-              </div>
-              <div class="j-notice" style="background:#f6f9ff;border-color:#c5d4ec;">🔒 회사·담당자·연락처·명함만 기록합니다. <strong>금액 칸은 없으며</strong>, 이 영역은 콘텐츄어가 볼 수 없습니다 (고객사 전용).</div>
-              <div id="sj-buyer-list"></div>
-              <button type="button" class="jbtn-ghost" onclick="addBuyerToList('sj-buyer-list','simple')" style="margin:4px 0 18px;font-size:0.78rem;">+ 바이어 추가</button>
-
-              <div class="jeditor-footer" style="display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--gray-200);padding-top:16px;">
-                <span id="sjSavedAt" style="margin-right:auto;align-self:center;font-size:0.78rem;color:var(--gray-500);">마지막 저장: —</span>
-                <button class="jbtn-primary" onclick="saveSimpleJournal('draft')">&#128190; 임시저장</button>
-                <button class="jbtn-complete" onclick="saveSimpleJournal('complete')">&#9989; 제출하기</button>
-              </div>
-            </div>
-            </div><!-- end fmt-simple -->
 
             <!-- 나만의 양식 (커스텀 양식 빌더 + 렌더러) -->
             <div class="jformat-content" id="fmt-custom">
@@ -2909,10 +2859,9 @@
         document.getElementById('fmt-contentour-override').classList.add('active');
         return;
       }
-      var fmtMap = { contentour: 0, busan: 1, kita: 2, simple: 3 };
+      var fmtMap = { contentour: 0, busan: 1, kita: 2 };
       document.querySelectorAll('.jformat-tab')[fmtMap[fmt]].classList.add('active');
       document.getElementById('fmt-' + fmt).classList.add('active');
-      if (fmt === 'simple') sjInit();
     }
 
     // ══════════════ 현장 바이어 수집 (명함) — 세 양식 공통 카드 ══════════════
@@ -2921,7 +2870,6 @@
     // 양식별 추가필드 (공통 카드 뒤에 조건부로 붙음)
     var BUYER_FORM_EXTRAS = {
       contentour: [],
-      simple: [],
       busan: [
         { bf: 'deal_result', label: '상담 결과', type: 'select', opts: ['', '계약 체결', '샘플 발송 합의', '추가 협의 예정', '관심 표명', '불발'] },
         { bf: 'expected_amount', label: '예상 계약 금액 (USD)', type: 'text', ph: '예: $50,000' }
@@ -2989,7 +2937,6 @@
     function _buyerCtx(formType) {
       if (formType === 'busan') return { exhibition: (document.getElementById('bp-expo') || {}).value || '', contract_id: null, interpreter_id: null };
       if (formType === 'kita') return { exhibition: (document.getElementById('kt-expo') || {}).value || '', contract_id: null, interpreter_id: null };
-      if (formType === 'simple') return { exhibition: (document.getElementById('sj-expo-name') || {}).value || '', contract_id: document.getElementById('sj-contract-id').value || null, interpreter_id: document.getElementById('sj-interpreter-id').value || null };
       return { exhibition: (document.getElementById('j-expo') || {}).value || '', contract_id: document.getElementById('j-contract-id').value || null, interpreter_id: document.getElementById('j-interpreter-id').value || null };
     }
 
@@ -3168,96 +3115,6 @@
         if (r.error || !r.data || !r.data.signedUrl) { showJToast('&#9888;&#65039; 명함 이미지를 불러올 수 없습니다.'); return; }
         window.open(r.data.signedUrl, '_blank');
       } catch (e) { console.warn('viewCardImage 오류:', e); showJToast('&#9888;&#65039; 명함 이미지 오류.'); }
-    }
-
-    // ══════════════ ✨ 간편 상담일지 (프라이버시형) ══════════════
-    var _sjStars = 0;
-    var _sjActiveId = null;
-
-    function sjInit() {
-      var dateEl = document.getElementById('sj-date');
-      if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
-      sjPopulateExpo();
-    }
-
-    function sjPopulateExpo() {
-      var sel = document.getElementById('sj-expo-select'); if (!sel) return;
-      var contracts = window._journalContracts || [];
-      var cur = sel.value;
-      sel.innerHTML = '<option value="">전시회를 선택하세요</option>' +
-        contracts.map(function (c) {
-          return '<option value="' + _bEsc(c.dataVal) + '">' + _bEsc(c.name || '전시회') + (c.period ? ' (' + _bEsc(c.period) + ')' : '') + '</option>';
-        }).join('');
-      if (cur) sel.value = cur;
-    }
-
-    function sjSyncExpo() {
-      var sel = document.getElementById('sj-expo-select');
-      var parts = (sel && sel.value) ? sel.value.split('|') : [];
-      document.getElementById('sj-expo-name').value = parts[0] || '';
-      document.getElementById('sj-interp').value = parts[3] || '';
-      document.getElementById('sj-contract-id').value = parts[5] || '';
-      document.getElementById('sj-interpreter-id').value = parts[6] || '';
-    }
-
-    function sjSetStars(n) {
-      _sjStars = n;
-      document.querySelectorAll('#sj-stars .star-btn').forEach(function (b, i) {
-        b.style.color = (i < n) ? '#f5a623' : '#d8dde6';
-      });
-    }
-
-    async function saveSimpleJournal(type) {
-      var expoName = (document.getElementById('sj-expo-name').value || '').trim();
-      var date = document.getElementById('sj-date').value;
-      var summary = (document.getElementById('sj-summary').value || '').trim();
-      if (!expoName) { showJToast('&#9888;&#65039; 전시회를 선택해주세요.'); return; }
-      if (!date) { showJToast('&#9888;&#65039; 작성 날짜를 선택해주세요.'); return; }
-      if (type === 'complete' && !summary) { showJToast('&#9888;&#65039; 상담 요약을 작성해주세요.'); return; }
-
-      if (window.sbClient) {
-        try {
-          var user = await ContentourAuth.getCurrentUser();
-          if (user) {
-            var contractId = document.getElementById('sj-contract-id').value || null;
-            var interpId = document.getElementById('sj-interpreter-id').value || null;
-            var rec = {
-              interpreter_id: interpId || user.id,
-              customer_id: user.id,
-              exhibition_name: expoName,
-              consultation_date: date,
-              discussion_summary: summary,
-              status: type === 'complete' ? 'submitted' : 'draft',
-              submitted_at: type === 'complete' ? new Date().toISOString() : null,
-              attachments: JSON.stringify({ formType: 'simple' })
-            };
-            if (contractId) rec.contract_id = contractId;
-            if (_sjActiveId) {
-              var u = await window.sbClient.from('44_상담일지').update(rec).eq('id', _sjActiveId);
-              if (u.error) console.warn('간편 일지 update 실패:', u.error);
-            } else {
-              var ins = await window.sbClient.from('44_상담일지').insert(rec).select('id').single();
-              if (ins.error) console.warn('간편 일지 insert 실패:', ins.error);
-              else if (ins.data) _sjActiveId = ins.data.id;
-            }
-            // 통역사 평가 (공유 영역)
-            if (type === 'complete' && _sjStars > 0 && contractId && interpId) {
-              try {
-                await window.sbClient.from('49_통역사리뷰').upsert({
-                  contract_id: contractId, customer_id: user.id, interpreter_id: interpId,
-                  exhibition_name: expoName, rating_overall: _sjStars,
-                  review_text: (document.getElementById('sj-eval').value || '') || null,
-                  is_public: false
-                }, { onConflict: 'contract_id,customer_id' });
-              } catch (rev) { console.warn('통역사 평가 저장 실패:', rev); }
-            }
-            // 🔒 바이어 (고객사 전용) → 53_현장바이어
-            await saveBuyersFromList('sj-buyer-list', 'simple');
-          }
-        } catch (e) { console.error('간편 일지 저장 실패:', e); showJToast('&#9888;&#65039; 저장 중 오류가 발생했습니다.'); return; }
-      }
-      document.getElementById('sjSavedAt').textContent = '마지막 저장: ' + new Date().toLocaleString('ko-KR');
-      showJToast(type === 'complete' ? '✅ 간편 일지가 제출되었습니다.' : '&#128190; 임시저장되었습니다.');
     }
 
     // 부산테크노파크 폼
