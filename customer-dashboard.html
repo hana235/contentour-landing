@@ -3320,7 +3320,7 @@
       try {
         var res = await window.sbClient.from('54_상담일지양식')
           .select('id, name, sections, customer_id')
-          .or('customer_id.eq.' + currentClientId + ',customer_id.is.null')
+          .or('customer_id.eq.' + currentClientId + ',and(customer_id.is.null,interpreter_id.is.null)')
           .eq('is_active', true)
           .order('created_at', { ascending: true });
         if (res.error) { console.warn('배정 양식 로드 실패:', res.error.message); return; }

@@ -3986,11 +3986,15 @@
             try {
                 var custIds = [];
                 (window._jnlContracts || []).forEach(function(c) { if (c.customerId && custIds.indexOf(c.customerId) < 0) custIds.push(c.customerId); });
-                var orFilter = 'customer_id.is.null';
-                if (custIds.length) orFilter += ',customer_id.in.(' + custIds.join(',') + ')';
+                var myId = (window.InterpreterApp && InterpreterApp.currentUser) ? InterpreterApp.currentUser.id : null;
+                if (!myId) { try { var u = await ContentourAuth.getCurrentUser(); myId = u ? u.id : null; } catch(e) {} }
+                // 전체공통(둘 다 NULL) + 본인 직접배정(interpreter_id) + 본인 계약 고객사 지정
+                var ors = ['and(customer_id.is.null,interpreter_id.is.null)'];
+                if (myId) ors.push('interpreter_id.eq.' + myId);
+                if (custIds.length) ors.push('customer_id.in.(' + custIds.join(',') + ')');
                 var res = await window.sbClient.from('54_상담일지양식')
-                    .select('id, name, sections, customer_id')
-                    .or(orFilter)
+                    .select('id, name, sections, customer_id, interpreter_id')
+                    .or(ors.join(','))
                     .eq('is_active', true)
                     .order('created_at', { ascending: true });
                 if (res.error) { console.warn('배정 양식 로드 실패:', res.error.message); return; }

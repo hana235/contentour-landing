@@ -1561,11 +1561,11 @@
                     <div style="background:var(--white);border:1.5px solid var(--gray-200);border-radius:16px;margin-top:28px;overflow:hidden;">
                         <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200);">
                             <h3 style="font-size:0.95rem;font-weight:800;">🧩 업체별 맞춤 양식</h3>
-                            <p style="font-size:0.72rem;color:var(--gray-400);margin-top:4px;">고객사를 선택해 전용 상담일지 양식을 직접 만들어 배정합니다. (대상을 '전체 공통'으로 두면 모든 고객사에 제공)</p>
+                            <p style="font-size:0.72rem;color:var(--gray-400);margin-top:4px;">고객사 또는 통역사를 선택해 전용 상담일지 양식을 직접 만들어 배정합니다. (대상을 '전체 공통'으로 두면 모든 고객사·통역사에 제공)</p>
                         </div>
                         <div style="padding:20px 24px;">
                             <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
-                                <label style="font-size:0.8rem;font-weight:700;">대상 고객사</label>
+                                <label style="font-size:0.8rem;font-weight:700;">배정 대상</label>
                                 <select id="atTarget" onchange="atLoadTemplates()" style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;min-width:240px;font-size:0.84rem;"></select>
                             </div>
                             <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
@@ -6866,6 +6866,7 @@
 
             // ══════════════ 양식 권한 관리 ══════════════
             var fpClients = [];
+            var atInterpreters = []; // 맞춤양식 배정 대상용 통역사 목록
 
             // Supabase에서 고객사 목록 로드 (sbClient 로드 후 호출)
             window._loadFpClients = async function() {
@@ -6880,6 +6881,14 @@
                         .from('01_회원')
                         .select('id, name, email, company_name, phone, format_permissions')
                         .eq('role', 'customer');
+
+                    // 맞춤양식 배정 대상용 통역사 목록
+                    var { data: interps } = await sb
+                        .from('01_회원')
+                        .select('id, name')
+                        .eq('role', 'interpreter');
+                    atInterpreters.length = 0;
+                    (interps || []).forEach(function(p) { atInterpreters.push({ id: p.id, name: p.name || '통역사' }); });
 
                     var seen = {};
                     fpClients.length = 0;
@@ -7057,19 +7066,39 @@
             function atPopulateTargets() {
                 var sel = document.getElementById('atTarget'); if (!sel) return;
                 var cur = sel.value;
+                var custOpts = fpClients.map(function (c) {
+                    return '<option value="c:' + c.id + '">' + atEsc(c.name) + (c.manager && c.manager !== '-' ? ' (' + atEsc(c.manager) + ')' : '') + '</option>';
+                }).join('');
+                var interpOpts = atInterpreters.map(function (p) {
+                    return '<option value="i:' + p.id + '">' + atEsc(p.name) + '</option>';
+                }).join('');
                 sel.innerHTML = '<option value="">— 전체 공통 —</option>' +
-                    fpClients.map(function (c) {
-                        return '<option value="' + c.id + '">' + atEsc(c.name) + (c.manager && c.manager !== '-' ? ' (' + atEsc(c.manager) + ')' : '') + '</option>';
-                    }).join('');
+                    (custOpts ? '<optgroup label="고객사">' + custOpts + '</optgroup>' : '') +
+                    (interpOpts ? '<optgroup label="통역사">' + interpOpts + '</optgroup>' : '');
                 sel.value = cur;
                 atLoadTemplates();
             }
 
+            // 배정 대상 값 파싱: 'c:<id>'=고객사, 'i:<id>'=통역사, ''=전체공통
+            function atParseTarget() {
+                var raw = (document.getElementById('atTarget') || {}).value || '';
+                if (raw.indexOf('c:') === 0) return { customer_id: raw.slice(2), interpreter_id: null };
+                if (raw.indexOf('i:') === 0) return { customer_id: null, interpreter_id: raw.slice(2) };
+                return { customer_id: null, interpreter_id: null };
+            }
+            function atTargetLabel(t) {
+                if (t.customer_id) { var c = fpClients.find(function (x) { return x.id === t.customer_id; }); return '🏢 ' + atEsc(c ? c.name : '고객사'); }
+                if (t.interpreter_id) { var p = atInterpreters.find(function (x) { return x.id === t.interpreter_id; }); return '🧑‍💼 ' + atEsc(p ? p.name : '통역사'); }
+                return '🌐 전체 공통';
+            }
+
             async function atLoadTemplates() {
                 var sb = window.sbClient || window.supabase; if (!sb) return;
-                var target = document.getElementById('atTarget').value || null;
+                var tgt = atParseTarget();
                 var q = sb.from('54_상담일지양식').select('*');
-                q = target ? q.eq('customer_id', target) : q.is('customer_id', null);
+                if (tgt.customer_id) q = q.eq('customer_id', tgt.customer_id);
+                else if (tgt.interpreter_id) q = q.eq('interpreter_id', tgt.interpreter_id);
+                else q = q.is('customer_id', null).is('interpreter_id', null);
                 var res = await q.order('created_at', { ascending: true });
                 atTemplates = res.error ? [] : (res.data || []);
                 if (res.error) console.warn('맞춤 양식 로드 실패:', res.error);
@@ -7083,7 +7112,7 @@
                 el.innerHTML = atTemplates.map(function (t) {
                     var cnt = (t.sections || []).reduce(function (a, s) { return a + ((s.fields || []).length); }, 0);
                     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border:1px solid var(--gray-200);border-radius:10px;margin-bottom:8px;">' +
-                        '<div><div style="font-weight:700;font-size:0.86rem;">' + atEsc(t.name) + '</div>' +
+                        '<div><div style="font-weight:700;font-size:0.86rem;">' + atEsc(t.name) + ' <span style="font-weight:600;font-size:0.72rem;color:var(--blue);">' + atTargetLabel(t) + '</span></div>' +
                         '<div style="font-size:0.72rem;color:var(--gray-400);margin-top:2px;">' + (t.sections ? t.sections.length : 0) + '개 섹션 · ' + cnt + '개 항목' + (t.is_active === false ? ' · 비활성' : '') + '</div></div>' +
                         '<div style="display:flex;gap:6px;">' +
                         '<button onclick="atEditTemplate(\'' + t.id + '\')" style="padding:6px 12px;background:var(--gray-100);border:none;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer;">편집</button>' +
@@ -7187,13 +7216,13 @@
                 var hasEmpty = false;
                 atSections.forEach(function (s) { (s.fields || []).forEach(function (f) { if (!f.name.trim()) hasEmpty = true; }); });
                 if (hasEmpty) { showToast('⚠️ 항목명이 비어 있는 칸이 있습니다.'); return; }
-                var target = document.getElementById('atTarget').value || null;
+                var tgt = atParseTarget();
                 try {
                     if (atEditingId) {
                         var u = await sb.from('54_상담일지양식').update({ name: name, sections: atSections }).eq('id', atEditingId);
                         if (u.error) throw u.error;
                     } else {
-                        var i = await sb.from('54_상담일지양식').insert({ customer_id: target, name: name, sections: atSections, is_active: true });
+                        var i = await sb.from('54_상담일지양식').insert({ customer_id: tgt.customer_id, interpreter_id: tgt.interpreter_id, name: name, sections: atSections, is_active: true });
                         if (i.error) throw i.error;
                     }
                     showToast('✅ 맞춤 양식이 저장되었습니다.');
