@@ -3233,13 +3233,15 @@
     async function cfbInitDefault() {
       await cfbLoadAssigned();
       cfbPickDefaultOverride();
+      console.log('[기본탭대체-고객사] clientId=', currentClientId, '| 배정양식=', cfbAssignedTemplates.map(function(t){return {name:t.name,customer_id:t.customer_id,interpreter_id:t.interpreter_id};}), '| 선택=', cfbDefaultOverride ? cfbDefaultOverride.name : '(없음)');
       if (!cfbDefaultOverride) return;
       var base = document.getElementById('fmt-contentour');
-      if (!base || !base.classList.contains('active')) return;
+      if (!base) return;
       try {
         cfbEnsureOverrideContainer();
         cfbRenderDefaultOverride();
         base.classList.remove('active');
+        document.querySelectorAll('.jformat-content').forEach(function(c){ if (c.id !== 'fmt-contentour-override') c.classList.remove('active'); });
         document.getElementById('fmt-contentour-override').classList.add('active');
       } catch(e) { console.warn('기본탭 대체 실패:', e); }
     }

@@ -4052,13 +4052,16 @@
         async function icfbInitDefault() {
             await icfbLoadAssigned();
             icfbPickDefaultOverride();
+            var myId = (window.InterpreterApp && InterpreterApp.currentUser) ? InterpreterApp.currentUser.id : null;
+            console.log('[기본탭대체-통역사] myId=', myId, '| 배정양식=', icfbAssignedTemplates.map(function(t){return {name:t.name,customer_id:t.customer_id,interpreter_id:t.interpreter_id};}), '| 선택=', icfbDefaultOverride ? icfbDefaultOverride.name : '(없음)');
             if (!icfbDefaultOverride) return;
             var base = document.getElementById('jnl-fmt-contentour');
-            if (!base || !base.classList.contains('active')) return;
+            if (!base) return;
             try {
                 icfbEnsureOverrideContainer();
                 icfbRenderDefaultOverride();
                 base.classList.remove('active');
+                document.querySelectorAll('.jnl-format-content').forEach(function(c){ if (c.id !== 'jnl-fmt-contentour-override') c.classList.remove('active'); });
                 document.getElementById('jnl-fmt-contentour-override').classList.add('active');
             } catch(e) { console.warn('기본탭 대체 실패:', e); }
         }
