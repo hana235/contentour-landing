@@ -2441,7 +2441,9 @@
                                 star1: 0, star2: 0, star3: 0, star4: 0,
                                 adminComment: j.review_comment || '',
                                 status: j.status === 'submitted' ? 'new' : (j.status === 'reviewed' ? 'reviewed' : 'draft'),
-                                source: j.interpreter_id === j.customer_id ? 'customer' : 'interpreter'
+                                source: j.interpreter_id === j.customer_id ? 'customer' : 'interpreter',
+                                answers: Array.isArray(extra.answers) ? extra.answers : null,  // 맞춤/배정 양식 작성 본문
+                                _extra: extra  // 원본 attachments 보존 (부분 업데이트 시 유실 방지)
                             });
                         });
 
@@ -2841,6 +2843,28 @@
                     starsHtml += '<div class="jv-sec">고객사 현장 소견 (클릭 설문)</div><div class="jv-text">' + escapeHtml(j.customerSurveyText) + '</div>';
                 }
 
+                // 맞춤/배정 양식 작성 본문 (관리자가 배정한 양식으로 작성된 일지) — 섹션별로 필드:값 표시
+                var answersHtml = '';
+                if (j.answers && j.answers.length) {
+                    var bySec = {}, secOrder = [];
+                    j.answers.forEach(function(a) {
+                        var s = a.section || '기타';
+                        if (!bySec[s]) { bySec[s] = []; secOrder.push(s); }
+                        bySec[s].push(a);
+                    });
+                    answersHtml = '<div class="jv-sec">📋 작성 양식 내용 (콘텐츄어 배정 양식)</div>';
+                    secOrder.forEach(function(s) {
+                        answersHtml += '<div style="font-weight:700;font-size:0.82rem;color:#1565c0;margin:12px 0 4px;">' + escapeHtml(s) + '</div>';
+                        bySec[s].forEach(function(a) {
+                            var hasVal = !(a.value == null || String(a.value).trim() === '');
+                            var val = hasVal ? escapeHtml(String(a.value)).replace(/\n/g, '<br>') : '<span style="color:var(--gray-400);">—</span>';
+                            answersHtml += '<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--gray-100);font-size:0.85rem;">' +
+                                '<span style="min-width:140px;color:var(--gray-500);font-weight:600;">' + escapeHtml(a.field || '') + '</span>' +
+                                '<span style="flex:1;color:var(--gray-800);white-space:pre-line;">' + val + '</span></div>';
+                        });
+                    });
+                }
+
                 jv.innerHTML =
                 '<div class="jv-head">' +
                   '<div>' +
@@ -2867,6 +2891,9 @@
                     '</div>' +
                   '</div>' +
 
+                  answersHtml +
+
+                  (j.answers ? '' :
                   '<div class="jv-sec">일별 상담 실적</div>' +
                   '<div class="jv-stats">' +
                     '<div class="jv-stat"><div class="jv-stat__n">' + j.total + '</div><div class="jv-stat__l">총 상담 건수</div></div>' +
@@ -2896,7 +2923,8 @@
                   (isInterp ? '' : '<div class="jv-sec">특이사항</div><div class="jv-text">' + CT.escHtml(j.issue || '') + '</div>') +
 
                   '<div class="jv-sec">팔로업 액션 플랜</div>' +
-                  '<div class="jv-text">' + escapeHtml(j.action || '') + '</div>' +
+                  '<div class="jv-text">' + escapeHtml(j.action || '') + '</div>'
+                  ) +
 
                   interpExtraHtml +
                   starsHtml +
@@ -2932,7 +2960,8 @@
                 // DB에도 반영 (dbId가 있으면)
                 if (j.dbId && window.sbClient) {
                     try {
-                        var extra = { total: j.total||0, contract: j.contract||0, sample: j.sample||0, follow: j.follow||0, issue: j.issue||'', countries: j.countries||[], lang: j.lang||'' };
+                        // 기존 attachments 키(answers·설문·기간·시간 등) 보존 + 변경분만 병합 (덮어쓰기 데이터 유실 방지)
+                        var extra = Object.assign({}, j._extra || {}, { total: j.total||0, contract: j.contract||0, sample: j.sample||0, follow: j.follow||0, issue: j.issue||'', countries: j.countries||[], lang: j.lang||'' });
                         window.sbClient.from('44_상담일지').update({ attachments: JSON.stringify(extra) }).eq('id', j.dbId);
                     } catch(e) {}
                 }
