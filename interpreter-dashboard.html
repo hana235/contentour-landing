@@ -4036,6 +4036,7 @@
         }
         function icfbRenderDefaultOverride() {
             var tpl = icfbDefaultOverride; if (!tpl) return;
+            icfbEnsurePeriodField(tpl.sections);
             var cont = icfbEnsureOverrideContainer(); if (!cont) return;
             icfbWritingTpl = tpl; icfbWritingTemplateId = tpl.id || null; icfbWritingCustomerId = tpl.customer_id || null; icfbActiveDbId = null;
             cont.innerHTML =
@@ -4267,6 +4268,33 @@
             });
         }
 
+        // 배정 양식에 전시회명은 있는데 '기간' 필드가 없으면, 개최지(없으면 전시회명) 뒤에 '전시 기간'(text) 자동 삽입.
+        // → icfbAttachExpoAC가 '기간' 키워드로 잡아 전시회 선택 시 '시작일 ~ 종료일' 자동입력. DB 템플릿은 그대로 두고
+        //   렌더 시점 메모리 sections에만 추가(저장 시 icfbSaveWrite가 함께 수집).
+        function icfbEnsurePeriodField(sections) {
+            if (!sections || !sections.length) return;
+            var hasPeriod = false, hasExpo = false;
+            sections.forEach(function (sec) {
+                (sec.fields || []).forEach(function (f) {
+                    if (/기간|일정|period/i.test(f.name)) hasPeriod = true;
+                    if (f.type === 'text' && /전시회|박람|행사|expo|exhibition/i.test(f.name)) hasExpo = true;
+                });
+            });
+            if (hasPeriod || !hasExpo) return;
+            var newField = { name: '전시 기간', type: 'text', required: false, _autoInjected: true };
+            function findIdx(fs, re) { for (var i = 0; i < fs.length; i++) { if (fs[i].type === 'text' && re.test(fs[i].name)) return i; } return -1; }
+            for (var si = 0; si < sections.length; si++) {
+                var fs = sections[si].fields || [];
+                var i = findIdx(fs, /개최지|장소|위치|location/i);
+                if (i >= 0) { fs.splice(i + 1, 0, newField); return; }
+            }
+            for (var sj = 0; sj < sections.length; sj++) {
+                var gs = sections[sj].fields || [];
+                var j = findIdx(gs, /전시회|박람|행사|expo|exhibition/i);
+                if (j >= 0) { gs.splice(j + 1, 0, newField); return; }
+            }
+        }
+
         function icfbRenderForm(sections, editable) {
             return sections.map(function(sec) {
                 var fieldsHtml = '';
@@ -4374,6 +4402,7 @@
             var tpl = icfbAssignedTemplates[idx];
             if (!tpl) return;
             icfbWritingTplIdx = -1;
+            icfbEnsurePeriodField(tpl.sections);
             icfbWritingTpl = tpl; icfbWritingTemplateId = tpl.id; icfbWritingCustomerId = tpl.customer_id || null; icfbActiveDbId = null;
             icfbOpenWrite('📌 ' + icfbEsc(tpl.name) + ' — 상담일지 작성', tpl.sections);
         }
