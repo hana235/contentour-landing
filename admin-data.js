@@ -133,7 +133,6 @@ const AdminData = {
                 .select(`
                     *,
                     interpreter:interpreter_id (id, name),
-                    bank:bank_account_id (bank_name, account_holder, account_number),
                     contract:contract_id (id, contract_no, created_at)
                 `)
                 .order('requested_at', { ascending: false })
@@ -141,6 +140,18 @@ const AdminData = {
             if (error) throw error;
             if (data && data.length === 1000) console.warn('[정산] 로드 상한 1000건 도달 — 페이지네이션 도입 필요');
             if (!data || data.length === 0) return null;
+
+            // 통역사별 출금 계좌 일괄 로드 (본사 직접 입금 시 필요 — bank_account_id는 승인 후에만 채워지므로 interpreter_id로 조회)
+            // RLS '계좌_본인_조회'가 admin에게 전체 SELECT 허용. 국내+해외(SWIFT/Wise/PayPal/Payoneer) 전 컬럼 확보.
+            const interpIds = [...new Set(data.map(d => d.interpreter_id).filter(Boolean))];
+            const bankMap = {};
+            if (interpIds.length) {
+                const { data: banks } = await supabase
+                    .from('41_계좌정보')
+                    .select('user_id, account_type, payout_method, bank_name, account_holder, account_number, country_code, currency, beneficiary_name_en, bank_name_en, bank_address, swift_code, iban_or_account, beneficiary_address, payout_email')
+                    .in('user_id', interpIds);
+                (banks || []).forEach(b => { bankMap[b.user_id] = b; });
+            }
 
             const colors = ['#1565c0', '#0277bd', '#00695c', '#4527a0', '#c62828'];
             const statusMap = { request: '승인 대기', approved: '승인 완료', paid: '입금 완료', rejected: '반려' };
@@ -171,11 +182,7 @@ const AdminData = {
                 contractId: d.contract_id,
                 contractNo: d.contract?.contract_no || null,
                 contractCreatedAt: d.contract?.created_at || null,
-                bankInfo: d.bank ? {
-                    name: d.bank.bank_name,
-                    holder: d.bank.account_holder,
-                    account: d.bank.account_number
-                } : null
+                bankInfo: bankMap[d.interpreter_id] || null
             }));
         } catch (e) {
             console.error('정산 로드 실패:', e);

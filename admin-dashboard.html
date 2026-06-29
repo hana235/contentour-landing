@@ -3368,6 +3368,34 @@
                     '<div class="stl-bd__row stl-bd__total"><span>실수령액</span><span>₩' + net.toLocaleString() + '</span></div>' +
                 '</div>';
 
+                // 출금 계좌 정보 (본사 직접 입금용 — 송금 방식별 표시)
+                const bk = d.bankInfo;
+                html += '<div class="stl-bd" style="margin-top:14px;"><div class="stl-bd__head">🏦 출금 계좌 정보</div>';
+                if (!bk) {
+                    html += '<div style="padding:12px 14px;color:#e65100;font-size:0.82rem;background:#fff8e1;border-radius:8px;">⚠️ 통역사가 아직 출금 계좌를 등록하지 않았습니다. 등록 후 입금 처리가 가능합니다.</div>';
+                } else if (bk.account_type === 'overseas') {
+                    const methodLabel = { bank_swift: 'SWIFT 은행송금', wise: 'Wise', paypal: 'PayPal', payoneer: 'Payoneer' }[bk.payout_method] || bk.payout_method || '-';
+                    html += '<div class="stl-bd__row"><span>유형</span><span>🌐 해외 · ' + escapeHtml(methodLabel) + '</span></div>';
+                    html += '<div class="stl-bd__row"><span>국가 / 통화</span><span>' + escapeHtml(bk.country_code || '-') + ' / ' + escapeHtml(bk.currency || '-') + '</span></div>';
+                    if (bk.payout_method === 'bank_swift') {
+                        html += '<div class="stl-bd__row"><span>수령자(영문)</span><span>' + escapeHtml(bk.beneficiary_name_en || '-') + '</span></div>';
+                        html += '<div class="stl-bd__row"><span>은행(영문)</span><span>' + escapeHtml(bk.bank_name_en || '-') + '</span></div>';
+                        html += '<div class="stl-bd__row"><span>SWIFT/BIC</span><span>' + escapeHtml(bk.swift_code || '-') + '</span></div>';
+                        html += '<div class="stl-bd__row"><span>IBAN/계좌번호</span><span>' + escapeHtml(bk.iban_or_account || '-') + '</span></div>';
+                        if (bk.bank_address) html += '<div class="stl-bd__row"><span>은행 주소</span><span>' + escapeHtml(bk.bank_address) + '</span></div>';
+                        if (bk.beneficiary_address) html += '<div class="stl-bd__row"><span>수령자 주소</span><span>' + escapeHtml(bk.beneficiary_address) + '</span></div>';
+                    } else {
+                        html += '<div class="stl-bd__row"><span>계정 이메일</span><span>' + escapeHtml(bk.payout_email || '-') + '</span></div>';
+                        if (bk.beneficiary_name_en) html += '<div class="stl-bd__row"><span>수령자명</span><span>' + escapeHtml(bk.beneficiary_name_en) + '</span></div>';
+                    }
+                } else {
+                    html += '<div class="stl-bd__row"><span>유형</span><span>🇰🇷 국내 계좌</span></div>';
+                    html += '<div class="stl-bd__row"><span>은행</span><span>' + escapeHtml(bk.bank_name || '-') + '</span></div>';
+                    html += '<div class="stl-bd__row"><span>예금주</span><span>' + escapeHtml(bk.account_holder || '-') + '</span></div>';
+                    html += '<div class="stl-bd__row"><span>계좌번호</span><span>' + escapeHtml(bk.account_number || '-') + '</span></div>';
+                }
+                html += '</div>';
+
                 // 승인/입금 정보
                 if (d.approvedDate) {
                     html += '<div style="font-size:0.78rem;color:var(--gray-400);margin-bottom:4px;">승인일: ' + d.approvedDate + '</div>';
