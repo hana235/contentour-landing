@@ -3274,6 +3274,7 @@
             '<button class="jbtn-complete" onclick="cfbSaveWrite(\'complete\')">&#9989; 제출하기</button>' +
           '</div>' +
         '</div>';
+      cfbAttachExpoAC(tpl.sections);
     }
     async function cfbInitDefault() {
       await cfbLoadAssigned();
@@ -3457,6 +3458,32 @@
       showJToast('&#128465; "' + name + '" 양식이 삭제되었습니다.');
     }
 
+    // 배정/맞춤 양식의 전시회명 text 필드에 60_해외전시회DB 자동완성 부착 (표준 기본양식 j-expo와 동일 동작)
+    // - 필드 id는 cfbRenderField와 동일 규칙(cfb-f-<이름>)으로 계산
+    // - 개최지·전시기간 text 필드를 이름으로 매칭해 선택 시 자동입력 타깃으로 연결
+    // - script.js(attachExpoAutocomplete)가 늦게 로드되므로 없으면 150ms 후 재시도 (_expoAC 플래그로 중복 방지)
+    function cfbExpoFieldId(name) { return 'cfb-f-' + String(name == null ? '' : name).replace(/[^a-zA-Z0-9가-힣]/g, '_'); }
+    function cfbAttachExpoAC(sections) {
+      if (!window.attachExpoAutocomplete) { setTimeout(function () { cfbAttachExpoAC(sections); }, 150); return; }
+      var all = [];
+      (sections || []).forEach(function (sec) { (sec.fields || []).forEach(function (f) { all.push(f); }); });
+      var locId = null, periodId = null, expoFields = [];
+      all.forEach(function (f) {
+        if (f.type !== 'text') return;
+        if (/전시회|박람|행사|expo|exhibition/i.test(f.name)) expoFields.push(f);
+        else if (locId === null && /개최지|개최\s*도시|장소|위치|location/i.test(f.name)) locId = cfbExpoFieldId(f.name);
+        else if (periodId === null && /기간|일정|period/i.test(f.name)) periodId = cfbExpoFieldId(f.name);
+      });
+      expoFields.forEach(function (f) {
+        var el = document.getElementById(cfbExpoFieldId(f.name));
+        if (!el) return;
+        var map = {};
+        if (locId) map.location = locId;
+        if (periodId) map.period = periodId;
+        window.attachExpoAutocomplete(el, map);
+      });
+    }
+
     // 양식 → HTML 렌더링 (미리보기 & 작성 모드 공용)
     function cfbRenderForm(sections, editable) {
       return sections.map(function(sec) {
@@ -3588,6 +3615,7 @@
     function cfbOpenWrite(title, sections) {
       document.getElementById('cfbWriteTitle').innerHTML = title;
       document.getElementById('cfbWriteBody').innerHTML = cfbRenderForm(sections, true);
+      cfbAttachExpoAC(sections);
       document.getElementById('cfb-mode-list').style.display = 'none';
       document.getElementById('cfb-mode-builder').style.display = 'none';
       document.getElementById('cfb-mode-preview').style.display = 'none';
@@ -3597,7 +3625,10 @@
     }
 
     function cfbClearWrite() {
-      if (cfbWritingTpl) document.getElementById('cfbWriteBody').innerHTML = cfbRenderForm(cfbWritingTpl.sections, true);
+      if (cfbWritingTpl) {
+        document.getElementById('cfbWriteBody').innerHTML = cfbRenderForm(cfbWritingTpl.sections, true);
+        cfbAttachExpoAC(cfbWritingTpl.sections);
+      }
     }
 
     async function cfbSaveWrite(type) {
