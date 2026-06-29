@@ -2588,6 +2588,10 @@
         }
         .jnl-format-content { display: none; width: 100%; }
         .jnl-format-content.active { display: block; width: 100%; }
+        /* 배정 양식 판정 중: 표준 양식 깜빡임 방지 — 본문 숨기고 로딩 표시 */
+        .jnl-format-content.cfb-loading > * { display: none; }
+        .jnl-format-content.cfb-loading { min-height: 120px; }
+        .jnl-format-content.cfb-loading::after { content: "⏳ 양식 불러오는 중…"; display: block; text-align: center; padding: 48px 0; color: var(--gray-400); font-size: 0.9rem; }
 
         /* 나만의 양식 빌더 */
         .icfb-add-tab{background:none;border:1.5px dashed var(--gray-400);color:var(--gray-400);padding:10px 16px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;margin-left:4px;white-space:nowrap;}

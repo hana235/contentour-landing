@@ -379,6 +379,10 @@
     .jformat-tab .ftab-badge{display:inline-block;padding:2px 6px;border-radius:8px;font-size:0.6rem;font-weight:800;margin-left:4px;vertical-align:middle;background:#e8f5e9;color:#2e7d32;}
     .jformat-content{display:none;width:100%;}
     .jformat-content.active{display:block;width:100%;}
+    /* 배정 양식 판정 중: 표준 양식 깜빡임 방지 — 본문 숨기고 로딩 표시 */
+    .jformat-content.cfb-loading > *{display:none;}
+    .jformat-content.cfb-loading{min-height:120px;}
+    .jformat-content.cfb-loading::after{content:"⏳ 양식 불러오는 중…";display:block;text-align:center;padding:48px 0;color:var(--gray-400);font-size:0.9rem;}
 
     /* ===== Custom Form Builder ===== */
     .cfb-add-tab{background:none;border:1.5px dashed var(--gray-400);color:var(--gray-400);padding:10px 16px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;margin-left:4px;white-space:nowrap;}

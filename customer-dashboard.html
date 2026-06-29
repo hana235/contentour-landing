@@ -723,7 +723,7 @@
             </div>
 
             <!-- 콘텐츄어 기본 양식 -->
-            <div class="jformat-content active" id="fmt-contentour">
+            <div class="jformat-content active cfb-loading" id="fmt-contentour">
             <div class="jeditor-body">
               <div class="j-notice">&#128204; <strong>작성 안내:</strong> 전시회 기간 중 <strong>매일 작성</strong>해주세요. 작성된 일지는 콘텐츄어 담당자에게 자동으로 공유됩니다.</div>
               <div class="j-section">기본 정보</div>
@@ -3278,20 +3278,26 @@
       cfbAttachExpoAC(tpl.sections);
     }
     async function cfbInitDefault() {
+      // 배정 양식 판정 전까지 표준 양식 깜빡임 방지: 기본 탭을 로딩 상태로 가림 (HTML에 cfb-loading 기본 부여)
+      var base0 = document.getElementById('fmt-contentour');
+      if (base0) base0.classList.add('cfb-loading');
       await cfbLoadAssigned();
       cfbPickDefaultOverride();
       console.log('[기본탭대체-고객사] clientId=', currentClientId, '| 배정양식=', cfbAssignedTemplates.map(function(t){return {name:t.name,customer_id:t.customer_id,interpreter_id:t.interpreter_id};}), '| 선택=', cfbDefaultOverride ? cfbDefaultOverride.name : '(없음)');
-      if (!cfbDefaultOverride) return;
+      if (!cfbDefaultOverride) { if (base0) base0.classList.remove('cfb-loading'); return; } // 배정 없음 → 표준 양식 노출
       var base = document.getElementById('fmt-contentour');
       if (!base) return;
       try {
         cfbEnsureOverrideContainer();
         cfbRenderDefaultOverride();
         base.classList.remove('active');
+        base.classList.remove('cfb-loading');
         document.querySelectorAll('.jformat-content').forEach(function(c){ if (c.id !== 'fmt-contentour-override') c.classList.remove('active'); });
         document.getElementById('fmt-contentour-override').classList.add('active');
-      } catch(e) { console.warn('기본탭 대체 실패:', e); }
+      } catch(e) { console.warn('기본탭 대체 실패:', e); base.classList.remove('cfb-loading'); }
     }
+    // 안전망: 어떤 이유로든 판정이 안 끝나도 표준 양식이 영구히 가려지지 않도록 4초 후 강제 해제
+    setTimeout(function () { var b = document.getElementById('fmt-contentour'); if (b) b.classList.remove('cfb-loading'); }, 4000);
 
     function cfbRenderSavedList() {
       cfbLoadTemplates();
