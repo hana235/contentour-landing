@@ -2184,7 +2184,7 @@
       document.getElementById('schDayTitle').textContent = (+m) + '월 ' + (+d) + '일 일정';
       const evs = schData.filter(e => e.start <= ds && e.end >= ds);
       const body = document.getElementById('schDayBody');
-      if (!evs.length) { body.innerHTML = '<div class="sch-empty">&#128525; 이 날은 파견 일정이 없습니다.</div>'; return; }
+      if (!evs.length) { body.innerHTML = '<div class="sch-empty">이 날은 파견 일정이 없습니다.</div>'; return; }
       body.innerHTML = evs.map(ev => '<div class="sch-dev" style="display:flex;align-items:center;gap:10px;"><div class="sch-dev-dot" style="background:' + schStatusColor[ev.status] + ';"></div><div style="flex:1;"><div class="sch-dev-title">' + CT.escHtml(ev.expo) + '</div><div class="sch-dev-sub">&#128100; ' + CT.escHtml(ev.interp) + ' · &#127760; ' + CT.escHtml(ev.lang) + '</div><div class="sch-dev-sub">&#128205; ' + CT.escHtml(ev.location) + ' · ' + CT.escHtml(ev.type) + '</div></div><button onclick="addToGoogleCal(\'' + ev.expo.replace(/'/g, "\\'") + '\',\'' + (ev.location || '').replace(/'/g, "\\'") + '\',\'' + ev.start + '\',\'' + ev.end + '\',\'\',\'' + (ev.lang || '') + '\',\'' + (ev.interp || '').replace(/'/g, "\\'") + '\')" style="flex-shrink:0;padding:6px 10px;border:1.5px solid #e5eaf2;background:#fff;border-radius:8px;font-size:0.72rem;font-weight:700;color:#1565c0;cursor:pointer;white-space:nowrap;" title="Google 캘린더에 추가">&#128197;+</button></div>').join('');
     }
     function schRenderUpcoming() {
