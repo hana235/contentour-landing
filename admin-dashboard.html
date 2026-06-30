@@ -5975,11 +5975,69 @@
                 refreshInterpreterJournals();
             });
 
+            // ══════════════ 미응답(응답 기한 초과) 배정 감지 + 수동 리마인더 ══════════════
+            var _overdueAssignments = [];
+            async function loadOverdueAssignments() {
+                _overdueAssignments = [];
+                if (!supabase) return;
+                try {
+                    var nowIso = new Date().toISOString();
+                    var { data, error } = await supabase
+                        .from('42_통역계약')
+                        .select('id, exhibition_name, client_company, interpreter_id, respond_by, status')
+                        .not('interpreter_id', 'is', null)
+                        .is('interpreter_accepted', null)
+                        .eq('status', 'pending')
+                        .not('respond_by', 'is', null)
+                        .lt('respond_by', nowIso);
+                    if (error || !data) return;
+                    var ids = [...new Set(data.map(function(c){ return c.interpreter_id; }).filter(Boolean))];
+                    var names = {};
+                    if (ids.length) {
+                        var { data: profs } = await supabase.from('40_통역사프로필').select('user_id, display_name').in('user_id', ids);
+                        if (profs) profs.forEach(function(p){ names[p.user_id] = p.display_name; });
+                    }
+                    _overdueAssignments = data.map(function(c){ return {
+                        id: c.id, expo: c.exhibition_name || '계약', client: c.client_company || '',
+                        interpreterId: c.interpreter_id, interpreterName: names[c.interpreter_id] || '통역사'
+                    }; });
+                } catch (e) { console.warn('미응답 배정 조회 실패:', e); }
+            }
+
+            // 통역사에게 응답 독촉 알림 + 응답 기한 48h 연장
+            async function sendAssignReminder(contractId, interpreterId, btn) {
+                if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = '전송 중...'; }
+                try {
+                    if (!supabase || !interpreterId) throw new Error('대상 정보 없음');
+                    var o = _overdueAssignments.find(function(x){ return x.id === contractId; });
+                    var expo = o ? o.expo : '배정';
+                    await supabase.from('24_알림').insert({
+                        user_id: interpreterId,
+                        notification_type: 'assignment',
+                        title: '⏰ 배정 응답 요청',
+                        message: '"' + expo + '" 배정 건의 응답 기한이 지났습니다. 수락 또는 거절을 진행해주세요.',
+                        is_read: false
+                    });
+                    var newDeadline = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
+                    await supabase.from('42_통역계약').update({ respond_by: newDeadline }).eq('id', contractId);
+                    showToast('⏰ 리마인더를 보냈습니다. 응답 기한이 48시간 연장되었습니다.');
+                    await loadOverdueAssignments();
+                    renderFabPanel();
+                    updateFabBadge();
+                } catch (e) {
+                    showToast('⚠️ 리마인더 전송 실패: ' + (e.message || ''));
+                    if (btn) { btn.disabled = false; btn.textContent = '⏰ 리마인더 보내기'; }
+                }
+            }
+
             // ══════════════ FAB 승인 대기 패널 ══════════════
-            function toggleAdminFab() {
+            async function toggleAdminFab() {
                 var panel = document.getElementById('adminPanel');
                 panel.classList.toggle('open');
-                if (panel.classList.contains('open')) renderFabPanel();
+                if (panel.classList.contains('open')) {
+                    await loadOverdueAssignments();
+                    renderFabPanel();
+                }
             }
 
             function renderFabPanel() {
@@ -5988,6 +6046,7 @@
                 var balanceReview = ctAdminContracts.filter(function(c){return c.status==='balance_review' && c.balance > 0;});
                 var stlRequest = stlAdminData.filter(function(d){return d.status==='request';});
                 var all = [];
+                _overdueAssignments.forEach(function(o){ all.push({type:'overdue', id:o.id, title:o.expo, sub:'⏰ 통역사 미응답 (응답 기한 초과)', client:o.interpreterName, interpreterId:o.interpreterId}); });
                 balanceReview.forEach(function(c){ all.push({type:'balance', id:c.id, title:c.expo, sub:'잔금 '+ctFmt(c.balance)+' 결제 확인', client:c.client.company}); });
                 stlRequest.forEach(function(d){ all.push({type:'settlement', id:d.id, title:d.expo, sub:'정산 ₩'+d.amount.toLocaleString()+' 승인 대기', client:d.interpreter||'통역사'}); });
 
@@ -6002,7 +6061,10 @@
                 }
                 body.innerHTML = all.map(function(item) {
                     var btns = '';
-                    if (item.type === 'balance') {
+                    if (item.type === 'overdue') {
+                        btns = '<div style="display:flex;gap:6px;margin-top:8px;">' +
+                            '<button class="contract-card__action approve" onclick="event.stopPropagation();sendAssignReminder(\''+item.id+'\',\''+item.interpreterId+'\',this);">⏰ 리마인더 보내기</button></div>';
+                    } else if (item.type === 'balance') {
                         btns = '<div style="display:flex;gap:6px;margin-top:8px;">' +
                             '<button class="contract-card__action approve" onclick="event.stopPropagation();ctAdminApproveBalance(\''+item.id+'\');renderFabPanel();">잔금 확인</button>' +
                             '<button class="contract-card__action reject" onclick="event.stopPropagation();ctAdminRejectBalance(\''+item.id+'\');renderFabPanel();">반려</button></div>';
@@ -6011,9 +6073,9 @@
                             '<button class="contract-card__action approve" onclick="event.stopPropagation();openStlApproval('+item.id+');document.getElementById(\'adminPanel\').classList.remove(\'open\');">상세/승인</button></div>';
                     }
                     return '<div class="ap-card">' +
-                        '<div class="ap-card__title">'+item.title+'</div>' +
+                        '<div class="ap-card__title">'+escapeHtml(item.title)+'</div>' +
                         '<div style="font-size:0.78rem;color:var(--gray-400);">'+item.sub+'</div>' +
-                        '<div style="font-size:0.72rem;color:var(--gray-600);margin-top:2px;">'+item.client+'</div>' +
+                        '<div style="font-size:0.72rem;color:var(--gray-600);margin-top:2px;">'+escapeHtml(item.client)+'</div>' +
                         btns +
                     '</div>';
                 }).join('');
@@ -6022,6 +6084,7 @@
             function updateFabBadge() {
                 var count = ctAdminContracts.filter(function(c){return c.status==='deposit_review'||c.status==='balance_review';}).length;
                 count += stlAdminData.filter(function(d){return d.status==='request';}).length;
+                count += _overdueAssignments.length; // 응답 기한 초과 미응답 배정(패널 열 때 갱신)
                 var badge = document.getElementById('fabBadge');
                 badge.textContent = count;
                 badge.style.display = count > 0 ? '' : 'none';

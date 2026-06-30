@@ -163,6 +163,14 @@ module.exports = async function handler(req, res) {
             }
         }
 
+        // 4b. 배정 응답 기한(통역사 수락/거절 기한 48h) 설정 — 재배정 시에도 갱신, 미응답 감지·리마인더용
+        if (contractId) {
+            try {
+                const respondBy = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
+                await sb.from('42_통역계약').update({ respond_by: respondBy }).eq('id', contractId);
+            } catch (e) { console.error('[assign] respond_by 설정 실패(무시):', e && e.message); }
+        }
+
         // 5a. 고객사 알림 발송
         if (customerId) {
             await sb.from('24_알림').insert({

@@ -585,7 +585,17 @@ const InterpreterApp = {
             return;
         }
 
-        container.innerHTML = assignments.map(a => `
+        container.innerHTML = assignments.map(a => {
+            // 응답 기한 표시 (기한 지나면 빨강 강조)
+            const rb = a.respond_by ? new Date(a.respond_by) : null;
+            const overdue = rb && rb < new Date();
+            let deadlineHtml = '';
+            if (rb) {
+                const pad = n => String(n).padStart(2, '0');
+                const label = pad(rb.getMonth() + 1) + '/' + pad(rb.getDate()) + ' ' + pad(rb.getHours()) + ':' + pad(rb.getMinutes());
+                deadlineHtml = `<div style="font-size:0.72rem;margin:4px 0 2px;${overdue ? 'color:#c62828;font-weight:700;' : 'color:#e65100;'}">⏰ 응답 기한 ${label}${overdue ? ' · 기한 지남' : ''}</div>`;
+            }
+            return `
             <div class="assign-item" data-contract-id="${escHtml(a.id)}">
                 <div class="assign-item__top">
                     <span class="assign-item__title">${escHtml(a.exhibition_name) || '전시회'}</span>
@@ -596,12 +606,13 @@ const InterpreterApp = {
                     <span>${escHtml(a.language_pair)}</span>
                     <span>${this.formatMoney(a.daily_rate)}/일</span>
                 </div>
+                ${deadlineHtml}
                 <div class="assign-item__actions">
                     <button class="btn-accept" onclick="InterpreterApp.handleHomeAccept('${escHtml(a.id)}', this)">수락</button>
                     <button class="btn-decline" onclick="InterpreterApp.handleHomeDecline('${escHtml(a.id)}', this)">거절</button>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
     },
 
     renderHomeSchedule(contracts) {
