@@ -233,8 +233,8 @@ const statsObserver = new IntersectionObserver(function (entries) {
 
                 if (!isNaN(number)) {
                     const suffix = text.replace(/[0-9]/g, ''); // 숫자 뒤 접미사 보존(+, %, H …)
-                    stat.textContent = '0';
-                    setTimeout(() => animateCounter(stat, number, suffix), 300);
+                    stat.textContent = '0' + suffix;           // 맨 '0' 대신 접미사 포함(0+, 0%, 0H)으로 시작 — 무미건조한 '0' 노출 방지
+                    setTimeout(() => animateCounter(stat, number, suffix), 80); // 정지 지연 단축으로 0 노출 시간 최소화
                 }
             });
             statsObserver.unobserve(entry.target);
