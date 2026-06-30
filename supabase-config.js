@@ -319,6 +319,8 @@ window.showToast = window.showToast || function(message, type) {
                     'contentour_journal_submit',
                     'contentour_chat_msg',
                     'contentour_chat_typing',
+                    'contentour_chat_messages',              // 고객 채팅 본문 캐시 (공용 PC 유출 방지)
+                    'contentour_interpreter_chat_messages',  // 통역사 채팅 본문 캐시 (공용 PC 유출 방지)
                     'contentour_quote_response',
                     'contentour_loyalty_data',
                     'contentour_custom_templates_',

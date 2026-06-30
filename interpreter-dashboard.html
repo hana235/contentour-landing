@@ -2410,7 +2410,7 @@
                 if (dayEvents.length > 0) {
                     evHtml = '<div class="sch-evs">';
                     dayEvents.forEach(e => {
-                        evHtml += '<div class="sch-ev" style="background:' + e.color + '15;color:' + e.color + ';border-color:' + e.color + ';">' + e.title + '</div>';
+                        evHtml += '<div class="sch-ev" style="background:' + e.color + '15;color:' + e.color + ';border-color:' + e.color + ';">' + escapeHtml(e.title) + '</div>';
                     });
                     evHtml += '</div>';
                 }
@@ -4979,7 +4979,7 @@
 
             container.innerHTML = filtered.map(d => {
                 const badgeClass = 'stl-b-' + d.status;
-                return '<div class="stl-item" onclick="openStlDetail(' + d.id + ')">' +
+                return '<div class="stl-item" onclick="openStlDetail(\'' + d.id + '\')">' +
                     '<div>' +
                         '<div class="stl-item__top">' +
                             '<span class="stl-item__expo">' + escapeHtml(d.expo) + '</span>' +
@@ -5130,7 +5130,7 @@
             // 재요청 버튼 (반려된 경우)
             if (d.status === 'rejected') {
                 html += '<div style="margin-top:16px;text-align:center;">' +
-                    '<button onclick="stlReRequest(' + d.id + ')" style="padding:10px 28px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:0.85rem;font-weight:700;font-family:inherit;cursor:pointer;">정산 재요청</button>' +
+                    '<button onclick="stlReRequest(\'' + d.id + '\')" style="padding:10px 28px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:0.85rem;font-weight:700;font-family:inherit;cursor:pointer;">정산 재요청</button>' +
                 '</div>';
             }
 

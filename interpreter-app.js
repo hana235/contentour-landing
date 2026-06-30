@@ -115,7 +115,7 @@ const InterpreterApp = {
                     // 배정 데이터 새로고침
                     const assignments = await this.loadPendingAssignments();
                     this._assignments = assignments;
-                    this.renderHomeKPI(assignments, this._contracts || [], this._settlements || []);
+                    this.renderHomeKPI(assignments, this._contracts || [], this._settlements || [], this._journals || []);
                     this.renderHomeAssignments(assignments);
                     this.renderWelcomeBanner(assignments, this._contracts || []);
                     // 토스트 알림
@@ -251,7 +251,7 @@ const InterpreterApp = {
                     console.log('[Realtime] 정산 상태 변경:', payload.new && payload.new.status);
                     const settlements = await this.loadSettlements();
                     this._settlements = settlements;
-                    this.renderHomeKPI(this._assignments || [], this._contracts || [], settlements);
+                    this.renderHomeKPI(this._assignments || [], this._contracts || [], settlements, this._journals || []);
                     const stView = document.getElementById('view-settlement');
                     if (stView && stView.classList.contains('active') && typeof this.loadSettlementView === 'function') {
                         await this.loadSettlementView();
@@ -423,8 +423,9 @@ const InterpreterApp = {
         this._contracts = contracts;
         this._settlements = settlements;
         this._notifications = notifications;
+        this._journals = journals;
 
-        this.renderHomeKPI(assignments, contracts, settlements);
+        this.renderHomeKPI(assignments, contracts, settlements, journals);
         this.renderHomeAssignments(assignments);
         this.renderHomeSchedule(contracts);
         this.renderHomeSettlement(settlements);
@@ -501,7 +502,7 @@ const InterpreterApp = {
         }
     },
 
-    renderHomeKPI(assignments, contracts, settlements) {
+    renderHomeKPI(assignments, contracts, settlements, journals) {
         const kpiCards = document.querySelectorAll('.kpi-card');
         const now = new Date();
         const thisMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
@@ -522,13 +523,15 @@ const InterpreterApp = {
             if (numEl) numEl.textContent = monthContracts.length;
         }
 
-        // 이번 달 완료
-        const completedThisMonth = contracts.filter(c =>
-            c.end_date && c.end_date.startsWith(thisMonth) && c.status === 'completed'
-        );
+        // 미제출 상담일지 (renderHomeJournals의 pending과 동일 기준: 종료된 수락 계약 중 일지 미제출)
         if (kpiCards[2]) {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const submittedContractIds = new Set((journals || []).map(j => j.contract_id));
+            const unsubmitted = (contracts || []).filter(c =>
+                c.end_date && c.end_date < todayStr && c.interpreter_accepted === true && !submittedContractIds.has(c.id)
+            );
             const numEl = kpiCards[2].querySelector('.kpi-num');
-            if (numEl) numEl.textContent = completedThisMonth.length;
+            if (numEl) numEl.textContent = unsubmitted.length;
         }
 
         // 이번 달 정산

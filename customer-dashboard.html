@@ -1973,8 +1973,8 @@
                         var ddayColor = diff <= 0 ? '#2e7d32' : diff <= 7 ? '#f57c00' : '#1565c0';
                         return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f4f6fb;">' +
                             '<div style="padding:4px 10px;background:' + ddayColor + '14;color:' + ddayColor + ';border-radius:8px;font-size:0.75rem;font-weight:800;white-space:nowrap;">' + dday + '</div>' +
-                            '<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:0.85rem;color:#0a2a5e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (c.exhibition_name || '') + '</div>' +
-                            '<div style="font-size:0.75rem;color:#9daec8;">' + c.start_date + ' ~ ' + c.end_date + ' · ' + (c.venue || '') + '</div></div></div>';
+                            '<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:0.85rem;color:#0a2a5e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(c.exhibition_name || '') + '</div>' +
+                            '<div style="font-size:0.75rem;color:#9daec8;">' + c.start_date + ' ~ ' + c.end_date + ' · ' + escapeHtml(c.venue || '') + '</div></div></div>';
                     }).join('');
                 }
             }
@@ -1991,7 +1991,7 @@
                         .limit(5);
 
                     if (!notifs || notifs.length === 0) {
-                        notiEl.innerHTML = '<div style="color:#9daec8;padding:10px 0;">새로운 알림이 없습��다.</div>';
+                        notiEl.innerHTML = '<div style="color:#9daec8;padding:10px 0;">새로운 알림이 없습니다.</div>';
                     } else {
                         notiEl.innerHTML = notifs.map(function(n) {
                             var iconMap = { system: '&#128276;', service: '&#128203;', payment: '&#128179;', contract: '&#128196;', chat: '&#128172;', assignment: '&#129309;', quote: '&#128232;', inquiry: '&#128233;', settlement: '&#128176;' };
@@ -6620,7 +6620,7 @@
       document.getElementById('pmBody').innerHTML = `
         <div class="pm-step-indicator"><div class="pm-step active"></div><div class="pm-step"></div><div class="pm-step"></div></div>
         <div class="pm-amount">
-          <div class="pm-amount__label">${c.expo} - ${label}</div>
+          <div class="pm-amount__label">${escapeHtml(c.expo)} - ${escapeHtml(label)}</div>
           <div class="pm-amount__value">${formatMoney(amount)}</div>
           <div class="pm-amount__sub">VAT 포함 금액</div>
         </div>
@@ -6774,7 +6774,7 @@
       document.getElementById('pmBody').innerHTML = `
         <div class="pm-step-indicator"><div class="pm-step done"></div><div class="pm-step active"></div><div class="pm-step"></div></div>
         <div class="pm-amount" style="margin-bottom:20px;">
-          <div class="pm-amount__label">${c.expo}</div>
+          <div class="pm-amount__label">${escapeHtml(c.expo)}</div>
           <div class="pm-amount__value">${formatMoney(amount)}</div>
           <div class="pm-amount__sub">VAT 포함 금액</div>
         </div>
@@ -6920,7 +6920,7 @@
       document.getElementById('pmBody').innerHTML = `
         <div class="pm-step-indicator"><div class="pm-step done"></div><div class="pm-step active"></div><div class="pm-step"></div></div>
         <div class="pm-amount">
-          <div class="pm-amount__label">${c.expo}</div>
+          <div class="pm-amount__label">${escapeHtml(c.expo)}</div>
           <div class="pm-amount__value">${formatMoney(amount)}</div>
         </div>
         <div class="cust-payment-label">출금 은행을 선택해주세요</div>
@@ -6967,7 +6967,7 @@
       document.getElementById('pmBody').innerHTML = `
         <div class="pm-step-indicator"><div class="pm-step done"></div><div class="pm-step active"></div><div class="pm-step"></div></div>
         <div class="pm-amount">
-          <div class="pm-amount__label">${c.expo}</div>
+          <div class="pm-amount__label">${escapeHtml(c.expo)}</div>
           <div class="pm-amount__value">${formatMoney(amount)}</div>
         </div>
         <div class="cust-payment-label">아래 계좌로 입금해주세요</div>
@@ -7028,7 +7028,7 @@
       document.getElementById('pmBody').innerHTML = `
         <div class="pm-step-indicator"><div class="pm-step done"></div><div class="pm-step active"></div><div class="pm-step"></div></div>
         <div class="pm-amount">
-          <div class="pm-amount__label">${c.expo}</div>
+          <div class="pm-amount__label">${escapeHtml(c.expo)}</div>
           <div class="pm-amount__value">${formatMoney(amount)}</div>
         </div>
         <div class="cust-payment-label">입금 은행을 선택해주세요</div>
