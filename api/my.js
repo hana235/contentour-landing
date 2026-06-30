@@ -375,16 +375,32 @@ async function handleDeclineAssignment(req, res) {
 
     try {
         const { data: c, error: cErr } = await sb.from('42_통역계약')
-            .select('id, customer_id, interpreter_id, exhibition_name, client_company, status')
+            .select('id, order_id, customer_id, interpreter_id, exhibition_name, client_company, status')
             .eq('id', contractId).single();
         if (cErr || !c) return res.status(404).json({ success: false, error: '계약을 찾을 수 없습니다.' });
         if (c.interpreter_id !== auth.user.id) return res.status(403).json({ success: false, error: '본인에게 배정된 계약만 거절할 수 있습니다.' });
         if (c.status === 'cancelled') return res.status(200).json({ success: true, alreadyCancelled: true });
 
+        // 거절: 계약을 취소(cancelled)로 죽이지 않고 '재배정 대기'로 리셋한다.
+        //  - 통역사 비움(interpreter_id=null) + 수락상태 초기화(interpreter_accepted=null) + status='pending'
+        //  - 재배정은 기존 /api/assign(assign_inquiry_atomic)가 order_id로 같은 계약을 UPDATE하므로 중복 생성 없음.
+        //    (RPC는 status를 건드리지 않아 pending 유지 → 새 통역사가 정상 수락 가능)
         const { error: upErr } = await sb.from('42_통역계약')
-            .update({ interpreter_accepted: false, rejected_at: new Date().toISOString(), reject_reason: reason, status: 'cancelled' })
+            .update({
+                interpreter_id: null,
+                interpreter_accepted: null,
+                rejected_at: new Date().toISOString(),
+                reject_reason: reason,
+                status: 'pending'
+            })
             .eq('id', contractId);
         if (upErr) { console.error('decline-assignment update 실패:', upErr); return res.status(500).json({ success: false, error: '거절 처리 실패' }); }
+
+        // 연결된 견적문의를 다시 배정 가능 상태('검토중')로 복귀 → admin 배정 큐에 재노출
+        if (c.order_id) {
+            try { await sb.from('46_ITQ견적문의').update({ status: '검토중' }).eq('id', c.order_id); }
+            catch (e) { console.error('의뢰 재배정 상태 복귀 실패(무시):', e && e.message); }
+        }
 
         const interpName = profile.name || '통역사';
         const expoLabel = c.exhibition_name || '계약';
