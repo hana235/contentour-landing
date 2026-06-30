@@ -3487,23 +3487,7 @@
                 stlAdminRender();
                 saveStlData();
                 showToast('✅ ' + d.expo + ' 정산이 승인되었습니다. 통역사에게 알림이 발송됩니다.');
-                // Cross-tab: 통역사 대시보드에 정산 승인 알림 (전체 데이터 포함)
-                try {
-                    localStorage.removeItem('contentour_settlement_update');
-                    setTimeout(function() {
-                        localStorage.setItem('contentour_settlement_update', JSON.stringify({
-                            settlementId: d.id, action: 'approve',
-                            approvedDate: d.approvedDate,
-                            contractId: d.contractId || null,
-                            fullData: {
-                                expo: d.expo, client: d.client,
-                                start: d.start, end: d.end, lang: d.lang,
-                                days: d.days, rate: d.rate, amount: d.amount, tax: d.tax
-                            },
-                            ts: Date.now()
-                        }));
-                    }, 50);
-                } catch(e) {}
+                // (정산 승인 알림은 approve_settlement RPC가 24_알림 INSERT로 처리 — cross-tab broadcast 제거)
             }
 
             async function stlReject(id, btn) {
@@ -3538,23 +3522,7 @@
                 stlAdminRender();
                 saveStlData();
                 showToast('❌ ' + d.expo + ' 정산이 반려되었습니다.');
-                // Cross-tab: 통역사 대시보드에 정산 반려 알림 (전체 데이터 포함)
-                try {
-                    localStorage.removeItem('contentour_settlement_update');
-                    setTimeout(function() {
-                        localStorage.setItem('contentour_settlement_update', JSON.stringify({
-                            settlementId: d.id, action: 'reject',
-                            reason: reason, rejectedDate: d.rejectedDate,
-                            contractId: d.contractId || null,
-                            fullData: {
-                                expo: d.expo, client: d.client,
-                                start: d.start, end: d.end, lang: d.lang,
-                                days: d.days, rate: d.rate, amount: d.amount, tax: d.tax
-                            },
-                            ts: Date.now()
-                        }));
-                    }, 50);
-                } catch(e) {}
+                // (정산 반려 알림은 reject_settlement RPC가 24_알림 INSERT로 처리 — cross-tab broadcast 제거)
             }
 
             async function stlMarkPaid(id, btn) {
@@ -3602,24 +3570,7 @@
                 }
 
                 showToast('💵 ' + d.expo + ' 통역사에게 입금 완료 처리되었습니다.');
-                // Cross-tab: 통역사 대시보드에 입금 완료 알림 (전체 데이터 포함)
-                try {
-                    localStorage.removeItem('contentour_settlement_update');
-                    setTimeout(function() {
-                        localStorage.setItem('contentour_settlement_update', JSON.stringify({
-                            settlementId: d.id, action: 'paid',
-                            contractId: d.contractId || null,
-                            paidDate: d.paidDate,
-                            approvedDate: d.approvedDate || null,
-                            fullData: {
-                                expo: d.expo, client: d.client,
-                                start: d.start, end: d.end, lang: d.lang,
-                                days: d.days, rate: d.rate, amount: d.amount, tax: d.tax
-                            },
-                            ts: Date.now()
-                        }));
-                    }, 50);
-                } catch(e) {}
+                // (입금 완료 알림은 complete_settlement_payment RPC가 24_알림 INSERT로 처리 — cross-tab broadcast 제거)
             }
 
             // ══════════════ 계약·결제 관리 시스템 ══════════════
@@ -4084,30 +4035,7 @@
                     })();
                 }
 
-                // Broadcast to customer & interpreter dashboards
-                try {
-                    localStorage.removeItem('contentour_admin_approve');
-                    setTimeout(function() {
-                        localStorage.setItem('contentour_admin_approve', JSON.stringify({
-                            contractId: contractId,
-                            action: 'approve_balance',
-                            // 정산 건 정보 포함 → 통역사 대시보드에서 정산 내역 자동 생성
-                            settlement: {
-                                id: dbStl ? dbStl.id : null,
-                                expo: c.expo,
-                                client: c.client.company,
-                                start: c.dates.start,
-                                end: c.dates.end,
-                                lang: c.lang,
-                                days: c.days,
-                                rate: Math.round(c.subtotal / c.days),
-                                amount: c.subtotal,
-                                tax: Math.round(c.subtotal * 0.033)
-                            },
-                            ts: Date.now()
-                        }));
-                    }, 50);
-                } catch(e) {}
+                // (잔금 확인·정산 생성은 서버 completeContract RPC가 정본 — 통역사는 정산 RPC의 24_알림 + 정산탭 DB로드로 확인. cross-tab broadcast 제거)
             }
 
             function ctAdminRejectBalance(contractId) {
@@ -4122,13 +4050,7 @@
                 });
                 ctAdminInit();
                 showToast('❌ ' + c.expo + ' 잔금 결제가 반려되었습니다.');
-                // Broadcast rejection
-                try {
-                    localStorage.removeItem('contentour_admin_approve');
-                    setTimeout(function() {
-                        localStorage.setItem('contentour_admin_approve', JSON.stringify({ contractId: contractId, action:'reject_balance', ts:Date.now() }));
-                    }, 50);
-                } catch(e) {}
+                // (cross-tab broadcast 제거 — 수신자 없음)
             }
 
             // ═══ 취소 관리 시스템 ═══
@@ -5354,57 +5276,9 @@
                 }
             }
 
-            // ═══ Cross-tab 실시간 연동: 고객사 결제 이벤트 수신 ═══
-            window.addEventListener('storage', function(e) {
-                if (e.key === 'contentour_contract_update') {
-                    try {
-                        const data = JSON.parse(e.newValue);
-                        if (!data) return;
-                        const c = ctAdminContracts.find(x => x.id === data.contractId);
-                        if (!c) return;
-                        if (data.type === 'deposit') {
-                            // A안 100% 선결제: 결제는 서버(verify-payment/웹훅/무통장 승인)가 검증하며 별도 관리자 승인 단계가 없음.
-                            // 가짜 'deposit_review(관리자 승인 대기)' 상태 생성을 제거하고 DB 정본으로 새로고침만 수행.
-                            showToast('🔔 ' + c.expo + ' 선결제가 접수되었습니다.');
-                            if (typeof loadContractsFromDB === 'function') {
-                                loadContractsFromDB().then(function(){ if (typeof ctAdminInit === 'function') ctAdminInit(); });
-                            }
-                            return;
-                        } else if (data.type === 'balance') {
-                            c.balancePaid = true;
-                            c.status = 'balance_review';
-                            c.statusText = '잔금 확인 대기';
-                            c.timeline.forEach(t => {
-                                if (t.step === '잔금 결제') { t.done = true; t.active = false; t.date = new Date().toISOString().split('T')[0]; }
-                                if (t.step === '완료') { t.active = true; }
-                            });
-                            showToast('🔔 ' + c.expo + ' 잔금 결제가 접수되었습니다. 확인이 필요합니다.');
-                        }
-                        ctAdminInit();
-                    } catch(ex) {}
-                }
-            });
-
-            // ═══ Cross-tab: 통역사 정산 재요청 수신 ═══
-            window.addEventListener('storage', function(e) {
-                if (e.key === 'contentour_settlement_rerequest') {
-                    try {
-                        const data = JSON.parse(e.newValue);
-                        if (!data || !data.settlementId) return;
-                        const d = stlAdminData.find(x => x.id === data.settlementId);
-                        if (d) {
-                            d.status = 'request';
-                            d.statusText = '승인 대기';
-                            d.rejectedDate = undefined;
-                            d.rejectReason = undefined;
-                            stlAdminUpdateKpi();
-                            stlAdminUpdateCounts();
-                            stlAdminRender();
-                        }
-                        showToast('📨 ' + data.expo + ' 정산 재요청이 접수되었습니다.');
-                    } catch(ex) {}
-                }
-            });
+            // [제거됨] contentour_contract_update / contentour_settlement_rerequest storage 리스너
+            //   → 두 키 모두 저장소 전체에 송신부(setItem)가 없어 절대 발생하지 않던 죽은 리스너.
+            //   결제/정산재요청의 실제 반영은 서버 결제검증·RPC·24_알림·Realtime/DB 재로딩이 담당.
 
             // ══════════════ 견적 발송 시스템 ══════════════
             const countryRates = {
@@ -5915,13 +5789,7 @@
                 closeQuoteModal();
                 renderTable(inquiries); updateInquiryKPI();
                 showToast('📨 ' + expoName + ' 견적이 고객사에게 발송되었습니다.');
-                // Broadcast to customer dashboard (localStorage 폴백)
-                try {
-                    localStorage.removeItem('contentour_quote_send');
-                    setTimeout(function() {
-                        localStorage.setItem('contentour_quote_send', JSON.stringify(quoteData));
-                    }, 50);
-                } catch(e) {}
+                // (고객 알림은 위 24_알림 INSERT가 정본 — cross-tab broadcast 제거, 수신자 없음)
             }
 
             // Listen for quote response from customer
@@ -6011,37 +5879,10 @@
                 }
             });
 
-            // ═══ Cross-tab: 계약서 동의 이벤트 수신 (고객/통역사) ═══
-            window.addEventListener('storage', function(e) {
-                if (e.key === 'contentour_contract_sign') {
-                    try {
-                        var data = JSON.parse(e.newValue);
-                        if (!data || !data.contractId) return;
-                        var c = ctAdminContracts.find(function(x) { return x.id === data.contractId; });
-                        if (!c) return;
-                        if (data.party === 'customer') {
-                            c.customerAgreed = true;
-                            showToast('📝 ' + c.expo + ' — 고객사가 계약서에 동의했습니다.');
-                        } else if (data.party === 'interpreter') {
-                            c.interpreterAgreed = true;
-                            showToast('📝 ' + c.expo + ' — 통역사가 계약서에 동의했습니다.');
-                        }
-                        // 양측 모두 동의 시 계약 체결 처리
-                        if (c.customerAgreed && c.interpreterAgreed && c.status === 'contract_sign') {
-                            var todayStr = new Date().toISOString().split('T')[0];
-                            c.status = 'deposit_pay';
-                            c.statusText = '계약금 결제 대기';
-                            c.timeline.forEach(function(t) {
-                                if (t.step === '계약서 확인') { t.done = true; t.active = false; t.date = todayStr; }
-                                if (t.step === '계약 체결') { t.done = true; t.date = todayStr; }
-                                if (t.step === '계약금 결제' || t.step === '선결제') { t.active = true; }
-                            });
-                            showToast('🎉 ' + c.expo + ' — 양측 계약서 동의 완료! 계약이 체결되었습니다.');
-                        }
-                        ctAdminInit();
-                    } catch(ex) {}
-                }
-            });
+            // [제거됨] contentour_contract_sign storage 리스너
+            //   → 저장소 전체에 송신부(setItem)가 없어 절대 발생하지 않던 죽은 리스너.
+            //   계약서 동의 반영은 DB(42_통역계약 customerAgreed/interpreter_accepted) + admin 42_통역계약 Realtime,
+            //   통역사 동의 알림은 /api/accept-assignment의 24_알림으로 처리.
 
             // When user switches back to this tab, reload interpreter journals
             function refreshInterpreterJournals() {
