@@ -5608,16 +5608,22 @@
             var c = interpreterContracts.find(function(x) { return x.id === contractId; });
             if (!c) return;
 
-            // DB에 통역사 동의 저장 — 성공한 경우에만 로컬 상태/계약 체결 반영 (실패 은폐 방지)
+            // 서버 경로(/api/accept-assignment)로 동의 기록 + 고객·관리자 24_알림 발송.
+            // 배정카드 수락과 동일 엔드포인트(멱등·본인검증) — 계약서 동의 경로에서도 알림이 누락되지 않도록 통일.
+            // 성공한 경우에만 로컬 상태/계약 체결 반영 (실패 은폐 방지)
             if (window.sbClient) {
                 try {
-                    var { error } = await window.sbClient.from('42_통역계약').update({
-                        interpreter_accepted: true,
-                        accepted_at: new Date().toISOString()
-                    }).eq('id', contractId);
-                    if (error) {
-                        console.error('통역사 계약 동의 DB 저장 실패:', error);
-                        throw new Error('계약 동의 저장 실패');
+                    var { data: { session } } = await window.sbClient.auth.getSession();
+                    var _token = session && session.access_token;
+                    if (!_token) throw new Error('로그인이 필요합니다.');
+                    var _resp = await fetch('/api/accept-assignment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token },
+                        body: JSON.stringify({ contractId: contractId })
+                    });
+                    var _data = await _resp.json();
+                    if (!_resp.ok || !_data || _data.success === false) {
+                        throw new Error((_data && _data.error) || '계약 동의 저장 실패');
                     }
                 } catch (e) {
                     console.error('통역사 계약 동의 예외:', e);

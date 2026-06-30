@@ -3878,9 +3878,8 @@
                 }
                 listEl.innerHTML = filtered.map(function(c) {
                     var actionHtml = '';
-                    if (c.status === 'deposit_review') {
-                        actionHtml = '<div class="contract-card__actions"><button class="contract-card__action approve" onclick="event.stopPropagation();ctAdminApprove(\''+c.id+'\')">\uC2B9\uC778</button><button class="contract-card__action reject" onclick="event.stopPropagation();ctAdminReject(\''+c.id+'\')">\uBC18\uB824</button></div>';
-                    } else if (c.status === 'balance_review' && c.balance > 0) {
+                    // deposit_review(\uC720\uB839 \uC120\uACB0\uC81C \uC2B9\uC778\uB300\uAE30)\uB294 \uC81C\uAC70\uB428 \u2014 \uC120\uACB0\uC81C\uB294 \uC11C\uBC84 \uAC80\uC99D\uC73C\uB85C \uBC14\uB85C in_progress \uC804\uC774.
+                    if (c.status === 'balance_review' && c.balance > 0) {
                         // A안: balance가 0이면 액션 버튼 숨김 (옛 계약 호환)
                         actionHtml = '<div class="contract-card__actions"><button class="contract-card__action approve" onclick="event.stopPropagation();ctAdminApproveBalance(\''+c.id+'\')">잔금 확인</button><button class="contract-card__action reject" onclick="event.stopPropagation();ctAdminRejectBalance(\''+c.id+'\')">반려</button></div>';
                     } else if (c.status === 'deposit_pay') {
@@ -3958,16 +3957,7 @@
                             '</div>';
                         }).join('') +
                     '</div>';
-                if (c.status === 'deposit_review') {
-                    bodyHtml += '<div class="cm-review-box">' +
-                        '<div class="cm-review-box__icon">\u23F3</div>' +
-                        '<div class="cm-review-box__title">\uAD00\uB9AC\uC790 \uC2B9\uC778 \uD544\uC694</div>' +
-                        '<div class="cm-review-box__desc">\uACE0\uAC1D\uC0AC\uAC00 \uACC4\uC57D\uAE08 '+ctFmt(c.deposit)+'\uC744 \uACB0\uC81C\uD588\uC2B5\uB2C8\uB2E4.<br>\uC2B9\uC778\uD558\uBA74 \uC11C\uBE44\uC2A4\uAC00 \uC9C4\uD589\uB429\uB2C8\uB2E4.</div>' +
-                        '<div class="cm-review-box__btns">' +
-                            '<button class="cm-review-box__btn approve" onclick="ctAdminApprove(\''+c.id+'\');closeCtModal();">\uC2B9\uC778</button>' +
-                            '<button class="cm-review-box__btn reject" onclick="ctAdminReject(\''+c.id+'\');closeCtModal();">\uBC18\uB824</button>' +
-                        '</div></div>';
-                }
+                // deposit_review \uC2B9\uC778\uBC15\uC2A4 \uC81C\uAC70\uB428 \u2014 \uC120\uACB0\uC81C\uB294 \uC11C\uBC84 \uAC80\uC99D\uC73C\uB85C \uBC14\uB85C \uC9C4\uD589\uB418\uC5B4 \uAD00\uB9AC\uC790 \uC2B9\uC778 \uB2E8\uACC4 \uC5C6\uC74C.
                 if (c.status === 'balance_review' && c.balance > 0) {
                     bodyHtml += '<div class="cm-review-box">' +
                         '<div class="cm-review-box__icon">\uD83D\uDCB0</div>' +
@@ -3986,47 +3976,9 @@
                 document.getElementById('ctModalOverlay').classList.remove('open');
             }
 
-            function ctAdminApprove(contractId) {
-                var c = ctAdminContracts.find(function(x){return x.id===contractId;});
-                if (!c || c.status !== 'deposit_review') return;
-                c.status = 'in_progress';
-                c.statusText = '\uC11C\uBE44\uC2A4 \uC9C4\uD589\uC911';
-                var _approveToday = new Date().toISOString().split('T')[0];
-                c.timeline.forEach(function(t) {
-                    if (t.step === '\uACC4\uC57D\uAE08 \uACB0\uC81C' || t.step === '\uC120\uACB0\uC81C') { t.done = true; t.active = false; if (!t.date) t.date = _approveToday; }
-                    if (t.step === '\uC11C\uBE44\uC2A4 \uC9C4\uD589') { t.active = true; }
-                });
-                ctAdminInit();
-                showToast('\u2705 ' + c.expo + ' \uACC4\uC57D\uC774 \uC2B9\uC778\uB418\uC5C8\uC2B5\uB2C8\uB2E4.');
-                // Broadcast to customer & interpreter dashboards
-                try {
-                    localStorage.removeItem('contentour_admin_approve');
-                    setTimeout(function() {
-                        localStorage.setItem('contentour_admin_approve', JSON.stringify({ contractId: contractId, action:'approve', ts:Date.now() }));
-                    }, 50);
-                } catch(e) {}
-            }
-
-            function ctAdminReject(contractId) {
-                var c = ctAdminContracts.find(function(x){return x.id===contractId;});
-                if (!c || c.status !== 'deposit_review') return;
-                c.status = 'deposit_pay';
-                c.statusText = '계약금 결제 대기';
-                c.depositPaid = false;
-                c.timeline.forEach(function(t) {
-                    if (t.step === '계약금 결제' || t.step === '선결제') { t.done = false; t.active = true; t.date = ''; }
-                    if (t.step === '서비스 진행') { t.active = false; t.date = ''; }
-                });
-                ctAdminInit();
-                showToast('❌ ' + c.expo + ' 계약이 반려되었습니다.');
-                // Broadcast rejection
-                try {
-                    localStorage.removeItem('contentour_admin_approve');
-                    setTimeout(function() {
-                        localStorage.setItem('contentour_admin_approve', JSON.stringify({ contractId: contractId, action:'reject', ts:Date.now() }));
-                    }, 50);
-                } catch(e) {}
-            }
+            // [\uC81C\uAC70\uB428] ctAdminApprove / ctAdminReject (\uC720\uB839 \uC120\uACB0\uC81C \uC2B9\uC778/\uBC18\uB824)
+            //   deposit_review \uC0C1\uD0DC\uB294 \uB354 \uC774\uC0C1 \uC0DD\uC131\uB418\uC9C0 \uC54A\uC74C(\uC120\uACB0\uC81C\uB294 \uC11C\uBC84 \uACB0\uC81C\uAC80\uC99D\uC73C\uB85C \uBC14\uB85C in_progress).
+            //   \uB450 \uD568\uC218\uB294 DB\uC5D0 \uC544\uBB34\uAC83\uB3C4 \uC4F0\uC9C0 \uC54A\uACE0 localStorage broadcast\uB9CC \uD588\uB358 \uC8FD\uC740 \uACBD\uB85C\uB77C \uC0AD\uC81C.
 
             // A안(100% 선결제) 계약은 balance_review에 도달하지 않아 잔금확인 버튼이 안 뜬다.
             // → in_progress(결제완료·진행중)에서 직접 '서비스 완료'로 completeContract 호출(정산건 생성).
@@ -5411,14 +5363,13 @@
                         const c = ctAdminContracts.find(x => x.id === data.contractId);
                         if (!c) return;
                         if (data.type === 'deposit') {
-                            c.depositPaid = true;
-                            c.status = 'deposit_review';
-                            c.statusText = '관리자 승인 대기';
-                            c.timeline.forEach(t => {
-                                if (t.step === '계약금 결제' || t.step === '선결제') { t.done = true; t.active = false; t.date = new Date().toISOString().split('T')[0]; }
-                                if (t.step === '서비스 진행') { t.active = true; }
-                            });
-                            showToast('🔔 ' + c.expo + ' 선결제 결제가 접수되었습니다. 승인이 필요합니다.');
+                            // A안 100% 선결제: 결제는 서버(verify-payment/웹훅/무통장 승인)가 검증하며 별도 관리자 승인 단계가 없음.
+                            // 가짜 'deposit_review(관리자 승인 대기)' 상태 생성을 제거하고 DB 정본으로 새로고침만 수행.
+                            showToast('🔔 ' + c.expo + ' 선결제가 접수되었습니다.');
+                            if (typeof loadContractsFromDB === 'function') {
+                                loadContractsFromDB().then(function(){ if (typeof ctAdminInit === 'function') ctAdminInit(); });
+                            }
+                            return;
                         } else if (data.type === 'balance') {
                             c.balancePaid = true;
                             c.status = 'balance_review';
@@ -6118,12 +6069,11 @@
             }
 
             function renderFabPanel() {
-                var depositReview = ctAdminContracts.filter(function(c){return c.status==='deposit_review';});
+                // deposit_review(유령 선결제 승인대기) 제거 — 선결제는 서버 검증으로 바로 진행, fab에 표시 안 함.
                 // A안: balance가 0인 계약은 잔금 확인 카드 자체를 만들지 않음
                 var balanceReview = ctAdminContracts.filter(function(c){return c.status==='balance_review' && c.balance > 0;});
                 var stlRequest = stlAdminData.filter(function(d){return d.status==='request';});
                 var all = [];
-                depositReview.forEach(function(c){ all.push({type:'deposit', id:c.id, title:c.expo, sub:'선결제 '+ctFmt(c.deposit)+' 결제 확인', client:c.client.company}); });
                 balanceReview.forEach(function(c){ all.push({type:'balance', id:c.id, title:c.expo, sub:'잔금 '+ctFmt(c.balance)+' 결제 확인', client:c.client.company}); });
                 stlRequest.forEach(function(d){ all.push({type:'settlement', id:d.id, title:d.expo, sub:'정산 ₩'+d.amount.toLocaleString()+' 승인 대기', client:d.interpreter||'통역사'}); });
 
@@ -6138,11 +6088,7 @@
                 }
                 body.innerHTML = all.map(function(item) {
                     var btns = '';
-                    if (item.type === 'deposit') {
-                        btns = '<div style="display:flex;gap:6px;margin-top:8px;">' +
-                            '<button class="contract-card__action approve" onclick="event.stopPropagation();ctAdminApprove(\''+item.id+'\');renderFabPanel();">승인</button>' +
-                            '<button class="contract-card__action reject" onclick="event.stopPropagation();ctAdminReject(\''+item.id+'\');renderFabPanel();">반려</button></div>';
-                    } else if (item.type === 'balance') {
+                    if (item.type === 'balance') {
                         btns = '<div style="display:flex;gap:6px;margin-top:8px;">' +
                             '<button class="contract-card__action approve" onclick="event.stopPropagation();ctAdminApproveBalance(\''+item.id+'\');renderFabPanel();">잔금 확인</button>' +
                             '<button class="contract-card__action reject" onclick="event.stopPropagation();ctAdminRejectBalance(\''+item.id+'\');renderFabPanel();">반려</button></div>';
