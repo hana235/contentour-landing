@@ -2141,6 +2141,30 @@
             var currentAssignInquiry = null;
             var selectedInterpreter = null;
             var allInterpretersFromDB = [];
+            var _assignConflictMap = {}; // { interpreterId: [{expo,start,end}] } — 배정 기간과 겹치는 기존 계약(중복예약 방지)
+
+            // 선택 의뢰 기간과 일정이 겹치는 통역사 맵 구축 (활성 계약만 — cancelled/refunded 제외)
+            async function loadAssignConflicts(startDate, endDate) {
+                _assignConflictMap = {};
+                if (!supabase || !startDate || !endDate) return;
+                try {
+                    // 기간 겹침 조건: 계약.start_date <= 의뢰.end  AND  계약.end_date >= 의뢰.start
+                    var { data, error } = await supabase
+                        .from('42_통역계약')
+                        .select('interpreter_id, exhibition_name, start_date, end_date, status')
+                        .not('interpreter_id', 'is', null)
+                        .lte('start_date', endDate)
+                        .gte('end_date', startDate);
+                    if (error || !data) return;
+                    var dead = { cancelled: 1, refunded: 1 };
+                    data.forEach(function(c) {
+                        if (!c.interpreter_id || dead[c.status]) return;
+                        (_assignConflictMap[c.interpreter_id] = _assignConflictMap[c.interpreter_id] || []).push({
+                            expo: c.exhibition_name || '계약', start: c.start_date, end: c.end_date
+                        });
+                    });
+                } catch (e) { console.warn('일정 충돌 조회 실패:', e); }
+            }
 
             async function loadAllInterpreters() {
                 if (!supabase) return;
@@ -2227,6 +2251,9 @@
                 // DB에서 전체 통역사 로드
                 if (allInterpretersFromDB.length === 0) await loadAllInterpreters();
 
+                // 배정 기간과 겹치는 통역사(중복예약) 조회 — 카드 표시·확정 경고용
+                await loadAssignConflicts(d.start, d.end || d.start);
+
                 // 통역사 목록 (DB 우선, 없으면 하드코딩 폴백)
                 var interpList = allInterpretersFromDB.length > 0 ? allInterpretersFromDB : interpreters;
 
@@ -2234,13 +2261,19 @@
                 var grid = document.getElementById('interpOptions');
                 grid.innerHTML = interpList.map(function(interp) {
                     var escapedId = typeof interp.id === 'string' ? "'" + interp.id + "'" : interp.id;
+                    var conflicts = _assignConflictMap[interp.id] || [];
+                    var statusHtml = !interp.available
+                        ? '<span style="color:#c62828;">불가</span>'
+                        : (conflicts.length
+                            ? '<span style="color:#e65100;font-weight:700;" title="' + escapeHtml(conflicts.map(function(c){ return c.expo + ' (' + c.start + '~' + c.end + ')'; }).join(', ')) + '">⚠️ 일정 충돌</span>'
+                            : '<span style="color:#2e7d32;">가용</span>');
                     return '<div class="interp-option" data-id="' + escapeHtml(interp.id) + '" data-name="' + escapeHtml(interp.name) + '" onclick="selectInterpreter(this, ' + escapedId + ')" style="display:flex;align-items:center;gap:12px;padding:12px;border:2px solid #e5eaf2;border-radius:10px;cursor:pointer;transition:all 0.2s;">' +
                         '<div style="width:40px;height:40px;border-radius:50%;background:' + interp.color + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;">' + interp.initials + '</div>' +
                         '<div style="flex:1;">' +
                         '<div style="font-weight:700;font-size:0.88rem;">' + escapeHtml(interp.name) + '</div>' +
                         '<div style="font-size:0.75rem;color:#8a95a8;">' + escapeHtml(interp.langs.join(', ')) + ' | ' + escapeHtml(interp.field) + '</div>' +
                         '</div>' +
-                        '<div style="font-size:0.75rem;">' + (interp.available ? '<span style="color:#2e7d32;">가용</span>' : '<span style="color:#c62828;">불가</span>') + '</div>' +
+                        '<div style="font-size:0.75rem;">' + statusHtml + '</div>' +
                         '</div>';
                 }).join('');
 
@@ -2271,6 +2304,15 @@
                 if (_assignInProgress) return;
                 if (!currentAssignInquiry) return;
                 if (!selectedInterpreter) { showToast('통역사를 선택해주세요.'); return; }
+
+                // 중복 예약(일정 충돌) 경고 — 겹치면 명시 확인 후에만 진행 (의도적 중복은 허용, 실수는 차단)
+                var _conf = _assignConflictMap[selectedInterpreter.id] || [];
+                if (_conf.length) {
+                    var _msg = selectedInterpreter.name + ' 통역사는 이 기간에 이미 다른 일정이 있습니다:\n\n' +
+                        _conf.map(function(c){ return '• ' + c.expo + ' (' + c.start + ' ~ ' + c.end + ')'; }).join('\n') +
+                        '\n\n일정이 겹치는데도 배정하시겠습니까?';
+                    if (!confirm(_msg)) return;
+                }
 
                 // 문의 ID 가드 — 버튼 잠금 설정 전에 검사 (early return 시 버튼이 '저장 중'으로 잠기는 것 방지)
                 var dbId = currentAssignInquiry.dbId || currentAssignInquiry.id;
