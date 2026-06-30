@@ -212,20 +212,19 @@ body {
     padding-bottom: 2px;
 }
 
-/* 로고 옆 플랫폼명 병기 (콘텐츄어 로고 + CONFEX) */
+/* 로고 옆 플랫폼명 병기 (콘텐츄어 로고가 메인, CONFEX는 차분한 보조 라벨) */
 .nav__logo-confex {
-    margin-left: 12px;
-    padding-left: 12px;
-    border-left: 1.5px solid #d5dbe3;
+    margin-left: 11px;
+    padding-left: 11px;
+    border-left: 1.5px solid #dde2ea;
     font-family: 'Inter', sans-serif;
-    font-size: 1.08rem;
-    font-weight: 800;
+    font-size: 0.92rem;
+    font-weight: 600;
     font-style: normal;
-    letter-spacing: 0.04em;
-    color: #0d2a52;
+    letter-spacing: 0.08em;
+    color: #7a8699;
     line-height: 1;
     display: inline-block;
-    transform: skewX(-6deg);
 }
 
 @media (max-width: 480px) {
