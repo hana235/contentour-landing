@@ -1737,6 +1737,7 @@
             <div class="modal__body">
                 <div class="inquiry-summary" id="inquirySummary"></div>
                 <div class="section-head">👤 통역사 선택</div>
+                <input type="text" id="interpFilter" placeholder="🔍 이름·언어로 검색 (예: 영어, 김)" oninput="filterInterpOptions(this.value)" autocomplete="off" style="width:100%;padding:9px 12px;margin-bottom:10px;border:1.5px solid #e5eaf2;border-radius:9px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
                 <div class="interp-grid" id="interpOptions"></div>
                 <input type="hidden" id="statusSelect" value="매칭완료">
                 <div class="section-head">📝 관리자 메모</div>
@@ -2171,7 +2172,7 @@
                 try {
                     const { data, error } = await supabase
                         .from('40_통역사프로필')
-                        .select('user_id, display_name, languages, specialties, is_active')
+                        .select('user_id, display_name, languages, specialties, is_active, rating')
                         .order('display_name');
                     if (!error && data) {
                         var colors = ['#1565c0','#0277bd','#00695c','#c62828','#6a1b9a','#2e7d32','#4527a0','#e65100','#ad1457','#00838f'];
@@ -2183,7 +2184,8 @@
                                 color: colors[i % colors.length],
                                 langs: p.languages || [],
                                 field: (p.specialties && p.specialties[0]) || '-',
-                                available: p.is_active
+                                available: p.is_active,
+                                rating: p.rating || 0
                             };
                         });
                     }
@@ -2257,6 +2259,22 @@
                 // 통역사 목록 (DB 우선, 없으면 하드코딩 폴백)
                 var interpList = allInterpretersFromDB.length > 0 ? allInterpretersFromDB : interpreters;
 
+                // 매칭 정렬: ① 의뢰 언어 일치 ② 일정 충돌 없음 ③ 평점 높은 순 (원본 배열 보존)
+                var reqLang = (d.lang || '').trim();
+                interpList = interpList.slice().sort(function(a, b) {
+                    var am = reqLang && (a.langs || []).indexOf(reqLang) >= 0 ? 1 : 0;
+                    var bm = reqLang && (b.langs || []).indexOf(reqLang) >= 0 ? 1 : 0;
+                    if (am !== bm) return bm - am;
+                    var ac = (_assignConflictMap[a.id] || []).length ? 1 : 0;
+                    var bc = (_assignConflictMap[b.id] || []).length ? 1 : 0;
+                    if (ac !== bc) return ac - bc;
+                    return (b.rating || 0) - (a.rating || 0);
+                });
+
+                // 검색 필터 초기화
+                var _filterEl = document.getElementById('interpFilter');
+                if (_filterEl) _filterEl.value = '';
+
                 // 통역사 선택 카드 렌더링
                 var grid = document.getElementById('interpOptions');
                 grid.innerHTML = interpList.map(function(interp) {
@@ -2267,11 +2285,14 @@
                         : (conflicts.length
                             ? '<span style="color:#e65100;font-weight:700;" title="' + escapeHtml(conflicts.map(function(c){ return c.expo + ' (' + c.start + '~' + c.end + ')'; }).join(', ')) + '">⚠️ 일정 충돌</span>'
                             : '<span style="color:#2e7d32;">가용</span>');
-                    return '<div class="interp-option" data-id="' + escapeHtml(interp.id) + '" data-name="' + escapeHtml(interp.name) + '" onclick="selectInterpreter(this, ' + escapedId + ')" style="display:flex;align-items:center;gap:12px;padding:12px;border:2px solid #e5eaf2;border-radius:10px;cursor:pointer;transition:all 0.2s;">' +
+                    var matchesLang = reqLang && (interp.langs || []).indexOf(reqLang) >= 0;
+                    var langBadge = matchesLang ? ' <span style="font-size:0.62rem;background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:6px;font-weight:700;">✓ ' + escapeHtml(reqLang) + '</span>' : '';
+                    var ratingHtml = interp.rating ? ' · ⭐ ' + Number(interp.rating).toFixed(1) : '';
+                    return '<div class="interp-option" data-id="' + escapeHtml(interp.id) + '" data-name="' + escapeHtml(interp.name) + '" data-langs="' + escapeHtml((interp.langs || []).join(',')) + '" onclick="selectInterpreter(this, ' + escapedId + ')" style="display:flex;align-items:center;gap:12px;padding:12px;border:2px solid #e5eaf2;border-radius:10px;cursor:pointer;transition:all 0.2s;">' +
                         '<div style="width:40px;height:40px;border-radius:50%;background:' + interp.color + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;">' + interp.initials + '</div>' +
                         '<div style="flex:1;">' +
-                        '<div style="font-weight:700;font-size:0.88rem;">' + escapeHtml(interp.name) + '</div>' +
-                        '<div style="font-size:0.75rem;color:#8a95a8;">' + escapeHtml(interp.langs.join(', ')) + ' | ' + escapeHtml(interp.field) + '</div>' +
+                        '<div style="font-weight:700;font-size:0.88rem;">' + escapeHtml(interp.name) + langBadge + '</div>' +
+                        '<div style="font-size:0.75rem;color:#8a95a8;">' + escapeHtml((interp.langs || []).join(', ')) + ' | ' + escapeHtml(interp.field) + ratingHtml + '</div>' +
                         '</div>' +
                         '<div style="font-size:0.75rem;">' + statusHtml + '</div>' +
                         '</div>';
@@ -2294,6 +2315,16 @@
                 el.style.background = '#f0f7ff';
                 var interpList = allInterpretersFromDB.length > 0 ? allInterpretersFromDB : interpreters;
                 selectedInterpreter = interpList.find(function(x) { return String(x.id) === String(id); });
+            }
+
+            // 배정 모달 통역사 목록 이름·언어 검색 필터 (재렌더 없이 표시/숨김)
+            function filterInterpOptions(q) {
+                q = (q || '').trim().toLowerCase();
+                document.querySelectorAll('#interpOptions .interp-option').forEach(function(el) {
+                    var name = (el.getAttribute('data-name') || '').toLowerCase();
+                    var langs = (el.getAttribute('data-langs') || '').toLowerCase();
+                    el.style.display = (!q || name.indexOf(q) >= 0 || langs.indexOf(q) >= 0) ? 'flex' : 'none';
+                });
             }
 
             function closeModal() { document.getElementById('overlay').classList.remove('open'); currentAssignInquiry = null; }
