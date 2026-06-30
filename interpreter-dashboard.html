@@ -2943,6 +2943,54 @@
             return resp.data ? resp.data.id : (existingDbId || null);
         }
 
+        // ══════════════ 고정양식(부산테크노파크/KITA) 공통 Supabase 저장 (44_상담일지) ══════════════
+        // 양식별 고유 필드는 전부 attachments JSON에 보관하여 유실 0. core 컬럼은 admin 목록 표시용 best-effort 매핑.
+        async function jnlSaveFixedFormToSupabase(payload, status, existingDbId) {
+            var sb = window.sbClient;
+            if (!sb) return null;
+            var user = null;
+            if (window.InterpreterApp && InterpreterApp.currentUser) user = InterpreterApp.currentUser;
+            else { try { user = await ContentourAuth.getCurrentUser(); } catch(e) {} }
+            if (!user || !user.id) {
+                console.warn('[상담일지] 인증 정보 없음 — Supabase 저장 스킵');
+                showToast('⚠️ 로그인 정보를 확인할 수 없어 저장하지 못했습니다.');
+                return null;
+            }
+            var contracts = window._jnlContracts || [];
+            var match = contracts.find(function(c) {
+                return c.name && payload.expo && c.name.toLowerCase() === payload.expo.toLowerCase();
+            });
+            var record = {
+                interpreter_id: user.id,
+                customer_id: match ? match.customerId : null,
+                contract_id: match ? match.contractId : null,
+                exhibition_name: payload.expo || '',
+                consultation_date: payload.date || new Date().toISOString().split('T')[0],
+                buyer_company: payload.company || '',
+                buyer_country: payload.location || '',
+                discussion_summary: payload.summary || '',
+                buyer_interest: payload.result || '',
+                follow_up_needed: !!payload.followNeeded,
+                follow_up_notes: payload.followNotes || '',
+                status: status,
+                submitted_at: status === 'submitted' ? new Date().toISOString() : null,
+                attachments: JSON.stringify(payload.extra || {})
+            };
+            var resp;
+            if (existingDbId) {
+                resp = await sb.from('44_상담일지').update(record).eq('id', existingDbId).select('id').single();
+            } else {
+                resp = await sb.from('44_상담일지').insert(record).select('id').single();
+            }
+            if (resp.error) {
+                console.error('[상담일지] 고정양식 Supabase 저장 실패:', resp.error.message);
+                showToast('⚠️ 클라우드 저장 실패: ' + resp.error.message);
+                return null;
+            }
+            console.log('[상담일지] 고정양식 저장 완료:', resp.data && resp.data.id, '(' + (existingDbId ? 'UPDATE' : 'INSERT') + ', status=' + status + ', form=' + (payload.extra && payload.extra.formType) + ')');
+            return resp.data ? resp.data.id : (existingDbId || null);
+        }
+
         // ══════════════ 상담일지 목록 로드/표시 ══════════════
         let _activeJournalDbId = null;
         let _activeJournalStatus = null; // 'draft' | 'submitted' | null — 제출완료 일지 보호 + UPDATE 분기용
@@ -3484,14 +3532,41 @@
             ['jnl-bp-staff','jnl-bp-total','jnl-bp-potential','jnl-bp-contract','jnl-bp-mou'].forEach(function(id) { var el = document.getElementById(id); if(el) el.value = '0'; });
             document.getElementById('jnl-bp-date').value = '';
             document.getElementById('jnlBpSavedAt').textContent = '마지막 저장: —';
+            _busanDbId = null; // 새 일지로 시작
             showToast('🔄 부산테크노파크 양식이 초기화되었습니다.');
         }
-        function saveJnlBusan(type) {
-            var expo = document.getElementById('jnl-bp-expo').value;
-            var date = document.getElementById('jnl-bp-date').value;
+        var _busanDbId = null; // 같은 일지 재저장 시 INSERT 중복 방지(UPDATE 분기용)
+        async function saveJnlBusan(type) {
+            var g = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+            var expo = g('jnl-bp-expo');
+            var date = g('jnl-bp-date');
             if (!expo) { showToast('⚠️ 전시회명을 입력해주세요.'); return; }
             if (!date) { showToast('⚠️ 작성일을 선택해주세요.'); return; }
-            if (type === 'submit' && !document.getElementById('jnl-bp-result').value.trim()) { showToast('⚠️ 주요 성과를 작성해주세요.'); return; }
+            if (type === 'submit' && !g('jnl-bp-result').trim()) { showToast('⚠️ 주요 성과를 작성해주세요.'); return; }
+            var status = (type === 'submit') ? 'submitted' : 'draft';
+            var payload = {
+                expo: expo, date: date,
+                company: g('jnl-bp-company'),
+                location: g('jnl-bp-location'),
+                summary: g('jnl-bp-products'),
+                result: g('jnl-bp-result'),
+                followNeeded: (parseInt(g('jnl-bp-potential'), 10) || 0) > 0,
+                followNotes: g('jnl-bp-plan'),
+                extra: {
+                    formType: 'busan', program: g('jnl-bp-program'), ceo: g('jnl-bp-ceo'),
+                    period: g('jnl-bp-period'), writer: g('jnl-bp-writer'), booth: g('jnl-bp-booth'),
+                    boothSize: g('jnl-bp-boothsize'), products: g('jnl-bp-products'), result: g('jnl-bp-result'),
+                    issue: g('jnl-bp-issue'), plan: g('jnl-bp-plan'), opinion: g('jnl-bp-opinion'),
+                    staff: g('jnl-bp-staff'), total: g('jnl-bp-total'), potential: g('jnl-bp-potential'),
+                    contract: g('jnl-bp-contract'), mou: g('jnl-bp-mou')
+                }
+            };
+            // DB 저장 성공해야만 성공 처리(실패 시 helper가 오류 토스트 표시)
+            if (window.sbClient) {
+                var newId = await jnlSaveFixedFormToSupabase(payload, status, _busanDbId);
+                if (!newId) return;
+                _busanDbId = newId;
+            }
             var now = new Date();
             var timeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
             document.getElementById('jnlBpSavedAt').textContent = '마지막 저장: 오늘 ' + timeStr;
@@ -3509,14 +3584,41 @@
             document.getElementById('jnl-kt-date').value = '';
             var purpose = document.getElementById('jnl-kt-purpose'); if(purpose) purpose.value = '';
             document.getElementById('jnlKtSavedAt').textContent = '마지막 저장: —';
+            _kitaDbId = null; // 새 일지로 시작
             showToast('🔄 한국무역협회 양식이 초기화되었습니다.');
         }
-        function saveJnlKita(type) {
-            var expo = document.getElementById('jnl-kt-expo').value;
-            var date = document.getElementById('jnl-kt-date').value;
+        var _kitaDbId = null; // 같은 일지 재저장 시 INSERT 중복 방지(UPDATE 분기용)
+        async function saveJnlKita(type) {
+            var g = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+            var expo = g('jnl-kt-expo');
+            var date = g('jnl-kt-date');
             if (!expo) { showToast('⚠️ 전시회명을 입력해주세요.'); return; }
             if (!date) { showToast('⚠️ 작성일을 선택해주세요.'); return; }
-            if (type === 'submit' && !document.getElementById('jnl-kt-evaluation').value.trim()) { showToast('⚠️ 종합 평가를 작성해주세요.'); return; }
+            if (type === 'submit' && !g('jnl-kt-evaluation').trim()) { showToast('⚠️ 종합 평가를 작성해주세요.'); return; }
+            var status = (type === 'submit') ? 'submitted' : 'draft';
+            var payload = {
+                expo: expo, date: date,
+                company: g('jnl-kt-company'),
+                location: g('jnl-kt-location'),
+                summary: g('jnl-kt-items'),
+                result: g('jnl-kt-evaluation'),
+                followNeeded: !!g('jnl-kt-followup').trim(),
+                followNotes: g('jnl-kt-followup'),
+                extra: {
+                    formType: 'kita', program: g('jnl-kt-program'), bizno: g('jnl-kt-bizno'),
+                    period: g('jnl-kt-period'), writer: g('jnl-kt-writer'), items: g('jnl-kt-items'),
+                    booth: g('jnl-kt-booth'), onsite: g('jnl-kt-onsite'), expected: g('jnl-kt-expected'),
+                    market: g('jnl-kt-market'), competitor: g('jnl-kt-competitor'), strength: g('jnl-kt-strength'),
+                    evaluation: g('jnl-kt-evaluation'), followup: g('jnl-kt-followup'), opinion: g('jnl-kt-opinion'),
+                    purpose: g('jnl-kt-purpose'), staff: g('jnl-kt-staff'), total: g('jnl-kt-total'),
+                    newbuyer: g('jnl-kt-newbuyer'), existing: g('jnl-kt-existing'), contract: g('jnl-kt-contract')
+                }
+            };
+            if (window.sbClient) {
+                var newId = await jnlSaveFixedFormToSupabase(payload, status, _kitaDbId);
+                if (!newId) return;
+                _kitaDbId = newId;
+            }
             var now = new Date();
             var timeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
             document.getElementById('jnlKtSavedAt').textContent = '마지막 저장: 오늘 ' + timeStr;

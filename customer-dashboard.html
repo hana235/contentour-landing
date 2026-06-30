@@ -2247,14 +2247,19 @@
       // Supabase에 문의 저장
       if (window.sbClient) {
         try {
-          const langMap = { '영어': 'KR-EN', '일본어': 'KR-JP', '중국어': 'KR-CN' };
-          const typeMap = { '부스 상주': 'BOOTH', '미팅 동행': 'MEETING', '현장 운영': 'ONSITE_OPS' };
+          // select 옵션 텍스트와 정확히 일치해야 함(부분 문자열로 들어오던 매핑 키 불일치로 BOOTH/ONSITE_OPS가 전부 OTHER 저장되던 버그 수정)
+          const typeMap = {
+            '부스 상주 (상담 통역)': 'BOOTH',
+            '미팅 동행': 'MEETING',
+            '현장 운영 / 주최사 커뮤니케이션': 'ONSITE_OPS',
+            '기타': 'OTHER'
+          };
           const user = await ContentourAuth.getCurrentUser();
           const profile = user ? await ContentourAuth.getUserProfile() : null;
 
           const { error } = await window.sbClient.from('46_ITQ견적문의').insert({
             user_id: user ? user.id : null,
-            company: profile ? profile.name : '미확인 고객사',
+            company: (profile && profile.company_name) ? profile.company_name : '미확인 고객사',
             contact_name: profile ? profile.name : '',
             email: user ? user.email : '',
             phone: (profile && profile.phone) ? profile.phone : '-',
@@ -2293,6 +2298,7 @@
           }
         } catch (e) {
           console.error('문의 저장 예외:', e);
+          showJToast('&#9888;&#65039; 문의 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
           restoreBtn();
           return;
         }
