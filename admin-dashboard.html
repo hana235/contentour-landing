@@ -7283,8 +7283,8 @@
                     chatmonChannels = [];
                     chatmonLogs = {};
                     chatmonUnread = {};
-                    for (var i = 0; i < contracts.length; i++) {
-                        var c = contracts[i];
+                    // 채널은 즉시 구성, 메시지는 방마다 병렬 로드 (순차 await 제거 — admin은 전체 계약이라 특히 큼)
+                    contracts.forEach(function (c) {
                         var roomId = 'contract_' + c.id;
                         var custInfo = nameMap[c.customer_id];
                         var intpInfo = nameMap[c.interpreter_id];
@@ -7302,11 +7302,13 @@
                             customerId: c.customer_id,
                             interpreterId: c.interpreter_id
                         });
-
-                        // 메시지 로드
+                        chatmonUnread[roomId] = 0;
+                    });
+                    await Promise.all(contracts.map(async function (c) {
+                        var roomId = 'contract_' + c.id;
                         var msgResult = await window.sbClient
                             .from('45_채팅메시지')
-                            .select('*')
+                            .select('id, sender_role, message, created_at, sender_name, attachments')
                             .eq('room_id', roomId)
                             .order('created_at', { ascending: true })
                             .limit(200);
@@ -7323,8 +7325,7 @@
                                 ts: dt.getTime()
                             };
                         });
-                        chatmonUnread[roomId] = 0;
-                    }
+                    }));
 
                     // 메시지 없는 채널은 뒤로
                     chatmonChannels.sort(function(a, b) {
@@ -7933,7 +7934,7 @@
             }
         }
         </script>
-        <script src="shared-constants.js"></script>
+        <script src="shared-constants.js?v=20260701"></script>
         <script>
         /* ══════════ 관리자 알림 센터 (벨 드롭다운) ══════════ */
         (function () {
@@ -8138,7 +8139,7 @@
         var supabase = _sb;
         </script>
         <!-- service_role 클라이언트 제거됨 — 모든 관리자 작업은 서버사이드 API(/api/)를 통해 처리 -->
-        <script src="admin-data.js"></script>
+        <script src="admin-data.js?v=20260701"></script>
         <script src="chat-data.js?v=20260701-perf"></script>
         <script>
         // ── Supabase에서 문의 + 캘린더 데이터 로드 ──
