@@ -728,7 +728,8 @@
               <div class="j-notice">&#128204; <strong>작성 안내:</strong> 전시회 기간 중 <strong>매일 작성</strong>해주세요. 작성된 일지는 콘텐츄어 담당자에게 자동으로 공유됩니다.</div>
               <div class="j-section">기본 정보</div>
               <div class="j-grid">
-                <div class="j-field"><label>전시회명 *</label>
+                <div class="j-field"><label>전시회명 * <span style="color:#1565c0;font-weight:500;font-size:0.8em;">(내 계약에서 자동 선택)</span></label>
+                  <select id="j-expo-picker" onchange="pickJournalExpo(this.value)" style="display:none;margin-bottom:6px;width:100%;padding:9px 10px;border:1.5px solid #cfe0f5;border-radius:8px;background:#f4f9ff;font-size:0.85rem;"></select>
                   <input type="text" id="j-expo" placeholder="전시회명 또는 국가를 입력하세요" autocomplete="off">
                   <input type="hidden" id="j-expo-data">
                   <input type="hidden" id="j-contract-id">
@@ -1808,6 +1809,12 @@
                             dataVal: [ct.exhibition_name, ct.venue || '', period, interp, ct.language_pair || '', ct.id || '', ct.interpreter_id || ''].join('|')
                         };
                     });
+                    // 상담일지 뷰가 이미 열려 있고 아직 전시회 미선택이면 드롭다운 즉시 채움
+                    try {
+                        if (typeof populateJournalExpoPicker === 'function' && !document.getElementById('j-expo').value) {
+                            populateJournalExpoPicker();
+                        }
+                    } catch (ep) {}
                 }
             } catch(e3) {
                 console.error('전시회 목록 로드 실패:', e3);
@@ -2497,7 +2504,7 @@
         else if (editorEl) editorEl.appendChild(box);
       }
     }
-    function newJournal() { activeJournalId = null; clearJournal(); renderJournalList(); document.getElementById('jeditorTitle').textContent = '새 상담일지 작성'; document.getElementById('jeditorSub').textContent = '전시회를 선택하고 상담 내용을 입력하세요.'; var cb = document.getElementById('adminCommentBox'); if (cb) cb.remove(); var ib = document.getElementById('interpDetailBox'); if (ib) ib.remove(); }
+    function newJournal() { activeJournalId = null; clearJournal(); renderJournalList(); document.getElementById('jeditorTitle').textContent = '새 상담일지 작성'; document.getElementById('jeditorSub').textContent = '전시회를 선택하고 상담 내용을 입력하세요.'; var cb = document.getElementById('adminCommentBox'); if (cb) cb.remove(); var ib = document.getElementById('interpDetailBox'); if (ib) ib.remove(); populateJournalExpoPicker(); }
     function clearJournal() {
       document.getElementById('j-expo').value = '';
       document.getElementById('j-date').value = new Date().toISOString().split('T')[0];
@@ -2521,6 +2528,30 @@
       document.getElementById('j-lang').value = parts[4] || '';
       document.getElementById('j-contract-id').value = parts[5] || '';
       document.getElementById('j-interpreter-id').value = parts[6] || '';
+    }
+    // 고객 본인 계약에서 전시회를 골라 넣기 — 직접 찾을 필요 없이 드롭다운/자동선택
+    function populateJournalExpoPicker() {
+      var sel = document.getElementById('j-expo-picker');
+      if (!sel) return;
+      var contracts = window._journalContracts || [];
+      if (!contracts.length) { sel.style.display = 'none'; return; }
+      sel.innerHTML = '<option value="">— 내 계약에서 전시회 선택 —</option>' +
+        contracts.map(function (c, i) {
+          var per = (c.period && c.period.replace(/\s|~/g, '')) ? ' (' + c.period + ')' : '';
+          return '<option value="' + i + '">' + CT.escHtml((c.name || '(전시회명 미정)') + per) + '</option>';
+        }).join('');
+      sel.style.display = '';
+      // 계약이 하나뿐이면 자동 선택 + 자동 채움 (고객이 아무것도 안 해도 뜸)
+      if (contracts.length === 1) { sel.value = '0'; pickJournalExpo('0'); }
+      else { sel.value = ''; }
+    }
+    function pickJournalExpo(idx) {
+      var contracts = window._journalContracts || [];
+      var c = contracts[idx];
+      if (!c) return;
+      document.getElementById('j-expo').value = c.name || '';
+      document.getElementById('j-expo-data').value = c.dataVal || '';
+      updateExpoInfo();
     }
     async function saveJournal(type) {
       const expoInput = document.getElementById('j-expo').value;
