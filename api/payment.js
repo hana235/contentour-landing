@@ -73,9 +73,12 @@ async function handleVerifyPayment(req, res, rawBody) {
         if (contract.customer_id !== user.id) {
             return res.status(403).json({ success: false, error: '본인 계약만 결제 가능합니다.' });
         }
-        // 사업자등록증 승인 게이트 (정책 B): 승인 전 결제 차단
-        const bizBlock = await checkBusinessApproved(sb, user.id);
-        if (bizBlock) return res.status(403).json({ success: false, error: bizBlock.error, code: bizBlock.code });
+        // 사업자등록증 승인 게이트 (정책 B): 첫 결제(계약금/전액) 전 승인 필요.
+        // 이미 계약금이 결제된 건(잔금 등)은 게이트를 이미 통과한 것이므로 재차단하지 않음.
+        if (contract.deposit_status !== 'paid') {
+            const bizBlock = await checkBusinessApproved(sb, user.id);
+            if (bizBlock) return res.status(403).json({ success: false, error: bizBlock.error, code: bizBlock.code });
+        }
 
         // ── 서버에서 paymentType별 정확한 금액 재계산 (클라이언트 메모리 변조 방어) ──
         let serverExpected = null;

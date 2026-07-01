@@ -235,6 +235,10 @@ window.showToast = window.showToast || function(message, type) {
                     updateFields.business_registration_url = brnFileUrl;
                     updateFields.business_registration_status = 'pending';
                     updateFields.business_registration_uploaded_at = new Date().toISOString();
+                } else {
+                    // 파일 미첨부(선택 가입) → 컬럼 기본값 'pending'이 아니라 '미제출(none)'로 명시.
+                    // (안 하면 파일 없이 가입한 고객이 '검수중'으로 잘못 표시되고 관리자가 승인도 못 함)
+                    updateFields.business_registration_status = 'none';
                 }
                 if (Object.keys(updateFields).length > 0) {
                     const { error: updErr } = await sb
@@ -435,6 +439,6 @@ window.ContentourPresence = (function () {
         // 특정 사용자가 현재 온라인인지
         isOnline: function (userId) { return !!(userId && online[userId]); },
         // 접속 상태 변동 시 콜백 (채팅 목록/헤더 갱신용)
-        onChange: function (cb) { if (typeof cb === 'function') listeners.push(cb); }
+        onChange: function (cb) { if (typeof cb === 'function' && listeners.indexOf(cb) < 0) listeners.push(cb); }
     };
 })();
