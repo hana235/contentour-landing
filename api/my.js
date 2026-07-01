@@ -375,11 +375,16 @@ async function handleDeclineAssignment(req, res) {
 
     try {
         const { data: c, error: cErr } = await sb.from('42_통역계약')
-            .select('id, order_id, customer_id, interpreter_id, exhibition_name, client_company, status')
+            .select('id, order_id, customer_id, interpreter_id, exhibition_name, client_company, status, deposit_status, balance_status')
             .eq('id', contractId).single();
         if (cErr || !c) return res.status(404).json({ success: false, error: '계약을 찾을 수 없습니다.' });
         if (c.interpreter_id !== auth.user.id) return res.status(403).json({ success: false, error: '본인에게 배정된 계약만 거절할 수 있습니다.' });
         if (c.status === 'cancelled') return res.status(200).json({ success: true, alreadyCancelled: true });
+        // 고객이 이미 결제(계약금/전액)한 계약은 거절로 통역사만 비우면 결제완료 계약이 고아가 된다.
+        // → 거절 불가, 취소 흐름으로 유도. (관리자만 취소·환불 처리 가능)
+        if (c.deposit_status === 'paid' || c.balance_status === 'paid') {
+            return res.status(409).json({ success: false, error: '이미 결제가 완료된 계약은 거절할 수 없습니다. 관리자에게 취소를 요청해주세요.' });
+        }
 
         // 거절: 계약을 취소(cancelled)로 죽이지 않고 '재배정 대기'로 리셋한다.
         //  - 통역사 비움(interpreter_id=null) + 수락상태 초기화(interpreter_accepted=null) + status='pending'

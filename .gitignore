@@ -6,6 +6,9 @@
 Thumbs.db
 desktop.ini
 
+# 명함/테스트 이미지 (현장바이어 OCR 테스트용 — 소스 아님, 저장소에 커밋 금지)
+KakaoTalk_*.jpg
+
 # Editor
 .vscode/
 .idea/

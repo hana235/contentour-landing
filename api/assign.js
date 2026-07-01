@@ -129,6 +129,10 @@ module.exports = async function handler(req, res) {
 
             const fields = {
                 interpreter_id: interpreterId,
+                // 재배정 시 이전 통역사의 수락/거절 상태 초기화 (RPC 분기와 동일 — 무단 자동수락 방지)
+                interpreter_accepted: null,
+                accepted_at: null,
+                rejected_at: null,
                 exhibition_name: expo || '',
                 client_company: company || '',
                 venue: venue || location || '',

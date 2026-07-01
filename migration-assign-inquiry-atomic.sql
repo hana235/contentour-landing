@@ -42,8 +42,14 @@ BEGIN
      LIMIT 1;
 
     IF v_existing IS NOT NULL THEN
+        -- 재배정: 통역사를 새로 배정하면 이전 통역사의 수락/거절 상태를 반드시 초기화한다.
+        -- (초기화 안 하면 A가 수락했던 계약을 B로 교체 시 interpreter_accepted=true가 남아
+        --  B가 동의 없이 '수락됨'으로 처리되고 배정 큐·미응답 리마인더에도 안 잡힘.)
         UPDATE "42_통역계약" SET
             interpreter_id = (p_contract->>'interpreter_id')::uuid,
+            interpreter_accepted = NULL,
+            accepted_at    = NULL,
+            rejected_at    = NULL,
             customer_id    = COALESCE((p_contract->>'customer_id')::uuid, customer_id),
             exhibition_name= p_contract->>'exhibition_name',
             client_company = p_contract->>'client_company',
