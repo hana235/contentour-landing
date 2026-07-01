@@ -496,6 +496,12 @@ body {
 
 /* ? 핵심: 화면이 줄어들면 카테고리 스타일 메뉴로 변신 */
 @media (max-width: 860px) {
+    /* 닫힌 오프캔버스 메뉴(position:fixed + translateX(100%))가 화면 밖으로 나가며
+       가로 스크롤/흰 여백을 만드는 것 방지 — html에도 가로 오버플로 클립 */
+    html {
+        overflow-x: hidden;
+    }
+
     .nav-cta {
         display: none;
     }

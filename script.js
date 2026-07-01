@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initScrollAnimations();
     initInquiryForm();
     initExpoAutocomplete();
+    initKoreanValidation();
 
 
     initFaqAccessibility();
@@ -20,37 +21,27 @@ function initMobileMenu() {
     const navMenu = document.getElementById('navMenu');
 
     if (mobileMenuToggle && navMenu) {
+        const srLabel = mobileMenuToggle.querySelector('.sr-only');
+        function setMenuOpen(open) {
+            navMenu.setAttribute('data-open', open ? 'true' : 'false');
+            mobileMenuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (srLabel) srLabel.textContent = open ? '메뉴 닫기' : '메뉴 열기';
+            document.body.style.overflow = open ? 'hidden' : '';   // Lock body scroll when open
+        }
+
         mobileMenuToggle.addEventListener('click', function () {
-            const isOpen = navMenu.getAttribute('data-open') === 'true';
-            const newState = !isOpen;
-
-            navMenu.setAttribute('data-open', newState);
-            mobileMenuToggle.setAttribute('aria-expanded', newState);
-
-            // Lock body scroll when menu is open
-            if (newState) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
+            setMenuOpen(navMenu.getAttribute('data-open') !== 'true');
         });
 
         // Close menu when clicking links (especially for hash links on the same page)
-        const links = navMenu.querySelectorAll('a');
-        links.forEach(link => {
-            link.addEventListener('click', () => {
-                navMenu.setAttribute('data-open', 'false');
-                mobileMenuToggle.setAttribute('aria-expanded', 'false');
-                document.body.style.overflow = '';
-            });
+        navMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => setMenuOpen(false));
         });
 
         // ESC 키로 모바일 메뉴 닫기 (접근성)
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && navMenu.getAttribute('data-open') === 'true') {
-                navMenu.setAttribute('data-open', 'false');
-                mobileMenuToggle.setAttribute('aria-expanded', 'false');
-                document.body.style.overflow = '';
+                setMenuOpen(false);
                 mobileMenuToggle.focus();
             }
         });
@@ -58,6 +49,23 @@ function initMobileMenu() {
 }
 
 // Active navigation link highlighting
+// 폼 기본 검증 메시지를 한국어로 (브라우저 기본 "Please fill out this field." 대체)
+function initKoreanValidation() {
+    document.querySelectorAll('input, select, textarea').forEach(function (el) {
+        el.addEventListener('invalid', function () {
+            if (el.validity.valueMissing) {
+                el.setCustomValidity(el.tagName === 'SELECT' ? '항목을 선택해주세요.' : '이 항목을 입력해주세요.');
+            } else if (el.validity.typeMismatch && el.type === 'email') {
+                el.setCustomValidity('올바른 이메일 형식으로 입력해주세요.');
+            } else {
+                el.setCustomValidity('');
+            }
+        });
+        el.addEventListener('input', function () { el.setCustomValidity(''); });
+        el.addEventListener('change', function () { el.setCustomValidity(''); });
+    });
+}
+
 function initActiveNavLink() {
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav__menu a');
@@ -604,16 +612,18 @@ function initExpoAutocomplete() {
 
         function renderDropdown(matches) {
             if (matches.length === 0) { dropdown.style.display = 'none'; setExpanded(false); return; }
+            // DB값(60_해외전시회DB)을 innerHTML/속성에 넣기 전 escape (방어적 XSS·속성깨짐 방지)
+            var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
             dropdown.innerHTML = matches.map(function(m) {
-                var dateInfo = (m.s && m.e) ? ' · ' + m.s.slice(5) + ' ~ ' + m.e.slice(5) : '';
+                var dateInfo = (m.s && m.e) ? ' · ' + esc(m.s.slice(5)) + ' ~ ' + esc(m.e.slice(5)) : '';
             return '<div class="expo-ac-item" role="option" style="padding:10px 14px;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #f0f0f0;transition:background 0.15s;" ' +
                     'onmouseover="this.style.background=\'#f0f7ff\'" onmouseout="this.style.background=\'#fff\'" ' +
-                    'data-name="' + m.name + '" data-country="' + m.country + '" data-city="' + m.city + '"' +
-                    (m.v ? ' data-venue="' + m.v + '"' : '') +
-                    (m.s ? ' data-start="' + m.s + '"' : '') +
-                    (m.e ? ' data-end="' + m.e + '"' : '') + '>' +
-                    '<div style="font-weight:700;color:#1a1a2e;">' + m.name + '</div>' +
-                    '<div style="font-size:0.75rem;color:#888;margin-top:2px;">' + m.country + ' · ' + m.city + (m.v ? ' · ' + m.v : '') + ' · ' + m.field + dateInfo + '</div>' +
+                    'data-name="' + esc(m.name) + '" data-country="' + esc(m.country) + '" data-city="' + esc(m.city) + '"' +
+                    (m.v ? ' data-venue="' + esc(m.v) + '"' : '') +
+                    (m.s ? ' data-start="' + esc(m.s) + '"' : '') +
+                    (m.e ? ' data-end="' + esc(m.e) + '"' : '') + '>' +
+                    '<div style="font-weight:700;color:#1a1a2e;">' + esc(m.name) + '</div>' +
+                    '<div style="font-size:0.75rem;color:#888;margin-top:2px;">' + esc(m.country) + ' · ' + esc(m.city) + (m.v ? ' · ' + esc(m.v) : '') + ' · ' + esc(m.field) + dateInfo + '</div>' +
                 '</div>';
             }).join('');
             dropdown.style.display = 'block';
