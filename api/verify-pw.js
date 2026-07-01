@@ -28,6 +28,13 @@ module.exports = async function handler(req, res) {
     const hash = crypto.createHash('sha256').update(password).digest('hex');
 
     if (hash === PASSWORD_HASH) {
+        // 서버단 게이트(middleware.js)용 쿠키 발급 — HttpOnly·Secure·SameSite=Lax, 7일
+        // GATE_TOKEN 미설정이면 쿠키 없이 통과(미들웨어도 비활성이라 정합)
+        var token = process.env.GATE_TOKEN;
+        if (token) {
+            res.setHeader('Set-Cookie',
+                'ct_gate=' + token + '; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800');
+        }
         return res.status(200).json({ ok: true });
     }
 
