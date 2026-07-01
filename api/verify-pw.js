@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
     if (hash === PASSWORD_HASH) {
         // 서버단 게이트(middleware.js)용 쿠키 발급 — HttpOnly·Secure·SameSite=Lax, 7일
         // GATE_TOKEN 미설정이면 쿠키 없이 통과(미들웨어도 비활성이라 정합)
-        var token = process.env.GATE_TOKEN;
+        var token = (process.env.GATE_TOKEN || '').trim();  // 붙여넣기 공백/줄바꿈 방어
         if (token) {
             res.setHeader('Set-Cookie',
                 'ct_gate=' + token + '; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800');

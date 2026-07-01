@@ -36,7 +36,7 @@ go.onclick=submit;pw.addEventListener('keydown',function(e){if(e.key==='Enter')s
 </script></body></html>`;
 
 export default function middleware(request) {
-  const token = process.env.GATE_TOKEN;
+  const token = (process.env.GATE_TOKEN || '').trim();  // 붙여넣기 공백/줄바꿈 방어
   if (!token) return;                                   // 미설정 → 게이트 비활성 (통과)
   const cookie = request.headers.get('cookie') || '';
   const authed = cookie.split(';').some(function (c) { return c.trim() === 'ct_gate=' + token; });
