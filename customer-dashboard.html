@@ -4172,6 +4172,11 @@
         try {
             const user = await ChatData.getUser();
             if (!user) return;
+            // 실시간 접속 상태 시작 + 상대 접속 변동 시 채팅 목록/헤더 갱신
+            if (window.ContentourPresence) {
+                ContentourPresence.start(user.id);
+                ContentourPresence.onChange(refreshChatPresence);
+            }
             const rooms = await ChatData.loadChatRooms();
             if (!rooms) return;
 
@@ -4192,7 +4197,7 @@
                     expo: r.expo || '',
                     lang: r.lang || '',
                     color: colors[i % colors.length],
-                    online: false,
+                    online: (window.ContentourPresence ? ContentourPresence.isOnline(r.partnerId) : false),
                     unread: r.unread
                 });
 
@@ -4505,6 +4510,20 @@
     // 데스크톱 알림 — 브라우저 권한 요청 없이 토스트로 대체
     function showDesktopNotif(title, body) {
       showContractToast(title + ': ' + body);
+    }
+
+    // 상대 접속 상태 변동 시: 목록 초록점 + 열린 대화 헤더 상태 갱신
+    function refreshChatPresence() {
+      if (!window.ContentourPresence) return;
+      chatContacts.forEach(function (c) { c.online = ContentourPresence.isOnline(c.partnerId); });
+      try { renderChatContacts(); } catch (e) {}
+      const openC = chatContacts.find(function (c) { return c.id === activeChatId; });
+      if (openC) {
+        const st = document.querySelector('.chat-main__head-status');
+        if (st) { st.className = 'chat-main__head-status ' + (openC.online ? 'on' : 'off'); st.innerHTML = openC.online ? '🟢 온라인' : '오프라인'; }
+        const notice = document.querySelector('.chat-offline-notice');
+        if (notice && openC.online) notice.style.display = 'none';
+      }
     }
 
     // ── Contact List (#4 XSS fix, #11 expo 표시) ──

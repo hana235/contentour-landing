@@ -391,3 +391,50 @@ window.showToast = window.showToast || function(message, type) {
         }
     };
 })();
+
+// ── 실시간 접속 상태(presence) ──────────────────────────────────────────────
+// 대시보드에 접속(채팅 포함) 중인 사용자를 '온라인'으로 표시. Supabase Realtime Presence 사용.
+// 별도 DB 컬럼/RLS 없이, 공유 채널 'presence-online'에 자신을 track하고 상대 접속 여부를 읽는다.
+window.ContentourPresence = (function () {
+    var channel = null;
+    var myId = null;
+    var online = {};          // { userId: true }
+    var listeners = [];
+
+    function rebuild() {
+        online = {};
+        try {
+            var state = channel ? channel.presenceState() : {};
+            Object.keys(state).forEach(function (key) {
+                if (state[key] && state[key].length) online[key] = true;   // presence key = userId
+            });
+        } catch (e) {}
+        listeners.forEach(function (cb) { try { cb(); } catch (e) {} });
+    }
+
+    return {
+        // 로그인한 사용자 id로 접속 시작 (대시보드 로드 시 1회 호출)
+        start: function (userId) {
+            if (!window.sbClient || !userId) return;
+            if (channel && myId === userId) return;          // 이미 시작됨
+            myId = userId;
+            if (channel) { try { window.sbClient.removeChannel(channel); } catch (e) {} channel = null; }
+            channel = window.sbClient.channel('presence-online', {
+                config: { presence: { key: userId } }
+            });
+            channel
+                .on('presence', { event: 'sync' }, rebuild)
+                .on('presence', { event: 'join' }, rebuild)
+                .on('presence', { event: 'leave' }, rebuild)
+                .subscribe(function (status) {
+                    if (status === 'SUBSCRIBED') {
+                        channel.track({ user_id: userId, online_at: new Date().toISOString() });
+                    }
+                });
+        },
+        // 특정 사용자가 현재 온라인인지
+        isOnline: function (userId) { return !!(userId && online[userId]); },
+        // 접속 상태 변동 시 콜백 (채팅 목록/헤더 갱신용)
+        onChange: function (cb) { if (typeof cb === 'function') listeners.push(cb); }
+    };
+})();
