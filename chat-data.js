@@ -98,46 +98,45 @@ const ChatData = {
                 }
             }
 
-            // 각 채팅방의 마지막 메시지 + 안읽은 수 조회
-            const rooms = [];
-            for (const c of contracts) {
+            // 각 채팅방의 마지막 메시지 + 안읽은 수 조회 (방마다 병렬 — 순차 대기 제거로 로딩 단축)
+            const rooms = await Promise.all(contracts.map(async (c) => {
                 const roomId = 'contract_' + c.id;
                 const partnerId = user.role === 'customer' ? c.interpreter_id : c.customer_id;
                 const partnerName = partnerNames[partnerId]
                     || (user.role === 'customer' ? '통역사' : (c.client_company || '고객'));
-                const partner = { id: partnerId, name: partnerName };
 
-                // 마지막 메시지
-                const { data: lastMsg } = await window.sbClient
-                    .from('45_채팅메시지')
-                    .select('message, created_at, sender_id')
-                    .eq('room_id', roomId)
-                    .order('created_at', { ascending: false })
-                    .limit(1)
-                    .maybeSingle();
+                const [lastRes, unreadRes] = await Promise.all([
+                    window.sbClient
+                        .from('45_채팅메시지')
+                        .select('message, created_at, sender_id')
+                        .eq('room_id', roomId)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle(),
+                    window.sbClient
+                        .from('45_채팅메시지')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('room_id', roomId)
+                        .neq('sender_id', user.id)
+                        .not('read_by', 'cs', '["' + user.id + '"]')
+                ]);
+                const lastMsg = lastRes.data;
+                const unreadCount = unreadRes.count;
 
-                // 안읽은 메시지 수
-                const { count: unreadCount } = await window.sbClient
-                    .from('45_채팅메시지')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('room_id', roomId)
-                    .neq('sender_id', user.id)
-                    .not('read_by', 'cs', '["' + user.id + '"]');
-
-                rooms.push({
+                return {
                     roomId: roomId,
                     contractId: c.id,
                     expo: c.exhibition_name,
                     company: c.client_company,
                     lang: c.language_pair,
-                    partnerId: partner.id,
-                    partnerName: partner.name,
+                    partnerId: partnerId,
+                    partnerName: partnerName,
                     lastMessage: lastMsg ? lastMsg.message : '',
                     lastMessageTime: lastMsg ? lastMsg.created_at : null,
                     lastSenderId: lastMsg ? lastMsg.sender_id : null,
                     unread: unreadCount || 0
-                });
-            }
+                };
+            }));
 
             // 마지막 메시지 시간 순 정렬
             rooms.sort((a, b) => {

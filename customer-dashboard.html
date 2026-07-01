@@ -192,7 +192,7 @@
   <script src="supabase-config.js?v=20260701"></script>
   <script src="review-filter.js?v=20260518c"></script>
   <script src="shared-constants.js"></script>
-  <script src="chat-data.js?v=20260507-cancelled-at"></script>
+  <script src="chat-data.js?v=20260701-perf"></script>
   <script src="payment-data.js"></script>
 </head>
 <body>
@@ -4185,11 +4185,10 @@
             const newMessages = {};
             chatRoomMap = {};
 
-            for (let i = 0; i < rooms.length; i++) {
-                const r = rooms[i];
+            // 연락처는 즉시 구성하고, 메시지는 방마다 병렬 로드 (순차 await 제거 → 로딩 단축)
+            rooms.forEach((r, i) => {
                 const contactId = 'db_' + r.contractId;
                 chatRoomMap[contactId] = { roomId: r.roomId, contractId: r.contractId };
-
                 newContacts.push({
                     id: contactId,
                     name: r.partnerName,
@@ -4200,7 +4199,9 @@
                     online: (window.ContentourPresence ? ContentourPresence.isOnline(r.partnerId) : false),
                     unread: r.unread
                 });
-
+            });
+            await Promise.all(rooms.map(async (r) => {
+                const contactId = 'db_' + r.contractId;
                 const msgs = await ChatData.loadMessages(r.roomId, 100);
                 newMessages[contactId] = msgs.map(m => ({
                     dbId: m.id,
@@ -4212,7 +4213,7 @@
                     unread: m.sender_id !== user.id && !(m.read_by || []).includes(user.id),
                     readByPartner: m.sender_id === user.id && (m.read_by || []).includes(r.partnerId)
                 }));
-            }
+            }));
 
             chatContacts = newContacts;
             chatMessages = newMessages;
