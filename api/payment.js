@@ -6,6 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 const { emailPaymentCompleteToCustomer, emailPaymentCompleteToInterpreter } = require('../lib/email-templates');
 const { checkRateLimit } = require('../lib/rate-limit');
+const { checkBusinessApproved } = require('../lib/business-guard');
 
 const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -72,6 +73,9 @@ async function handleVerifyPayment(req, res, rawBody) {
         if (contract.customer_id !== user.id) {
             return res.status(403).json({ success: false, error: '본인 계약만 결제 가능합니다.' });
         }
+        // 사업자등록증 승인 게이트 (정책 B): 승인 전 결제 차단
+        const bizBlock = await checkBusinessApproved(sb, user.id);
+        if (bizBlock) return res.status(403).json({ success: false, error: bizBlock.error, code: bizBlock.code });
 
         // ── 서버에서 paymentType별 정확한 금액 재계산 (클라이언트 메모리 변조 방어) ──
         let serverExpected = null;
@@ -474,6 +478,9 @@ async function handleManualTransferRequest(req, res, rawBody) {
         if (cErr || !contract) return res.status(404).json({ success: false, error: '계약을 찾을 수 없습니다.' });
         if (contract.customer_id !== user.id) return res.status(403).json({ success: false, error: '본인 계약만 신청 가능합니다.' });
         if (contract.deposit_status === 'paid') return res.status(400).json({ success: false, error: '이미 결제가 완료된 계약입니다.' });
+        // 사업자등록증 승인 게이트 (정책 B): 승인 전 무통장 입금 신청 차단
+        const bizBlockM = await checkBusinessApproved(sb, user.id);
+        if (bizBlockM) return res.status(403).json({ success: false, error: bizBlockM.error, code: bizBlockM.code });
 
         // 금액은 서버에서 계약 기준으로 산정 (A안 100% 선결제)
         const amount = Number(contract.deposit_amount || contract.total_amount) || 0;

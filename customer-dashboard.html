@@ -1821,13 +1821,19 @@
     function showBizVerifyBanner(status, reason) {
         var existing = document.getElementById('bizVerifyBanner');
         if (existing) existing.remove();
-        if (!status || status === 'approved' || status === 'none') return;
+        if (status === 'approved') return;   // 승인 완료만 배너 없음
 
         var banner = document.createElement('div');
         banner.id = 'bizVerifyBanner';
         banner.style.cssText = 'position:sticky;top:64px;z-index:49;padding:12px 24px;font-size:0.85rem;font-weight:600;line-height:1.5;border-bottom:1px solid;';
 
-        if (status === 'pending') {
+        if (!status || status === 'none') {
+            // 미등록 — 가입 시 선택이라 아직 안 올린 상태. 결제 전 등록 유도.
+            banner.style.background = '#e3f2fd';
+            banner.style.borderColor = '#90caf9';
+            banner.style.color = '#0d47a1';
+            banner.innerHTML = '📄 <strong>사업자등록증을 등록해주세요</strong> — 결제·계약 진행 전 등록·승인이 필요합니다. <span style="text-decoration:underline;cursor:pointer;" onclick="switchView(\'mypage\')">마이페이지에서 등록하기 →</span>';
+        } else if (status === 'pending') {
             banner.style.background = '#fff8e1';
             banner.style.borderColor = '#ffcc80';
             banner.style.color = '#5d4037';

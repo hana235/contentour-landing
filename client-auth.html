@@ -296,9 +296,9 @@
                         </div>
 
                         <div class="field-group">
-                            <label>사업자등록증 파일 첨부 <span class="req">*</span></label>
+                            <label>사업자등록증 파일 첨부 <span style="color:var(--muted,#888);font-weight:500;font-size:0.85em;">(선택 — 나중에 마이페이지에서 등록 가능)</span></label>
                             <div class="file-upload-wrap" id="reg-brn-file-wrap">
-                                <input type="file" id="reg-brn-file" class="file-upload-input" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <input type="file" id="reg-brn-file" class="file-upload-input" accept=".pdf,.jpg,.jpeg,.png">
                                 <label for="reg-brn-file" class="file-upload-label" id="reg-brn-file-label">
                                     <span class="file-upload-icon">📄</span>
                                     <span class="file-upload-text">
@@ -308,8 +308,8 @@
                                     <span class="file-upload-action" id="reg-brn-file-action">파일 선택</span>
                                 </label>
                             </div>
-                            <p class="file-upload-hint">📌 가입 후 관리자 검수를 거쳐 승인됩니다 (평균 1~2 영업일).</p>
-                            <p class="field-error">사업자등록증 파일을 첨부해주세요.</p>
+                            <p class="file-upload-hint">📌 지금 등록하지 않아도 가입됩니다. 다만 <b>결제·계약 진행 전</b>에는 등록증 승인이 필요합니다 (관리자 검수 평균 1~2 영업일).</p>
+                            <p class="field-error">PDF·JPG·PNG 파일만 첨부 가능합니다.</p>
                         </div>
 
                         <div class="field-row">
@@ -812,12 +812,11 @@
                 showAlert('사업자등록번호 형식을 확인해주세요. (예: 000-00-00000)', 'error');
             } else brn.classList.remove('error');
 
-            // 사업자등록증 파일 검증
+            // 사업자등록증 파일 검증 (선택 — 첨부한 경우에만 형식·크기 검사)
             var brnFile = brnFileEl.files && brnFileEl.files[0];
             var brnFileWrap = document.getElementById('reg-brn-file-wrap');
             if (!brnFile) {
-                brnFileWrap.classList.add('error'); valid = false;
-                showAlert('사업자등록증 파일을 첨부해주세요.', 'error');
+                brnFileWrap.classList.remove('error');   // 미첨부 허용 (가입 후 마이페이지에서 등록)
             } else {
                 var allowedExt = /\.(pdf|jpg|jpeg|png)$/i;
                 if (!allowedExt.test(brnFile.name)) {
