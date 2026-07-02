@@ -764,11 +764,18 @@ module.exports = async function handler(req, res) {
             }).eq('id', cancelId);
             if (updErr) { console.error('거절 처리 실패:', updErr); return res.status(500).json({ error: '거절 처리에 실패했습니다.' }); }
 
-            // 계약 상태 복구
+            // 계약 상태 복구 (2026-07-02 점검 L5): 무조건 'pending'으로 되돌리면 결제 완료 계약이
+            //  미결제로 표시된다. 결제 상태에 맞는 status로 복원한다.
+            let restoreStatus = 'pending';
             if (cancel.contract_id) {
                 try {
+                    const { data: ctc } = await supabase.from('42_통역계약')
+                        .select('deposit_status, balance_status, balance_amount').eq('id', cancel.contract_id).single();
+                    if (ctc && ctc.deposit_status === 'paid') {
+                        restoreStatus = (ctc.balance_amount > 0 && ctc.balance_status === 'paid') ? 'balance_paid' : 'deposit_paid';
+                    }
                     await supabase.from('42_통역계약').update({
-                        status: 'pending',
+                        status: restoreStatus,
                         cancelled_by: null,
                         cancel_reason: null,
                         cancelled_at: null
@@ -780,7 +787,7 @@ module.exports = async function handler(req, res) {
                 action: 'cancel_reject',
                 target_table: '51_취소내역',
                 target_id: cancelId,
-                after: { status: 'rejected', contract_id: cancel.contract_id, contract_restored_to: 'pending' },
+                after: { status: 'rejected', contract_id: cancel.contract_id, contract_restored_to: restoreStatus },
                 note: trimmed
             });
             await notifyContractParties(cancel.contract_id, '↩️ 계약 취소 거절', '취소 요청이 거절되어 계약이 유지됩니다. 사유: ' + trimmed);

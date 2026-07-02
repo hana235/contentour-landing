@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { checkRateLimit } = require('../lib/rate-limit');
 
 const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -26,19 +27,24 @@ module.exports = async function handler(req, res) {
         return res.status(403).json({ error: '통역사 계정만 응답할 수 있습니다.' });
     }
 
+    // 레이트리밋 — 응답 본문이 고객 알림으로 발송되므로 스팸 방지 (2026-07-02 점검 L2)
+    if (!await checkRateLimit(sb, 'respond-inquiry:' + user.id, 10, 60)) {
+        return res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    }
+
     const { inquiryId, responseMessage } = req.body;
     if (!inquiryId || !responseMessage) {
         return res.status(400).json({ error: '필수 항목이 누락되었습니다.' });
     }
-    // 응답 메시지 길이 제한 — 알림 본문에도 그대로 들어가므로 과대 입력 차단
-    const safeMessage = String(responseMessage).trim().slice(0, 2000);
+    // 응답 메시지 길이 제한 + < > 제거 — 알림 본문에 그대로 들어가므로 과대입력·마크업 삽입 차단
+    const safeMessage = String(responseMessage).trim().replace(/[<>]/g, '').slice(0, 2000);
     if (!safeMessage) return res.status(400).json({ error: '응답 내용을 입력해주세요.' });
 
     try {
         // 견적문의 조회 (고객 user_id 포함)
         const { data: inquiry, error: fetchErr } = await sb
             .from('46_ITQ견적문의')
-            .select('admin_note, user_id, exhibition_name')
+            .select('admin_note, user_id, exhibition_name, status')
             .eq('id', inquiryId)
             .single();
 
@@ -63,12 +69,16 @@ module.exports = async function handler(req, res) {
         note.responded_at = new Date().toISOString();
         note.responded_by = user.id;
 
+        // 상태 역행 방지 (2026-07-02 점검 L2): 이미 견적발송·계약진행·완료 등 후속 단계면
+        //  '검토중'으로 되돌리지 않는다 (되돌리면 accept-quote가 409로 막힘). 초기 단계만 갱신.
+        var updatePayload = { admin_note: JSON.stringify(note) };
+        if (!['견적발송', '계약진행', '완료', '취소됨'].includes(inquiry.status)) {
+            updatePayload.status = '검토중';
+        }
+
         const { error: updateErr } = await sb
             .from('46_ITQ견적문의')
-            .update({
-                admin_note: JSON.stringify(note),
-                status: '검토중'
-            })
+            .update(updatePayload)
             .eq('id', inquiryId);
 
         if (updateErr) throw updateErr;

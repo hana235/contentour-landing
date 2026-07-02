@@ -84,8 +84,11 @@ async function handleReviews(req, res) {
 
         const result = reviews.map(r => {
             const cust = custMap[r.customer_id] || {};
+            // 공개(무인증) 응답이므로 회원 UUID(customer_id·interpreter_id)는 제거하고
+            // 마스킹된 이름만 노출한다 (2026-07-02 점검 L4). exhibition_name 기준으로 클라가 그룹핑.
+            const { customer_id, interpreter_id, ...safe } = r;
             return {
-                ...r,
+                ...safe,
                 _customerName: maskName(cust.name),
                 _companyName: companyMap[r.customer_id] || '',
                 _interpreterName: interpMap[r.interpreter_id] || ''

@@ -424,14 +424,8 @@
                 if (!apiRes.ok) throw new Error('API ' + apiRes.status);
                 var reviews = await apiRes.json();
 
-                // API 응답의 고객명 매핑
-                var custMap = {};
-                (reviews || []).forEach(function(r) {
-                    if (r._customerName) {
-                        var name = r._customerName;
-                        custMap[r.customer_id] = name.length >= 2 ? name[0] + '○'.repeat(name.length - 1) : name;
-                    }
-                });
+                // 고객명은 서버(data.js)가 이미 마스킹한 _customerName 사용 (회원 UUID는 응답에서 제거됨, 점검 L4)
+                var maskName = function(name){ name = name || '고객'; return name.length >= 2 ? name[0] + '○'.repeat(name.length - 1) : name; };
 
                 if (!reviews || reviews.length === 0) {
                     listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280;font-size:0.85rem;">아직 후기가 없습니다.</div>';
@@ -439,7 +433,7 @@
                     listEl.innerHTML = reviews.map(function(r) {
                         return '<div class="review-card">' +
                             '<div class="review-card__header">' +
-                                '<div><span class="review-card__author">' + escHtml(custMap[r.customer_id] || '고객') + '</span></div>' +
+                                '<div><span class="review-card__author">' + escHtml(maskName(r._customerName)) + '</span></div>' +
                                 '<div><span class="review-card__stars">' + renderStars(r.rating_overall) + '</span> <span class="review-card__date">' + escHtml(formatDate(r.created_at)) + '</span></div>' +
                             '</div>' +
                             (r.review_text ? '<div class="review-card__text">"' + escHtml(r.review_text) + '"</div>' : '') +
