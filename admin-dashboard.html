@@ -5760,6 +5760,12 @@
                 if (!country) { showToast('개최 국가를 선택해주세요.'); return; }
                 if (!interpreter) { showToast('통역사를 선택해주세요.'); return; }
                 if (!rate) { showToast('일당 단가를 입력해주세요.'); return; }
+                // 견적에 실릴 통역사 id는 드롭다운 선택(이름)에서 해석한다.
+                // 전역 selectedInterpreter는 '배정 모달' 전용이라 견적 대상과 분리돼 있어,
+                // 그대로 쓰면 잘못된(또는 null) 통역사로 계약이 바인딩된다.
+                var _qmInterp = allInterpretersFromDB.find(function(p) { return p.name === interpreter; });
+                var qmInterpreterId = _qmInterp ? _qmInterp.id
+                    : (selectedInterpreter && selectedInterpreter.name === interpreter ? selectedInterpreter.id : null);
                 var subtotal = days * rate;
                 var fee = CT.vatFromNet(subtotal);
                 var total = subtotal + fee;
@@ -5800,7 +5806,7 @@
                             quoted_at: new Date().toISOString(),
                             admin_note: JSON.stringify({
                                 interpreter: interpreter,
-                                interpreterId: selectedInterpreter ? selectedInterpreter.id : null,
+                                interpreterId: qmInterpreterId,
                                 country: country,
                                 location: currentQuoteInquiry.location || '',
                                 days: days,
