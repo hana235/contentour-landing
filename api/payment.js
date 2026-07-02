@@ -573,6 +573,24 @@ async function handleManualTransferConfirm(req, res, rawBody) {
         const nowIso = new Date().toISOString();
 
         if (action === 'approve') {
+            // 승인 전 계약 상태 재확인 (2026-07-02 보안 점검 D)
+            //  요청 접수 후 통역사 거절(interpreter_id=null 고아)·계약 취소·이미 결제됨 상태로 바뀌었을 수 있으므로
+            //  47_결제기록만 보고 무조건 결제완료 처리하면 안 된다. 어긋난 신청은 무효(rejected) 처리.
+            const { data: ct, error: ctErr } = await sb.from('42_통역계약')
+                .select('status, interpreter_id, deposit_status, balance_status').eq('id', rec.contract_id).single();
+            if (ctErr || !ct) return res.status(404).json({ success: false, error: '계약을 찾을 수 없습니다.' });
+
+            const alreadyPaid = rec.payment_type === 'balance' ? (ct.balance_status === 'paid') : (ct.deposit_status === 'paid');
+            let blockReason = null;
+            if (ct.status === 'cancelled' || ct.status === 'refunded') blockReason = '이미 취소/환불된 계약입니다.';
+            else if (!ct.interpreter_id) blockReason = '통역사 배정이 해제된 계약입니다. 재배정 후 다시 승인해주세요.';
+            else if (alreadyPaid) blockReason = '이미 결제가 완료된 계약입니다.';
+            if (blockReason) {
+                // 승인 불가 — 대기 중인 무통장 신청을 무효 처리해 큐에서 제거 (재승인 시도 방지)
+                await sb.from('47_결제기록').update({ status: 'rejected', cancelled_at: nowIso, cancel_reason: '자동 무효: ' + blockReason, updated_at: nowIso }).eq('id', rec.id);
+                return res.status(409).json({ success: false, error: blockReason + ' 입금 신청을 무효 처리했습니다.' });
+            }
+
             // 결제유형별 갱신 컬럼 분기 — balance(레거시 10/90 잔금)는 잔금 컬럼만, 그 외(deposit/full)는 계약금 컬럼
             const patch = rec.payment_type === 'balance'
                 ? { balance_status: 'paid', balance_paid_at: nowIso, status: 'balance_paid', updated_at: nowIso }
