@@ -3658,9 +3658,12 @@
                 if (s === 'cancelled') return { status:'cancelled', statusText:'취소됨' };
                 if (s === 'refunded') return { status:'cancelled', statusText:'환불 완료' };
                 if (s === 'deposit_paid') {
-                    if (c.balance_status === 'paid') return { status:'settled', statusText:'정산 완료' };
                     // A안: 잔금 개념 없음 — balance가 0이거나 미설정이면 자동 통과
+                    // 주의: A안 계약은 생성 시점부터 balance_status='paid'(잔금 없음)이므로
+                    //       balance_status만으로 '정산 완료' 판단 금지 (H1 거절 가드와 동일 뿌리).
+                    //       실제 잔금(>0)이 존재하고 그 잔금까지 결제된 레거시 10/90만 정산 완료로 표시.
                     var hasBalance = (c.balance_amount && c.balance_amount > 0);
+                    if (hasBalance && c.balance_status === 'paid') return { status:'settled', statusText:'정산 완료' };
                     if (!hasBalance) return { status:'in_progress', statusText:'서비스 진행중' };
                     var now = new Date();
                     var end = new Date(c.end_date + 'T23:59:59');
