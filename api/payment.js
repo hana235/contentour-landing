@@ -470,28 +470,37 @@ async function handleManualTransferRequest(req, res, rawBody) {
     const { contractId, paymentType } = body;
     const holder = String(body.depositorName || '').trim().slice(0, 100);
     if (!contractId || !paymentType) return res.status(400).json({ success: false, error: '필수 파라미터 누락' });
-    if (!['deposit', 'full'].includes(paymentType)) return res.status(400).json({ success: false, error: '유효하지 않은 결제 유형' });
+    if (!['deposit', 'full', 'balance'].includes(paymentType)) return res.status(400).json({ success: false, error: '유효하지 않은 결제 유형' });
     if (!holder) return res.status(400).json({ success: false, error: '입금자명을 입력해주세요.' });
 
     try {
         const { data: contract, error: cErr } = await sb
             .from('42_통역계약')
-            .select('customer_id, exhibition_name, client_company, total_amount, deposit_amount, deposit_status')
+            .select('customer_id, exhibition_name, client_company, total_amount, deposit_amount, deposit_status, balance_amount, balance_status')
             .eq('id', contractId).single();
         if (cErr || !contract) return res.status(404).json({ success: false, error: '계약을 찾을 수 없습니다.' });
         if (contract.customer_id !== user.id) return res.status(403).json({ success: false, error: '본인 계약만 신청 가능합니다.' });
-        if (contract.deposit_status === 'paid') return res.status(400).json({ success: false, error: '이미 결제가 완료된 계약입니다.' });
         // 사업자등록증 승인 게이트 (정책 B): 승인 전 무통장 입금 신청 차단
         const bizBlockM = await checkBusinessApproved(sb, user.id);
         if (bizBlockM) return res.status(403).json({ success: false, error: bizBlockM.error, code: bizBlockM.code });
 
-        // 금액은 서버에서 계약 기준으로 산정 (A안 100% 선결제)
-        const amount = Number(contract.deposit_amount || contract.total_amount) || 0;
+        // 금액·단계 가드는 서버에서 계약 기준으로 산정 (유형별)
+        let amount;
+        if (paymentType === 'balance') {
+            // 레거시 10/90 잔금: 계약금 결제 완료 후 + 미결제 잔금이 있어야 신청 가능
+            if (contract.deposit_status !== 'paid') return res.status(400).json({ success: false, error: '계약금 결제가 먼저 완료되어야 합니다.' });
+            if (contract.balance_status === 'paid') return res.status(400).json({ success: false, error: '이미 잔금 결제가 완료된 계약입니다.' });
+            amount = Number(contract.balance_amount) || 0;
+        } else {
+            // deposit / full (A안 100% 선결제)
+            if (contract.deposit_status === 'paid') return res.status(400).json({ success: false, error: '이미 결제가 완료된 계약입니다.' });
+            amount = Number(contract.deposit_amount || contract.total_amount) || 0;
+        }
         if (amount <= 0) return res.status(400).json({ success: false, error: '계약에 결제할 금액이 없습니다.' });
 
-        // 중복 신청 방지
+        // 중복 신청 방지 (같은 계약+같은 결제유형의 대기 건)
         const { data: existing } = await sb.from('47_결제기록')
-            .select('id').eq('contract_id', contractId).eq('pg_provider', 'manual').eq('status', 'manual_pending').limit(1);
+            .select('id').eq('contract_id', contractId).eq('pg_provider', 'manual').eq('status', 'manual_pending').eq('payment_type', paymentType).limit(1);
         if (existing && existing.length) {
             return res.status(200).json({ success: true, status: 'manual_pending', duplicate: true });
         }
@@ -555,7 +564,7 @@ async function handleManualTransferConfirm(req, res, rawBody) {
 
     try {
         const { data: rec, error: rErr } = await sb.from('47_결제기록')
-            .select('id, contract_id, customer_id, amount, pg_provider, status')
+            .select('id, contract_id, customer_id, amount, pg_provider, status, payment_type')
             .eq('id', paymentRecordId).single();
         if (rErr || !rec) return res.status(404).json({ success: false, error: '결제 신청을 찾을 수 없습니다.' });
         if (rec.pg_provider !== 'manual') return res.status(400).json({ success: false, error: '무통장 신청이 아닙니다.' });
@@ -564,7 +573,10 @@ async function handleManualTransferConfirm(req, res, rawBody) {
         const nowIso = new Date().toISOString();
 
         if (action === 'approve') {
-            const patch = { deposit_status: 'paid', deposit_paid_at: nowIso, status: 'deposit_paid', updated_at: nowIso };
+            // 결제유형별 갱신 컬럼 분기 — balance(레거시 10/90 잔금)는 잔금 컬럼만, 그 외(deposit/full)는 계약금 컬럼
+            const patch = rec.payment_type === 'balance'
+                ? { balance_status: 'paid', balance_paid_at: nowIso, status: 'balance_paid', updated_at: nowIso }
+                : { deposit_status: 'paid', deposit_paid_at: nowIso, status: 'deposit_paid', updated_at: nowIso };
             const { error: upErr } = await sb.from('42_통역계약').update(patch).eq('id', rec.contract_id);
             if (upErr) { console.error('manual approve 계약 update 실패:', upErr); return res.status(500).json({ success: false, error: '계약 갱신 실패' }); }
             await sb.from('47_결제기록').update({ status: 'paid', paid_at: nowIso, updated_at: nowIso }).eq('id', rec.id);
