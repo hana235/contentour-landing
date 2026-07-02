@@ -528,7 +528,7 @@ const InterpreterApp = {
             const todayStr = new Date().toISOString().slice(0, 10);
             const submittedContractIds = new Set((journals || []).map(j => j.contract_id));
             const unsubmitted = (contracts || []).filter(c =>
-                c.end_date && c.end_date < todayStr && c.interpreter_accepted === true && !submittedContractIds.has(c.id)
+                c.end_date && c.end_date < todayStr && c.interpreter_accepted === true && !['cancelled', 'refunded'].includes(c.status) && !submittedContractIds.has(c.id)
             );
             const numEl = kpiCards[2].querySelector('.kpi-num');
             if (numEl) numEl.textContent = unsubmitted.length;
@@ -618,7 +618,7 @@ const InterpreterApp = {
     renderHomeSchedule(contracts) {
         const todayStr = new Date().toISOString().slice(0, 10);
         const upcoming = contracts
-            .filter(c => c.start_date >= todayStr && c.interpreter_accepted === true)
+            .filter(c => c.start_date >= todayStr && c.interpreter_accepted === true && !['cancelled', 'refunded'].includes(c.status))
             .sort((a, b) => a.start_date.localeCompare(b.start_date))
             .slice(0, 3);
 
@@ -735,7 +735,7 @@ const InterpreterApp = {
         // 완료된 계약 중 상담일지가 제출되지 않은 건 찾기
         const todayStr = new Date().toISOString().slice(0, 10);
         const completedContracts = contracts.filter(c =>
-            c.end_date < todayStr && c.interpreter_accepted === true
+            c.end_date < todayStr && c.interpreter_accepted === true && !['cancelled', 'refunded'].includes(c.status)
         );
         const submittedContractIds = new Set(journals.map(j => j.contract_id));
 
@@ -776,7 +776,7 @@ const InterpreterApp = {
     renderWelcomeBanner(assignments, contracts) {
         const todayStr = new Date().toISOString().slice(0, 10);
         const todayCount = contracts.filter(c =>
-            c.start_date <= todayStr && c.end_date >= todayStr && c.interpreter_accepted === true
+            c.start_date <= todayStr && c.end_date >= todayStr && c.interpreter_accepted === true && !['cancelled', 'refunded'].includes(c.status)
         ).length;
 
         const descEl = document.querySelector('.welcome-banner__desc');
@@ -1292,7 +1292,7 @@ const InterpreterApp = {
         };
 
         window.schEvents = contracts
-            .filter(c => c.interpreter_accepted === true)
+            .filter(c => c.interpreter_accepted === true && !['cancelled', 'refunded'].includes(c.status))
             .map(c => ({
                 id: c.id,
                 title: c.exhibition_name,

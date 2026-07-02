@@ -5828,7 +5828,7 @@
                     interpreter: { name: (d.interpreter_id && interpNameMap[d.interpreter_id]) || '미배정', id: d.interpreter_id },
                     client: { name: '', company: d.client_company },
                     status: uiStatus,
-                    statusText: statusTextMap[uiStatus] || uiStatus,
+                    statusText: (uiStatus === 'complete' && d.customer_confirmed_at) ? '완료 확인됨 (정산 대기)' : (statusTextMap[uiStatus] || uiStatus),
                     dates: { start: d.start_date, end: d.end_date },
                     lang: d.language_pair || '',
                     dailyRate: d.daily_rate || 0,
@@ -5843,6 +5843,7 @@
                     customerAgreed: d.contract_signed || false,
                     interpreterAgreed: d.interpreter_accepted || false,
                     confirmationClickedAt: d.confirmation_clicked_at || null,
+                    customerConfirmedAt: d.customer_confirmed_at || null,
                     cancelledAt: d.cancelled_at || null,
                     cancelledBy: d.cancelled_by || null,
                     cancelReason: d.cancel_reason || null,
@@ -5859,7 +5860,7 @@
                             { step: '서비스 진행', date: d.status === 'in_progress' || d.status === 'completed' || d.status === 'settled' ? d.start_date : '', done: d.status === 'completed' || d.status === 'settled' || d.status === 'in_progress' }
                         ];
                         if (hasBalance) steps.push({ step: '잔금 결제', date: d.balance_paid_at ? d.balance_paid_at.split('T')[0] : '', done: d.balance_status === 'paid' });
-                        steps.push({ step: '완료 확인', date: d.status === 'completed' || d.status === 'settled' ? todayStr : '', done: d.status === 'settled' });
+                        steps.push({ step: '완료 확인', date: d.customer_confirmed_at ? d.customer_confirmed_at.split('T')[0] : (d.status === 'settled' ? todayStr : ''), done: !!d.customer_confirmed_at || d.status === 'settled' });
                         steps.push({ step: '정산 완료', date: d.status === 'settled' ? todayStr : '', done: d.status === 'settled' });
                         return steps;
                     })()
@@ -5937,7 +5938,9 @@
         else if (c.status === 'balance_review' && c.balance > 0) actionHtml = `<span class="contract-card__action label" style="background:#f3e5f5;color:#7b1fa2;">잔금 확인 대기중</span>`;
         else if (c.status === 'in_progress') actionHtml = `<span class="contract-card__action label">진행중</span>`;
         else if (c.status === 'complete') {
-          actionHtml = `<button class="contract-card__action pay" onclick="event.stopPropagation();confirmServiceComplete('${c.id}')">완료 확인</button>`;
+          actionHtml = c.customerConfirmedAt
+            ? `<span class="contract-card__action label" style="background:#e8f5e9;color:#2e7d32;">✅ 완료 확인됨 · 정산 대기</span>`
+            : `<button class="contract-card__action pay" onclick="event.stopPropagation();confirmServiceComplete('${c.id}')">완료 확인</button>`;
           if (!c._reviewDone) actionHtml += `<button class="contract-card__action pay" onclick="event.stopPropagation();openReviewModal('${c.id}')" style="background:linear-gradient(135deg,#f57c00,#ef6c00);margin-left:4px;">⭐ 리뷰 작성</button>`;
         }
         else if (c.status === 'settled') {
@@ -7283,7 +7286,8 @@
         c.status = 'deposit_review';
         c.statusText = '관리자 승인 대기';
         if (c.timeline) c.timeline.forEach(t => {
-          if (t.step === '계약금 결제') { t.done = true; t.active = false; t.date = new Date().toISOString().split('T')[0]; }
+          // A안(잔금 0)은 결제 단계 라벨이 '선결제', 레거시 10/90은 '계약금 결제' — 둘 다 매칭 (finalizeContractSign과 동일 패턴)
+          if (t.step === '계약금 결제' || t.step === '선결제') { t.done = true; t.active = false; t.date = new Date().toISOString().split('T')[0]; }
           if (t.step === '관리자 승인') { t.active = true; }
         });
       } else if (type === 'balance') {
@@ -7352,32 +7356,40 @@
       if (!c) return;
       // 완료 확인은 관리자 잔금확인(서비스 완료) 단계에서만 가능 — 사전 단계 계약을 임의 완료 처리하지 못하도록 가드
       if (c.status !== 'complete') { showContractToast('아직 완료 확인 단계가 아닙니다.'); return; }
+      if (c.customerConfirmedAt) { showContractToast('이미 완료 확인된 계약입니다.'); return; }
 
       // DB 먼저 업데이트 — 실패 시 상태 변경·성공 토스트 없이 중단 (낙관적 업데이트로 인한 불일치 방지)
+      // status='settled' 전이는 결제컬럼 보호 트리거가 클라이언트 차단 + 정산은 admin 몫이므로
+      // 전용 컬럼 customer_confirmed_at에 확인 시각만 기록한다. (migration-customer-complete-confirm.sql)
+      var confirmedAt = new Date().toISOString();
       var dbId = c.dbId || c.id;
       if (window.sbClient && dbId) {
         try {
           const { error } = await window.sbClient.from('42_통역계약').update({
-            status: 'completed'
+            customer_confirmed_at: confirmedAt
           }).eq('id', dbId);
           if (error) throw error;
         } catch (e) {
           console.error('서비스 완료 DB 업데이트 실패:', e);
-          showContractToast('완료 확인 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+          // 컬럼 미적용(마이그레이션 전) 시 명확히 안내
+          if (String(e && e.message || '').indexOf('customer_confirmed_at') >= 0) {
+            showContractToast('완료 확인 기능 준비 중입니다. 관리자에게 문의해주세요.');
+          } else {
+            showContractToast('완료 확인 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+          }
           return;
         }
       }
 
-      // DB 성공 후에만 로컬 상태 반영
-      c.status = 'settled';
-      c.statusText = '정산 완료';
+      // DB 성공 후에만 로컬 상태 반영 — 정산 완료(settled)는 admin 정산 승인에서 전이되므로 여기서 속이지 않는다
+      c.customerConfirmedAt = confirmedAt;
+      c.statusText = '완료 확인됨 (정산 대기)';
       c.timeline.forEach(t => {
-        if (t.step === '완료 확인') { t.done = true; t.active = false; t.date = new Date().toISOString().split('T')[0]; }
-        if (t.step === '정산 완료') { t.done = true; t.date = new Date().toISOString().split('T')[0]; }
+        if (t.step === '완료 확인') { t.done = true; t.active = false; t.date = confirmedAt.split('T')[0]; }
       });
 
       renderContracts();
-      showContractToast('서비스 완료가 확인되었습니다.');
+      showContractToast('서비스 완료가 확인되었습니다. 정산 완료 시 상태가 갱신됩니다.');
     }
 
     function showContractToast(msg) {

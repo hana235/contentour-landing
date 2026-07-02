@@ -469,14 +469,13 @@ async function handleAcceptQuote(req, res) {
         const balance = Number(note.balance) || 0;
         if (subtotal <= 0 || total <= 0) return res.status(400).json({ error: '견적 금액이 유효하지 않습니다.' });
 
-        // 5. 중복 계약 방지 (같은 고객+전시회+기간) — 멱등 처리
-        //    전시회명만으로는 동명 다른 의뢰가 충돌하므로 기간(시작·종료일)까지 키에 포함
+        // 5. 중복 계약 방지 — 원천 문의(order_id) 기준 멱등 처리
+        //    (같은 고객+전시+기간 키는 같은 행사에 언어별 복수 의뢰 시 두 번째 계약 생성을 막는 오탐이 있었음.
+        //     같은 견적 이중클릭은 order_id 멱등이, 레거시 재수락은 6단계 상태 체크가 차단한다.)
         const { data: existing } = await sb.from('42_통역계약')
             .select('id')
             .eq('customer_id', auth.user.id)
-            .eq('exhibition_name', inq.exhibition_name)
-            .eq('start_date', inq.start_date)
-            .eq('end_date', inq.end_date)
+            .eq('order_id', inquiryId)
             .limit(1);
         if (existing && existing.length > 0) {
             return res.status(200).json({ contractId: existing[0].id, duplicate: true,
@@ -492,6 +491,7 @@ async function handleAcceptQuote(req, res) {
         const { data: ins, error: insErr } = await sb.from('42_통역계약').insert({
             customer_id: auth.user.id,
             interpreter_id: note.interpreterId || null,
+            order_id: inquiryId, // 원천 문의 연결 — 중복 방지 멱등 키 + 통역사 거절 시 문의 재배정 복귀에 사용
             exhibition_name: inq.exhibition_name,
             client_company: inq.company || '',
             venue: note.country || note.location || inq.location || '',
