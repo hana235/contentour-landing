@@ -1698,6 +1698,11 @@
     // false: 마이페이지 적립금 탭·결제 모달 적립금 사용·Realtime 구독·자동 적립 모두 OFF
     // true: 전체 적립금 UI 복원 (DB·RPC·이력 그대로라 데이터 손실 없음)
     const LOYALTY_UI_ENABLED = false;
+
+    // 결제수단: 무통장입금만 노출 (카드/실시간이체/가상계좌 = PortOne 경유는 일시 OFF).
+    // true: 무통장입금만 (관리자 확인 방식). false: PortOne 3종 + 무통장입금 전체 복원.
+    // PortOne 코드·키·서버 검증은 그대로 유지 → 한 줄만 false로 바꾸면 즉시 복원. (2026-07-02)
+    const MANUAL_ONLY_PAYMENT = true;
     (function applyLoyaltyFlag(){
         if (!LOYALTY_UI_ENABLED) {
             document.body.classList.add('loyalty-off');
@@ -6511,7 +6516,7 @@
         '<div class="section-title">제3조 결제 조건</div>' +
         '<table class="info-table">' +
           '<tr><th>선결제 (100%)</th><td>₩' + (c.total || 0).toLocaleString() + ' — 계약 체결 후 <b>3영업일 이내</b> 전액 입금' + (c.depositPaid || c.balancePaid ? ' ✅ 결제완료' : '') + '</td></tr>' +
-          '<tr><th>결제 방법</th><td>신용카드, 계좌이체, 가상계좌</td></tr>' +
+          '<tr><th>결제 방법</th><td>' + (MANUAL_ONLY_PAYMENT ? '무통장입금 (콘텐츄어 계좌 이체 후 관리자 확인)' : '신용카드, 계좌이체, 가상계좌') + '</td></tr>' +
           '<tr><th>결제 실패 처리</th><td>결제 실패 시 영업일 1일 이내 재결제 안내가 발송됩니다. <b>3회 연속 결제 실패 또는 미납 3영업일 경과 시 계약은 자동 해지</b>되며, 자동 해지로 인한 통역사 손해는 갑이 부담합니다.</td></tr>' +
         '</table>' +
         '<div class="clause" style="margin-top:8px;font-size:12px;color:#666;">📌 모든 결제는 플랫폼을 통해서만 진행되며, 플랫폼 외 직접 결제는 금지됩니다.</div>' +
@@ -6695,6 +6700,8 @@
       const amount = type === 'deposit' ? c.deposit : c.balance;
       const label = type === 'deposit' ? '선결제 (100%)' : '잔금';
       currentPayment.step = 1;
+      // 무통장입금 단독 모드: 유일한 수단을 미리 선택
+      if (MANUAL_ONLY_PAYMENT) currentPayment.method = 'manual';
       document.getElementById('pmTitle').textContent = label + ' 결제';
       document.getElementById('pmBody').innerHTML = `
         <div class="pm-step-indicator"><div class="pm-step active"></div><div class="pm-step"></div><div class="pm-step"></div></div>
@@ -6723,6 +6730,7 @@
         })()}
         <div class="cust-payment-label">결제 수단을 선택해주세요</div>
         <div class="pm-methods">
+          ${MANUAL_ONLY_PAYMENT ? '' : `
           <div class="pm-method${currentPayment.method==='card'?' selected':''}" onclick="selectPayMethod(this,'card')">
             <div class="pm-method__radio"></div>
             <div class="pm-method__icon">&#128179;</div>
@@ -6746,7 +6754,7 @@
               <div class="pm-method__name">가상계좌</div>
               <div class="pm-method__desc">발급된 계좌로 입금 (24시간 이내)</div>
             </div>
-          </div>
+          </div>`}
           <div class="pm-method${currentPayment.method==='manual'?' selected':''}" onclick="selectPayMethod(this,'manual')">
             <div class="pm-method__radio"></div>
             <div class="pm-method__icon">&#129534;</div>
@@ -6757,7 +6765,7 @@
           </div>
         </div>
         <label class="pm-terms"><input type="checkbox" id="pmAgreeCheck" ${currentPayment.agreed?'checked':''} onchange="currentPayment.agreed=this.checked;updatePayBtn()"> 전자금융거래 이용약관 및 에스크로 결제 약관에 동의합니다</label>
-        <button class="pm-confirm-btn" id="pmConfirmBtn" ${!(currentPayment.method && currentPayment.agreed)?'disabled':''} onclick="pmGoStep2()">${(typeof PaymentData !== 'undefined' && PaymentData.isReady()) ? '결제하기' : '다음 단계'}</button>
+        <button class="pm-confirm-btn" id="pmConfirmBtn" ${!(currentPayment.method && currentPayment.agreed)?'disabled':''} onclick="pmGoStep2()">${(!MANUAL_ONLY_PAYMENT && typeof PaymentData !== 'undefined' && PaymentData.isReady()) ? '결제하기' : '다음 단계'}</button>
       `;
     }
 
