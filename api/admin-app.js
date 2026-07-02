@@ -792,13 +792,11 @@ module.exports = async function handler(req, res) {
             if (!contractId) return res.status(400).json({ error: 'contractId 필수' });
             const { data: ct, error: ctErr } = await supabase.from('42_통역계약').select('*').eq('id', contractId).single();
             if (ctErr || !ct) return res.status(404).json({ error: '계약을 찾을 수 없습니다.' });
-            if (ct.status === 'completed' || ct.status === 'settled') {
-                return res.status(409).json({ error: '이미 완료 처리된 계약입니다.' });
-            }
-            const { error: upErr } = await supabase.from('42_통역계약').update({ status: 'completed' }).eq('id', contractId);
-            if (upErr) return res.status(500).json({ error: '계약 완료 처리 실패' });
 
-            // 정산건: 이미 있으면 재사용, 없으면 생성 (43_정산내역.contract_id UNIQUE 권장 — migration-settlement-unique.sql)
+            // 정산건을 먼저 확보한 뒤 status를 전이한다 (2026-07-02 점검 G).
+            //  기존엔 status='completed'를 먼저 쓰고 정산 insert가 실패하면, 재시도가 '이미 완료' 409에
+            //  막혀 정산이 영구히 생성 불가였다. 순서를 뒤집으면 실패 시 재시도로 복구되고,
+            //  status가 이미 completed인데 정산건이 없던 계약도 이 경로로 복구된다. (멱등)
             let settlement = null;
             const { data: existing } = await supabase.from('43_정산내역').select('*').eq('contract_id', contractId).maybeSingle();
             if (existing) {
@@ -830,7 +828,13 @@ module.exports = async function handler(req, res) {
                     settlement = ins;
                 }
             }
-            await recordAudit(req, admin, { action: 'complete_contract', target_table: '42_통역계약', target_id: contractId, after: { status: 'completed' } });
+
+            // 정산건 확보 후에만 status 전이 (이미 completed/settled면 재기록 불필요 — 멱등 재호출 허용)
+            if (ct.status !== 'completed' && ct.status !== 'settled') {
+                const { error: upErr } = await supabase.from('42_통역계약').update({ status: 'completed' }).eq('id', contractId);
+                if (upErr) return res.status(500).json({ error: '계약 완료 처리 실패' });
+                await recordAudit(req, admin, { action: 'complete_contract', target_table: '42_통역계약', target_id: contractId, after: { status: 'completed' } });
+            }
             return res.status(200).json({ ok: true, settlement });
 
         } else if (action === 'settleContract') {

@@ -17,8 +17,8 @@ const WEBHOOK_SECRET = process.env.PORTONE_WEBHOOK_SECRET;
 const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 const sbAuth = createClient(SUPABASE_URL, ANON_KEY);
 
-// 두 라우트 모두 raw body 후 분기에서 자체 파싱
-module.exports.config = { api: { bodyParser: false } };
+// config는 파일 하단(module.exports = handler 재할당 이후)에서 설정한다.
+// 여기서 지정하면 아래 module.exports 재할당에 의해 지워진다. (2026-07-02 점검 H)
 
 function readRawBody(req) {
     return new Promise(function (resolve, reject) {
@@ -641,3 +641,7 @@ module.exports = async function handler(req, res) {
         default: return res.status(404).json({ error: 'Unknown route: ' + route });
     }
 };
+
+// raw body 파싱을 위해 bodyParser 비활성 — 반드시 module.exports 재할당 '이후'에 설정.
+// (portone-webhook 서명 검증 + 각 핸들러가 readRawBody로 자체 파싱) (2026-07-02 점검 H)
+module.exports.config = { api: { bodyParser: false } };

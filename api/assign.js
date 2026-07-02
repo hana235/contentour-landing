@@ -105,7 +105,21 @@ module.exports = async function handler(req, res) {
             net_amount: netAmount
         };
 
+        // E (2026-07-02 점검): 이미 결제된 계약을 재배정할 때 금액을 새 통역사 base_rate로
+        //  재계산하면 결제액(47_결제기록)과 desync되고 고객이 수락한 견적(admin_note)이 소실된다.
+        //  → 결제 완료 계약은 RPC/재계산 경로를 타지 않고 통역사 필드만 교체하고 금액·견적을 보존한다.
+        const { data: existingCt } = await sb.from('42_통역계약')
+            .select('id, deposit_status').eq('order_id', inquiryId).limit(1).maybeSingle();
+
         let contractId = null;
+        if (existingCt && existingCt.deposit_status === 'paid') {
+            await sb.from('42_통역계약').update({
+                interpreter_id: interpreterId,
+                interpreter_accepted: null, accepted_at: null, rejected_at: null
+            }).eq('id', existingCt.id);
+            contractId = existingCt.id;
+            // 46_ITQ견적문의 상태/admin_note(견적 금액)는 보존 — 덮어쓰지 않는다.
+        } else {
         try {
             const { data: rpcId, error: rpcErr } = await sb.rpc('assign_inquiry_atomic', {
                 p_inquiry_id: inquiryId,
@@ -165,6 +179,7 @@ module.exports = async function handler(req, res) {
                 contractId = newContract.id;
                 await sb.from('46_ITQ견적문의').update({ contract_id: contractId }).eq('id', inquiryId);
             }
+        }
         }
 
         // 4b. 배정 응답 기한(통역사 수락/거절 기한 48h) 설정 — 재배정 시에도 갱신, 미응답 감지·리마인더용

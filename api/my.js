@@ -404,10 +404,22 @@ async function handleDeclineAssignment(req, res) {
             .eq('id', contractId);
         if (upErr) { console.error('decline-assignment update 실패:', upErr); return res.status(500).json({ success: false, error: '거절 처리 실패' }); }
 
-        // 연결된 견적문의를 다시 배정 가능 상태('검토중')로 복귀 → admin 배정 큐에 재노출
+        // 연결된 원천 문의/공고를 다시 배정 가능 상태로 복귀 (2026-07-02 점검 F)
+        //  · 일반 견적문의(admin_inquiry): status='검토중' → admin 배정 큐 재노출
+        //  · 구인공고(direct_posting): contract_id 해제 → showcase 카드 recruiting 복귀(재매칭 가능),
+        //    매칭됐던 지원행(70_구인공고지원)을 'pending'으로 되돌린다. ('검토중' 오기입 금지)
         if (c.order_id) {
-            try { await sb.from('46_ITQ견적문의').update({ status: '검토중' }).eq('id', c.order_id); }
-            catch (e) { console.error('의뢰 재배정 상태 복귀 실패(무시):', e && e.message); }
+            try {
+                const { data: src } = await sb.from('46_ITQ견적문의').select('source_type').eq('id', c.order_id).single();
+                if (src && src.source_type === 'direct_posting') {
+                    await sb.from('46_ITQ견적문의').update({ contract_id: null }).eq('id', c.order_id);
+                    await sb.from('70_구인공고지원')
+                        .update({ status: 'pending', contract_id: null })
+                        .eq('posting_id', c.order_id).eq('status', 'matched');
+                } else {
+                    await sb.from('46_ITQ견적문의').update({ status: '검토중' }).eq('id', c.order_id);
+                }
+            } catch (e) { console.error('의뢰/공고 재배정 복귀 실패(무시):', e && e.message); }
         }
 
         const interpName = profile.name || '통역사';
