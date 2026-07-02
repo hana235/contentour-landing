@@ -34,3 +34,13 @@ UPDATE-LOG-*.txt
 AUTH-REVIEW-*.txt
 SUPABASE-SETUP-GUIDE.txt
 WORK_LOG.txt
+
+# 내부 운영 문서/메모 (배포·저장소 노출 금지 — 2026-07-02 보안 점검 C)
+# 마이그레이션 .sql 은 기록 보존 위해 계속 추적하되 .vercelignore로 배포만 제외한다.
+TODO-향후작업.txt
+가비아-호스팅-가이드.txt
+계약금 결제_계좌입금.txt
+통역사-단가-내용.txt
+프로젝트-작업요약.txt
+맥북-셋업-가이드.md
+클릭테스트-체크리스트.md

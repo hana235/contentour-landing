@@ -241,12 +241,10 @@ async function handleApplication(req, res) {
                 console.error('통역사 프로필 INSERT 실패 (계속 진행):', pErr);
             }
         } else if (reapplying) {
-            // 재지원: 비밀번호 재설정 (사용자가 새 비밀번호를 입력했으므로)
-            try {
-                await sb.auth.admin.updateUserById(userId, { password: password });
-            } catch (pwErr) {
-                console.error('재지원 비밀번호 갱신 실패 (무시):', pwErr);
-            }
+            // 재지원: 계정을 유지만 하고 비밀번호는 절대 건드리지 않는다.
+            // (이 엔드포인트는 미인증 공개 폼 — 여기서 password를 재설정하면 반려 통역사 이메일만
+            //  알면 타인이 임의 비밀번호로 계정을 탈취할 수 있었다. 2026-07-02 보안 점검 A.)
+            // 재지원자는 기존 비밀번호로 로그인하고, 잊었으면 비밀번호 찾기(복구 메일)를 사용한다.
         }
 
         // 5) 48_통역사지원서 INSERT (status=pending, created_user_id 연결)

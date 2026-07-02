@@ -209,29 +209,33 @@
 
                 var typeTagClass = { '부스 통역':'expo', '미팅 통역':'buyer', '현장 통역':'expo', '동시통역':'buyer', '수행 통역':'expo' };
 
+                // XSS 방지: 52_성과사례 텍스트 필드를 innerHTML에 넣기 전 escape (2026-07-02 보안 점검 B)
+                var esc = function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});};
+                var escUrl = function(v){return String(v==null?'':v).replace(/['"()\\<>]/g,'');}; // url() 브레이크아웃 차단
+
                 grid.innerHTML = cases.map(function(c) {
                     var tagClass = typeTagClass[c.case_type] || 'expo';
-                    var imgStyle = c.image_url ? "background-image:url('" + c.image_url + "')" : "background:#e3f0ff;";
-                    var href = 'case-detail.html?id=' + c.id;
+                    var imgStyle = c.image_url ? "background-image:url('" + escUrl(c.image_url) + "')" : "background:#e3f0ff;";
+                    var href = 'case-detail.html?id=' + encodeURIComponent(c.id);
                     var target = '';
 
                     var metricsHtml = '<div class="case-card__metrics">';
-                    if (c.interpreter_name) metricsHtml += '<span>통역사 <b>' + c.interpreter_name + '</b></span>';
-                    if (c.metric1_value) metricsHtml += '<span>' + (c.metric1_label||'') + ' <b>' + c.metric1_value + '</b></span>';
+                    if (c.interpreter_name) metricsHtml += '<span>통역사 <b>' + esc(c.interpreter_name) + '</b></span>';
+                    if (c.metric1_value) metricsHtml += '<span>' + esc(c.metric1_label||'') + ' <b>' + esc(c.metric1_value) + '</b></span>';
                     metricsHtml += '</div>';
 
                     if (c.industry) {
                         metricsHtml += '<div class="case-card__metrics" style="margin-top:4px;">';
-                        if (c.industry) metricsHtml += '<span>분야 <b>' + c.industry + '</b></span>';
+                        if (c.industry) metricsHtml += '<span>분야 <b>' + esc(c.industry) + '</b></span>';
                         metricsHtml += '</div>';
                     }
 
                     return '<a href="' + href + '" class="case-card"' + target + '>' +
                         '<div class="case-card__img" style="' + imgStyle + '"></div>' +
                         '<div class="case-card__body">' +
-                            '<span class="case-card__tag ' + tagClass + '">' + c.case_type + '</span>' +
-                            '<p class="case-card__title">[' + c.client_company + '] ' + c.country + '<br>' + c.exhibition_name + '</p>' +
-                            '<span class="case-card__country">' + c.country_flag + ' ' + c.country + ' · ' + c.exhibition_date + '</span>' +
+                            '<span class="case-card__tag ' + tagClass + '">' + esc(c.case_type) + '</span>' +
+                            '<p class="case-card__title">[' + esc(c.client_company) + '] ' + esc(c.country) + '<br>' + esc(c.exhibition_name) + '</p>' +
+                            '<span class="case-card__country">' + esc(c.country_flag) + ' ' + esc(c.country) + ' · ' + esc(c.exhibition_date) + '</span>' +
                             metricsHtml +
                         '</div>' +
                     '</a>';
@@ -260,20 +264,22 @@
             }
 
             function renderCards(reviews) {
+                // XSS 방지: 고객 작성 후기 텍스트를 escape (2026-07-02 보안 점검 B)
+                var esc = function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});};
                 grid.innerHTML = reviews.map(function(r, i) {
                     var c = avatarColors[i % avatarColors.length];
-                    var initial = (r.customer_name || '?')[0];
+                    var initial = esc((r.customer_name || '?')[0]);
                     return '<div class="testi-card">' +
                         '<div class="testi-card__stars">' + renderStars(r.rating_overall) + '</div>' +
-                        '<p class="testi-card__text">"' + (r.review_text || '') + '"</p>' +
+                        '<p class="testi-card__text">"' + esc(r.review_text || '') + '"</p>' +
                         '<div class="testi-card__author">' +
                             '<div class="testi-card__avatar" style="background:linear-gradient(135deg,' + c[0] + ',' + c[1] + ');">' + initial + '</div>' +
                             '<div>' +
-                                '<div class="testi-card__name">' + (r.customer_name || '고객') + '</div>' +
-                                '<div class="testi-card__company">' + (r.customer_company || '') + '</div>' +
+                                '<div class="testi-card__name">' + esc(r.customer_name || '고객') + '</div>' +
+                                '<div class="testi-card__company">' + esc(r.customer_company || '') + '</div>' +
                             '</div>' +
                         '</div>' +
-                        '<div class="testi-card__tag">' + (r.exhibition_name || '') + '</div>' +
+                        '<div class="testi-card__tag">' + esc(r.exhibition_name || '') + '</div>' +
                     '</div>';
                 }).join('');
             }

@@ -268,13 +268,13 @@
                 // 헤더
                 html += '<div class="detail-header"><div class="detail-header__inner">' +
                     '<a href="performance.html" class="detail-header__back">&larr; 성과사례 목록</a>' +
-                    '<div class="detail-header__tag ' + tagClass + '">' + c.case_type + '</div>' +
-                    '<h1 class="detail-header__title">[' + c.client_company + '] ' + c.exhibition_name + '</h1>' +
+                    '<div class="detail-header__tag ' + tagClass + '">' + escHtml(c.case_type) + '</div>' +
+                    '<h1 class="detail-header__title">[' + escHtml(c.client_company) + '] ' + escHtml(c.exhibition_name) + '</h1>' +
                     '<div class="detail-header__meta">' +
-                        '<span>' + c.country_flag + ' ' + c.country + '</span>' +
-                        '<span>&#128197; ' + c.exhibition_date + '</span>' +
-                        (c.interpreter_name ? '<span>&#128100; 통역사: ' + c.interpreter_name + '</span>' : '') +
-                        (c.industry ? '<span>&#127981; ' + c.industry + '</span>' : '') +
+                        '<span>' + escHtml(c.country_flag) + ' ' + escHtml(c.country) + '</span>' +
+                        '<span>&#128197; ' + escHtml(c.exhibition_date) + '</span>' +
+                        (c.interpreter_name ? '<span>&#128100; 통역사: ' + escHtml(c.interpreter_name) + '</span>' : '') +
+                        (c.industry ? '<span>&#127981; ' + escHtml(c.industry) + '</span>' : '') +
                     '</div>' +
                 '</div></div>';
 
@@ -283,17 +283,17 @@
 
                 // 대표 이미지
                 if (c.image_url) {
-                    html += '<img src="' + c.image_url + '" alt="' + c.exhibition_name + '" class="hero-image">';
+                    html += '<img src="' + escUrl(c.image_url) + '" alt="' + escHtml(c.exhibition_name) + '" class="hero-image">';
                 }
 
                 // 성과 지표 바
                 var hasMetrics = c.metric1_value || c.metric2_value;
                 if (hasMetrics) {
                     html += '<div class="metrics-bar">';
-                    if (c.interpreter_name) html += '<div class="metric-card"><div class="metric-card__label">투입 통역사</div><div class="metric-card__value">' + c.interpreter_name + '</div></div>';
-                    if (c.metric1_value) html += '<div class="metric-card"><div class="metric-card__label">' + (c.metric1_label || '성과 1') + '</div><div class="metric-card__value">' + c.metric1_value + '</div></div>';
-                    if (c.metric2_value) html += '<div class="metric-card"><div class="metric-card__label">' + (c.metric2_label || '성과 2') + '</div><div class="metric-card__value">' + c.metric2_value + '</div></div>';
-                    if (c.industry) html += '<div class="metric-card"><div class="metric-card__label">산업 분야</div><div class="metric-card__value" style="font-size:1rem;">' + c.industry + '</div></div>';
+                    if (c.interpreter_name) html += '<div class="metric-card"><div class="metric-card__label">투입 통역사</div><div class="metric-card__value">' + escHtml(c.interpreter_name) + '</div></div>';
+                    if (c.metric1_value) html += '<div class="metric-card"><div class="metric-card__label">' + escHtml(c.metric1_label || '성과 1') + '</div><div class="metric-card__value">' + escHtml(c.metric1_value) + '</div></div>';
+                    if (c.metric2_value) html += '<div class="metric-card"><div class="metric-card__label">' + escHtml(c.metric2_label || '성과 2') + '</div><div class="metric-card__value">' + escHtml(c.metric2_value) + '</div></div>';
+                    if (c.industry) html += '<div class="metric-card"><div class="metric-card__label">산업 분야</div><div class="metric-card__value" style="font-size:1rem;">' + escHtml(c.industry) + '</div></div>';
                     html += '</div>';
                 }
 
@@ -301,7 +301,7 @@
                 if (c.work_summary || c.description) {
                     html += '<div class="detail-section">' +
                         '<div class="detail-section__title"><span>&#128203;</span> 업무 내용</div>' +
-                        '<div class="work-summary">' + (c.work_summary || c.description) + '</div>' +
+                        '<div class="work-summary">' + escHtml(c.work_summary || c.description) + '</div>' +
                     '</div>';
                 }
 
@@ -312,15 +312,15 @@
                         '<div class="interpreter-profile">';
 
                     if (c.interpreter_photo) {
-                        html += '<img src="' + c.interpreter_photo + '" alt="' + c.interpreter_name + '" class="interpreter-profile__photo">';
+                        html += '<img src="' + escUrl(c.interpreter_photo) + '" alt="' + escHtml(c.interpreter_name) + '" class="interpreter-profile__photo">';
                     } else {
-                        html += '<div class="interpreter-profile__avatar">' + c.interpreter_name.charAt(0) + '</div>';
+                        html += '<div class="interpreter-profile__avatar">' + escHtml(c.interpreter_name.charAt(0)) + '</div>';
                     }
 
                     html += '<div class="interpreter-profile__info">' +
-                            '<div class="interpreter-profile__name">' + c.interpreter_name + '</div>' +
-                            '<div class="interpreter-profile__role">' + c.case_type + ' · ' + c.country + ' · ' + (c.industry || '') + '</div>' +
-                            (c.interpreter_comment ? '<div class="interpreter-profile__comment">"' + c.interpreter_comment + '"</div>' : '') +
+                            '<div class="interpreter-profile__name">' + escHtml(c.interpreter_name) + '</div>' +
+                            '<div class="interpreter-profile__role">' + escHtml(c.case_type) + ' · ' + escHtml(c.country) + ' · ' + escHtml(c.industry || '') + '</div>' +
+                            (c.interpreter_comment ? '<div class="interpreter-profile__comment">"' + escHtml(c.interpreter_comment) + '"</div>' : '') +
                         '</div>' +
                     '</div></div>';
                 }
@@ -335,11 +335,11 @@
                             '<div class="photo-slider__counter"><span id="sliderCurrent">1</span> / ' + photos.length + '</div>' +
                             '<div class="photo-slider__track" id="sliderTrack">';
                     photos.forEach(function(p) {
-                        var src = typeof p === 'string' ? p : p.url;
+                        var src = escUrl(typeof p === 'string' ? p : p.url);
                         var caption = typeof p === 'object' && p.caption ? p.caption : '';
                         html += '<div class="photo-slider__slide" onclick="openLightbox(\'' + src + '\')">' +
                             '<img src="' + src + '" alt="현장 사진">' +
-                            (caption ? '<div class="photo-slider__caption">' + caption + '</div>' : '') +
+                            (caption ? '<div class="photo-slider__caption">' + escHtml(caption) + '</div>' : '') +
                         '</div>';
                     });
                     html += '</div>';
@@ -363,10 +363,10 @@
                     html += '<div class="detail-section">' +
                         '<div class="detail-section__title"><span>&#128188;</span> 프로젝트 담당자</div>' +
                         '<div class="manager-card">' +
-                            '<div class="manager-card__avatar">' + c.manager_name.charAt(0) + '</div>' +
+                            '<div class="manager-card__avatar">' + escHtml(c.manager_name.charAt(0)) + '</div>' +
                             '<div>' +
-                                '<div class="manager-card__name">' + c.manager_name + '</div>' +
-                                (c.manager_role ? '<div class="manager-card__role">' + c.manager_role + '</div>' : '') +
+                                '<div class="manager-card__name">' + escHtml(c.manager_name) + '</div>' +
+                                (c.manager_role ? '<div class="manager-card__role">' + escHtml(c.manager_role) + '</div>' : '') +
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -396,6 +396,11 @@
                 container.innerHTML = '<div class="loading">로드 중 오류가 발생했습니다. <a href="performance.html" style="color:#1565c0;">목록으로 돌아가기</a></div>';
             }
         })();
+
+        // XSS 방지 헬퍼 (2026-07-02 보안 점검 B) — 52_성과사례·리뷰의 사용자/관리자 작성 텍스트를
+        // innerHTML에 넣기 전 escape. 함수 선언이라 위 IIFE에서도 호이스팅되어 사용 가능.
+        function escHtml(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+        function escUrl(v){return String(v==null?'':v).replace(/['"()\\<>]/g,'');} // url()/src/onclick 브레이크아웃 차단
 
         // ═══ 고객 리뷰 로드 & 작성 ═══
         function renderStars(rating) {
@@ -434,10 +439,10 @@
                     listEl.innerHTML = reviews.map(function(r) {
                         return '<div class="review-card">' +
                             '<div class="review-card__header">' +
-                                '<div><span class="review-card__author">' + (custMap[r.customer_id] || '고객') + '</span></div>' +
-                                '<div><span class="review-card__stars">' + renderStars(r.rating_overall) + '</span> <span class="review-card__date">' + formatDate(r.created_at) + '</span></div>' +
+                                '<div><span class="review-card__author">' + escHtml(custMap[r.customer_id] || '고객') + '</span></div>' +
+                                '<div><span class="review-card__stars">' + renderStars(r.rating_overall) + '</span> <span class="review-card__date">' + escHtml(formatDate(r.created_at)) + '</span></div>' +
                             '</div>' +
-                            (r.review_text ? '<div class="review-card__text">"' + r.review_text + '"</div>' : '') +
+                            (r.review_text ? '<div class="review-card__text">"' + escHtml(r.review_text) + '"</div>' : '') +
                             '<div class="review-card__detail-ratings">' +
                                 '<span>전문성 ' + renderStars(r.rating_expertise) + '</span>' +
                                 '<span>매너 ' + renderStars(r.rating_manner) + '</span>' +
