@@ -5703,6 +5703,8 @@
                 : ('CT-' + (contractDate || '').replace(/[^0-9]/g, '').slice(0, 8) + '-' + ((safe.id || '').replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || '0000'));
 
             var w = window.open('', '_blank', 'width=900,height=1200');
+            if (!w) { alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.'); return; }
+            try {
             w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>통역 서비스 계약서 - ' + displayContractId + '</title>');
             w.document.write('<style>' +
                 '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }' +
@@ -5987,6 +5989,12 @@
             }
 
             w.document.write('</body></html>');
+            } catch (contractErr) {
+                console.error('계약서 팝업 생성 오류:', contractErr);
+                try {
+                    w.document.write('<div style="max-width:640px;margin:40px auto;padding:24px;background:#fff3f3;border:2px solid #c62828;border-radius:12px;font-family:sans-serif;color:#b71c1c;font-size:14px;line-height:1.7;"><b>계약서 표시 중 오류가 발생했습니다.</b><br>오류 내용: ' + _esc(contractErr && contractErr.message ? contractErr.message : String(contractErr)) + '<br><br>이 화면을 캡처해 관리자(info@contentour.co.kr)에게 전달해주세요.</div></body></html>');
+                } catch (e2) {}
+            }
             w.document.close();
         }
 
