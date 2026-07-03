@@ -214,10 +214,11 @@ CT.openCancellationCertificate = function(row) {
       '<div class="noprint"><button onclick="window.print()">🖨 인쇄 / PDF 저장</button></div>' +
       '</div></body></html>';
 
-    var w = window.open('', '_blank');
-    if (!w) { alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.'); return; }
-    w.document.write(html);
-    w.document.close();
+    // Blob URL 방식 (document.write 팝업은 일부 환경에서 빈 about:blank 창이 됨)
+    var blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    var w = window.open(blobUrl, '_blank');
+    if (!w) { alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.'); }
+    setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 60000);
 };
 
 // ── 감사 로그 기록 ──
