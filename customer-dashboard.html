@@ -3938,9 +3938,10 @@
         '<div class="footer">© ' + new Date().getFullYear() + ' CONTENTOUR · 본 문서는 전시회 상담일지로 자동 생성되었습니다.</div>' +
         '<button class="print-btn" onclick="window.print()">🖨 PDF 저장 / 인쇄</button>' +
         '</body></html>';
-      var w = window.open('', '_blank');
-      w.document.write(html);
-      w.document.close();
+      var __blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+      var w = window.open(__blobUrl, '_blank');
+      if (!w) alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.');
+      setTimeout(function () { URL.revokeObjectURL(__blobUrl); }, 60000);
     }
 
     // PDF 출력용 HTML escape
@@ -4000,9 +4001,10 @@
         (v('bp-interp-comment') ? '<div class="text-box">' + v('bp-interp-comment') + '</div>' : '') +
         '<div class="footer">© ' + new Date().getFullYear() + ' CONTENTOUR · 부산테크노파크 상담일지</div>' +
         '<button class="print-btn" onclick="window.print()">🖨 PDF 저장 / 인쇄</button></body></html>';
-      var w = window.open('', '_blank');
-      w.document.write(html);
-      w.document.close();
+      var __blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+      var w = window.open(__blobUrl, '_blank');
+      if (!w) alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.');
+      setTimeout(function () { URL.revokeObjectURL(__blobUrl); }, 60000);
     }
 
     function exportKitaPDF() {
@@ -4064,9 +4066,10 @@
         (v('kt-interp-comment') ? '<div class="text-box">' + v('kt-interp-comment') + '</div>' : '') +
         '<div class="footer">© ' + new Date().getFullYear() + ' CONTENTOUR · 한국무역협회(KITA) 상담일지</div>' +
         '<button class="print-btn" onclick="window.print()">🖨 PDF 저장 / 인쇄</button></body></html>';
-      var w = window.open('', '_blank');
-      w.document.write(html);
-      w.document.close();
+      var __blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+      var w = window.open(__blobUrl, '_blank');
+      if (!w) alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.');
+      setTimeout(function () { URL.revokeObjectURL(__blobUrl); }, 60000);
     }
 
     function exportCustomPDF() {
@@ -4103,9 +4106,10 @@
 
       html += '<div class="footer">© ' + new Date().getFullYear() + ' CONTENTOUR · ' + tpl.name + '</div>' +
         '<button class="print-btn" onclick="window.print()">🖨 PDF 저장 / 인쇄</button></body></html>';
-      var w = window.open('', '_blank');
-      w.document.write(html);
-      w.document.close();
+      var __blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+      var w = window.open(__blobUrl, '_blank');
+      if (!w) alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.');
+      setTimeout(function () { URL.revokeObjectURL(__blobUrl); }, 60000);
     }
 
     // ===== Chat System =====
@@ -6375,8 +6379,10 @@
         ? CT.contractNo(c)
         : ('CT-' + (contractDate || '').replace(/[^0-9]/g, '').slice(0, 8) + '-' + ((safe.id || '').replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase() || '0000'));
 
-      var w = window.open('', '_blank', 'width=900,height=1200');
-      if (!w) { showToast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.', 'error'); return; }
+      // document.write 방식은 일부 환경(보안 프로그램·확장)에서 빈 about:blank 창이 되는 문제가 있어
+      // HTML을 문자열로 조립한 뒤 Blob URL로 여는 방식 사용
+      var __docParts = [];
+      var w = { document: { write: function (h) { __docParts.push(h); }, close: function () {} } };
       try {
       w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>통역 서비스 계약서 - ' + displayContractId + '</title>');
       w.document.write('<style>' +
@@ -6661,11 +6667,12 @@
       w.document.write('</body></html>');
       } catch (contractErr) {
         console.error('계약서 팝업 생성 오류:', contractErr);
-        try {
-          w.document.write('<div style="max-width:640px;margin:40px auto;padding:24px;background:#fff3f3;border:2px solid #c62828;border-radius:12px;font-family:sans-serif;color:#b71c1c;font-size:14px;line-height:1.7;"><b>계약서 표시 중 오류가 발생했습니다.</b><br>오류 내용: ' + escapeHtml(contractErr && contractErr.message ? contractErr.message : String(contractErr)) + '<br><br>이 화면을 캡처해 관리자(info@contentour.co.kr)에게 전달해주세요.</div></body></html>');
-        } catch (e2) {}
+        __docParts.push('<div style="max-width:640px;margin:40px auto;padding:24px;background:#fff3f3;border:2px solid #c62828;border-radius:12px;font-family:sans-serif;color:#b71c1c;font-size:14px;line-height:1.7;"><b>계약서 표시 중 오류가 발생했습니다.</b><br>오류 내용: ' + escapeHtml(contractErr && contractErr.message ? contractErr.message : String(contractErr)) + '<br><br>이 화면을 캡처해 관리자(info@contentour.co.kr)에게 전달해주세요.</div></body></html>');
       }
-      w.document.close();
+      var __blobUrl = URL.createObjectURL(new Blob([__docParts.join('')], { type: 'text/html;charset=utf-8' }));
+      var __win = window.open(__blobUrl, '_blank', 'width=900,height=1200');
+      if (!__win) { showToast('팝업이 차단되었습니다. 주소창 오른쪽의 팝업 차단 아이콘에서 허용 후 다시 시도해주세요.', 'error'); }
+      setTimeout(function () { URL.revokeObjectURL(__blobUrl); }, 60000);
     }
 
     let currentPayment = { contractId: null, type: null, method: null, agreed: false, step: 1, bankCode: null, cardData: {} };
