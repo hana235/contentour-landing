@@ -268,7 +268,7 @@
                 // 헤더
                 html += '<div class="detail-header"><div class="detail-header__inner">' +
                     '<a href="performance.html" class="detail-header__back">&larr; 성과사례 목록</a>' +
-                    '<div class="detail-header__tag ' + tagClass + '">' + escHtml(c.case_type) + '</div>' +
+                    (c.case_type ? '<div class="detail-header__tag ' + tagClass + '">' + escHtml(c.case_type) + '</div>' : '') +
                     '<h1 class="detail-header__title">[' + escHtml(c.client_company) + '] ' + escHtml(c.exhibition_name) + '</h1>' +
                     '<div class="detail-header__meta">' +
                         '<span>' + escHtml(c.country_flag) + ' ' + escHtml(c.country) + '</span>' +

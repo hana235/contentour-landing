@@ -279,7 +279,7 @@
                                 '<div class="testi-card__company">' + esc(r.customer_company || '') + '</div>' +
                             '</div>' +
                         '</div>' +
-                        '<div class="testi-card__tag">' + esc(r.exhibition_name || '') + '</div>' +
+                        (r.exhibition_name ? '<div class="testi-card__tag">' + esc(r.exhibition_name) + '</div>' : '') +
                     '</div>';
                 }).join('');
             }

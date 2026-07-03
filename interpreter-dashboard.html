@@ -2243,9 +2243,9 @@
             document.getElementById('modalDress').textContent = d.dress;
 
             // 태그
-            document.getElementById('modalLang').innerHTML = '<span class="assign-tag tag-lang">' + CT.escHtml(d.lang) + '</span>';
-            document.getElementById('modalField').innerHTML = '<span class="assign-tag tag-field">' + CT.escHtml(d.field) + '</span>';
-            document.getElementById('modalType').innerHTML = '<span class="assign-tag tag-type">' + CT.escHtml(d.type) + '</span>';
+            document.getElementById('modalLang').innerHTML = '<span class="assign-tag tag-lang">' + CT.escHtml(d.lang || '-') + '</span>';
+            document.getElementById('modalField').innerHTML = '<span class="assign-tag tag-field">' + CT.escHtml(d.field || '-') + '</span>';
+            document.getElementById('modalType').innerHTML = '<span class="assign-tag tag-type">' + CT.escHtml(d.type || '-') + '</span>';
 
             // 상태 배지
             const statusMap = {

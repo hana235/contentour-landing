@@ -213,7 +213,7 @@
                     return '<a href="case-detail.html?id=' + encodeURIComponent(c.id) + '" class="case-card">' +
                         '<div class="case-card__img" style="' + imgStyle + '"></div>' +
                         '<div class="case-card__body">' +
-                            '<span class="case-card__tag ' + tagClass + '">' + esc(c.case_type) + '</span>' +
+                            (c.case_type ? '<span class="case-card__tag ' + tagClass + '">' + esc(c.case_type) + '</span>' : '') +
                             '<p class="case-card__title">[' + esc(c.client_company) + '] ' + esc(c.country) + '<br>' + esc(c.exhibition_name) + '</p>' +
                             '<span class="case-card__country">' + esc(c.country_flag) + ' ' + esc(c.country) + ' · ' + esc(c.exhibition_date) + '</span>' +
                             metricsHtml +
