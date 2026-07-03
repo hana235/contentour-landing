@@ -158,15 +158,16 @@ CT.openCancellationCertificate = function(row) {
       '<style>' +
       '*{box-sizing:border-box;} body{font-family:"Pretendard","Noto Sans KR",sans-serif;color:#1a2a4a;margin:0;padding:40px;background:#f4f6fa;}' +
       '.doc{max-width:780px;margin:0 auto;background:#fff;padding:48px 52px;box-shadow:0 4px 24px rgba(0,0,0,0.08);border-radius:8px;}' +
-      '.head{text-align:center;border-bottom:3px solid #0a2a5e;padding-bottom:18px;margin-bottom:8px;}' +
-      '.head h1{font-size:1.7rem;letter-spacing:6px;margin:0 0 4px;color:#0a2a5e;}' +
-      '.head .en{font-size:0.78rem;color:#8a95a8;letter-spacing:2px;}' +
+      '.head{text-align:center;border-bottom:3px double #b71c1c;padding-bottom:18px;margin-bottom:8px;}' +
+      '.head h1{font-size:1.7rem;letter-spacing:6px;margin:0 0 4px;color:#b71c1c;}' +
+      '.head .en{font-size:0.78rem;color:#c98a8a;letter-spacing:2px;}' +
+      '.notice{background:#fdecea;border:1.5px solid #f5c6c0;border-radius:8px;padding:12px 16px;font-size:0.8rem;color:#8c3330;line-height:1.6;margin:16px 0 6px;}' +
       '.meta{display:flex;justify-content:space-between;font-size:0.8rem;color:#5b6577;margin:14px 0 26px;}' +
-      '.sec-title{font-size:0.92rem;font-weight:800;color:#0a2a5e;margin:22px 0 8px;padding-left:8px;border-left:3px solid #1565c0;}' +
+      '.sec-title{font-size:0.92rem;font-weight:800;color:#b71c1c;margin:22px 0 8px;padding-left:8px;border-left:3px solid #c62828;}' +
       'table{width:100%;border-collapse:collapse;font-size:0.86rem;}' +
       'th,td{border:1px solid #e0e5ec;padding:10px 12px;text-align:left;vertical-align:top;}' +
       'th{background:#f7f9fc;width:32%;font-weight:700;color:#3a4660;}' +
-      '.badge{display:inline-block;padding:3px 12px;border-radius:6px;font-size:0.8rem;font-weight:700;background:#e3f0ff;color:#1565c0;}' +
+      '.badge{display:inline-block;padding:3px 12px;border-radius:6px;font-size:0.8rem;font-weight:700;background:#fdecea;color:#c62828;}' +
       '.reason{white-space:pre-wrap;}' +
       '.foot{margin-top:32px;padding-top:18px;border-top:1px solid #e0e5ec;font-size:0.74rem;color:#8a95a8;line-height:1.7;}' +
       '.foot b{color:#3a4660;}' +
@@ -175,6 +176,7 @@ CT.openCancellationCertificate = function(row) {
       '@media print{body{background:#fff;padding:0;} .doc{box-shadow:none;border-radius:0;} .noprint{display:none;}}' +
       '</style></head><body><div class="doc">' +
       '<div class="head"><h1>취 소 확 인 서</h1><div class="en">CANCELLATION CONFIRMATION</div></div>' +
+      '<div class="notice">본 문서는 <b>계약 취소 처리에 대한 확인서</b>로, 계약서를 대체하지 않습니다. 취소 신청 내역과 취소 시점에 동결된 금액 기준의 위약금·환불 산정 내역을 증빙하기 위해 발급됩니다.</div>' +
       '<div class="meta"><span>확인서 번호: <b>' + esc(certNo) + '</b></span><span>발급일시: ' + issuedAt + '</span></div>' +
 
       '<div class="sec-title">1. 계약 정보</div><table>' +
