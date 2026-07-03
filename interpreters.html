@@ -823,7 +823,7 @@
                         reviewHtml +
                         '<div class="profile-card__tags">' +
                             p.tags.map(function(t) { return '<span class="profile-card__tag">' + escHtml(t) + '</span>'; }).join('') +
-                            '<span class="profile-card__tag field">' + escHtml(p.fieldTag) + '</span>' +
+                            (p.fieldTag ? '<span class="profile-card__tag field">' + escHtml(p.fieldTag) + '</span>' : '') +
                         '</div>' +
                         '<div class="profile-card__price">' +
                             '<span class="profile-card__price-label">부스 통역</span>' +
@@ -971,7 +971,7 @@
                 '<div class="ip-modal__section-title">전문 분야</div>' +
                 '<div class="ip-modal__tags">' +
                     p.tags.map(function(t) { return '<span class="ip-modal__tag">' + escHtml(t) + '</span>'; }).join('') +
-                    '<span class="ip-modal__tag field">' + escHtml(p.fieldTag) + '</span>' +
+                    (p.fieldTag ? '<span class="ip-modal__tag field">' + escHtml(p.fieldTag) + '</span>' : '') +
                 '</div>' +
             '</div>';
 
