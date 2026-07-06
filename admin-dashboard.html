@@ -5556,7 +5556,7 @@
                 w.document.write('</head><body><div class="contract-doc">');
                 w.document.write('<div class="preview-banner">📋 미리보기 — 아직 생성되지 않은 계약서입니다 (템플릿 v1.8)</div>');
                 w.document.write('<div class="doc-header"><h1>통역 서비스 계약서</h1><p>INTERPRETATION SERVICE CONTRACT</p><p style="margin-top:8px;font-size:0.85rem;">계약일: ' + today + ' | 템플릿 v1.8</p></div>');
-                var se = { company: _escHtml(company), contact: _escHtml(contact), interpreter: _escHtml(interpreter), expo: _escHtml(expo), location: _escHtml(location || '-'), lang: _escHtml(lang), type: _escHtml(type) };
+                var se = { company: _escHtml(company), contact: _escHtml(contact), interpreter: _escHtml(interpreter), expo: _escHtml(expo), location: _escHtml(CT.locationToEn(location) || '-'), lang: _escHtml(lang), type: _escHtml(type) };
 
                 // 갑/을 가로 2바 + 병은 아래 가로 한 줄
                 w.document.write('<div class="section-title">계약 당사자</div>' +
@@ -7954,7 +7954,7 @@
             }
         }
         </script>
-        <script src="shared-constants.js?v=20260703.2"></script>
+        <script src="shared-constants.js?v=20260706"></script>
         <script>
         /* ══════════ 관리자 알림 센터 (벨 드롭다운) ══════════ */
         (function () {

@@ -106,6 +106,97 @@ CT.vatFromTotal = function(total) { return Math.round((total || 0) * 10 / 110); 
 CT.netFromTotal = function(total) { return (total || 0) - CT.vatFromTotal(total); };             // 총액(VAT 포함) → 공급가
 CT.platformFee  = function(net)   { return Math.round((net   || 0) * CT.PLATFORM_FEE_RATE); };   // 공급가 → 통역사측 플랫폼 수수료
 
+// ── 개최지 한→영 변환 (계약서 표기용) ──
+// 계약서의 '개최 장소·주소'는 영문 표기 원칙. DB에는 견적 문의의 한글 개최지("일본 / 도쿄")가
+// 저장될 수 있어 렌더 시점에 변환한다. 이미 영문이면 그대로 통과 (멱등).
+CT.KO_EN_COUNTRIES = {
+    '미국': 'USA', '일본': 'Japan', '중국': 'China', '독일': 'Germany', '프랑스': 'France',
+    '영국': 'UK', '이탈리아': 'Italy', '스페인': 'Spain', '네덜란드': 'Netherlands', '벨기에': 'Belgium',
+    '폴란드': 'Poland', '체코': 'Czech Republic', '헝가리': 'Hungary', '핀란드': 'Finland', '러시아': 'Russia',
+    '터키': 'Turkey', '튀르키예': 'Turkey', '그리스': 'Greece', '포르투갈': 'Portugal', '스위스': 'Switzerland',
+    '오스트리아': 'Austria', '스웨덴': 'Sweden', '노르웨이': 'Norway', '덴마크': 'Denmark', '아일랜드': 'Ireland',
+    '대만': 'Taiwan', '베트남': 'Vietnam', '태국': 'Thailand', '말레이시아': 'Malaysia', '인도네시아': 'Indonesia',
+    '필리핀': 'Philippines', '인도': 'India', '방글라데시': 'Bangladesh', '우즈베키스탄': 'Uzbekistan',
+    '카자흐스탄': 'Kazakhstan', '몽골': 'Mongolia', 'UAE': 'UAE', '아랍에미리트': 'UAE',
+    '사우디아라비아': 'Saudi Arabia', '사우디': 'Saudi Arabia', '카타르': 'Qatar', '쿠웨이트': 'Kuwait',
+    '이스라엘': 'Israel', '이집트': 'Egypt', '모로코': 'Morocco', '남아공': 'South Africa',
+    '남아프리카공화국': 'South Africa', '캐나다': 'Canada', '멕시코': 'Mexico', '브라질': 'Brazil',
+    '아르헨티나': 'Argentina', '콜롬비아': 'Colombia', '칠레': 'Chile', '페루': 'Peru',
+    '호주': 'Australia', '뉴질랜드': 'New Zealand', '한국': 'Korea', '대한민국': 'Korea', '유럽': 'Europe'
+};
+CT.KO_EN_CITIES = {
+    // 아시아
+    '도쿄': 'Tokyo', '오사카': 'Osaka', '나고야': 'Nagoya', '요코하마': 'Yokohama', '후쿠오카': 'Fukuoka',
+    '베이징': 'Beijing', '상하이': 'Shanghai', '광저우': 'Guangzhou', '선전': 'Shenzhen', '심천': 'Shenzhen',
+    '홍콩': 'Hong Kong', '타이페이': 'Taipei', '타이베이': 'Taipei', '싱가포르': 'Singapore',
+    '방콕': 'Bangkok', '하노이': 'Hanoi', '호치민': 'Ho Chi Minh City', '자카르타': 'Jakarta',
+    '쿠알라룸푸르': 'Kuala Lumpur', '마닐라': 'Manila', '파사이': 'Pasay', '다카': 'Dhaka',
+    '뉴델리': 'New Delhi', '뭄바이': 'Mumbai', '벵갈루루': 'Bengaluru', '아흐메다바드': 'Ahmedabad',
+    '타슈켄트': 'Tashkent', '알마티': 'Almaty', '울란바토르': 'Ulaanbaatar',
+    // 중동·아프리카
+    '두바이': 'Dubai', '아부다비': 'Abu Dhabi', '리야드': 'Riyadh', '제다': 'Jeddah', '도하': 'Doha',
+    '이스탄불': 'Istanbul', '텔아비브': 'Tel Aviv', '카이로': 'Cairo', '카사블랑카': 'Casablanca',
+    '요하네스버그': 'Johannesburg', '케이프타운': 'Cape Town',
+    // 유럽
+    '런던': 'London', '버밍엄': 'Birmingham', '파리': 'Paris', '리옹': 'Lyon', '칸': 'Cannes',
+    '베를린': 'Berlin', '뮌헨': 'Munich', '프랑크푸르트': 'Frankfurt', '함부르크': 'Hamburg',
+    '뒤셀도르프': 'Dusseldorf', '쾰른': 'Cologne', '뉘른베르크': 'Nuremberg', '슈투트가르트': 'Stuttgart',
+    '에센': 'Essen', '하노버': 'Hannover', '프리드리히스하펜': 'Friedrichshafen', '라이프치히': 'Leipzig',
+    '밀라노': 'Milan', '볼로냐': 'Bologna', '베로나': 'Verona', '리미니': 'Rimini', '파르마': 'Parma',
+    '로마': 'Rome', '마드리드': 'Madrid', '바르셀로나': 'Barcelona', '리스본': 'Lisbon',
+    '암스테르담': 'Amsterdam', '마스트리히트': 'Maastricht', '브뤼셀': 'Brussels', '빈': 'Vienna',
+    '취리히': 'Zurich', '제네바': 'Geneva', '바르샤바': 'Warsaw', '포즈난': 'Poznan', '키엘체': 'Kielce',
+    '프라하': 'Prague', '브르노': 'Brno', '부다페스트': 'Budapest', '헬싱키': 'Helsinki',
+    '스톡홀름': 'Stockholm', '코펜하겐': 'Copenhagen', '오슬로': 'Oslo', '더블린': 'Dublin',
+    '모스크바': 'Moscow', '예카테린부르크': 'Yekaterinburg',
+    // 미주
+    '뉴욕': 'New York', '라스베이거스': 'Las Vegas', '라스베가스': 'Las Vegas', 'LA': 'Los Angeles',
+    '로스앤젤레스': 'Los Angeles', '시카고': 'Chicago', '보스턴': 'Boston', '마이애미': 'Miami',
+    '올랜도': 'Orlando', '애틀랜타': 'Atlanta', '달라스': 'Dallas', '댈러스': 'Dallas',
+    '휴스턴': 'Houston', '디트로이트': 'Detroit', '샌디에이고': 'San Diego', '샌프란시스코': 'San Francisco',
+    '토론토': 'Toronto', '몬트리올': 'Montreal', '캘거리': 'Calgary', '멕시코시티': 'Mexico City',
+    '과달라하라': 'Guadalajara', '몬테레이': 'Monterrey', '상파울루': 'Sao Paulo',
+    '부에노스아이레스': 'Buenos Aires', '보고타': 'Bogota', '메데인': 'Medellin',
+    // 오세아니아
+    '시드니': 'Sydney', '멜버른': 'Melbourne', '브리즈번': 'Brisbane', '오클랜드': 'Auckland',
+    // 국내 (도시·전시장)
+    '서울': 'Seoul', '부산': 'Busan', '인천': 'Incheon', '대구': 'Daegu', '광주': 'Gwangju',
+    '대전': 'Daejeon', '고양': 'Goyang', '수원': 'Suwon', '창원': 'Changwon', '제주': 'Jeju'
+};
+CT.KO_EN_VENUES = {
+    '코엑스': 'COEX', '킨텍스': 'KINTEX', '벡스코': 'BEXCO', '엑스코': 'EXCO', '세텍': 'SETEC',
+    '송도컨벤시아': 'Songdo Convensia', '빅사이트': 'Big Sight', '마쿠하리멧세': 'Makuhari Messe'
+};
+CT.locationToEn = function(str) {
+    if (!str) return '';
+    var s = String(str).trim();
+    if (!/[가-힣]/.test(s)) return s; // 이미 영문
+    var tokens = s.split(/[\s\/,·]+/).filter(Boolean);
+    var city = null, country = null, extras = [];
+    tokens.forEach(function(t) {
+        if (CT.KO_EN_VENUES[t]) { extras.push(CT.KO_EN_VENUES[t]); return; }
+        var ci = CT.KO_EN_CITIES[t];
+        if (ci) { if (!city) city = ci; else extras.push(ci); return; }
+        var co = CT.KO_EN_COUNTRIES[t];
+        if (co) { if (!country) country = co; else extras.push(co); return; }
+        extras.push(t);
+    });
+    if (city || country) {
+        // 영문 관례: "City, Country" 순서. 사전에 없는 토큰(전시장명 등)은 앞에 유지
+        var parts = [];
+        if (extras.length) parts.push(extras.join(' '));
+        if (city) parts.push(city);
+        if (country) parts.push(country);
+        return parts.join(', ');
+    }
+    // 토큰 단위 매칭 실패 시(붙여쓰기 등) 부분 문자열 치환 fallback
+    var out = s;
+    Object.keys(CT.KO_EN_VENUES).forEach(function(k) { if (out.indexOf(k) >= 0) out = out.split(k).join(CT.KO_EN_VENUES[k]); });
+    Object.keys(CT.KO_EN_CITIES).forEach(function(k) { if (out.indexOf(k) >= 0) out = out.split(k).join(CT.KO_EN_CITIES[k]); });
+    Object.keys(CT.KO_EN_COUNTRIES).forEach(function(k) { if (out.indexOf(k) >= 0) out = out.split(k).join(CT.KO_EN_COUNTRIES[k]); });
+    return out;
+};
+
 // ── 취소 확인서 (Cancellation Certificate) ──
 // 분쟁 대비용 정식 문서. 51_취소내역 row를 받아 인쇄 가능한 새 창으로 렌더.
 // row: 51_취소내역 row (snake_case). optional: row.contract(42_통역계약 join), row._applicantName, row._companyName

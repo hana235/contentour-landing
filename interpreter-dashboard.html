@@ -5823,7 +5823,7 @@
                 '<div class="section-title">제1조 서비스 내용</div>' +
                 '<table class="info-table">' +
                     '<tr><th>전시회/행사명</th><td>' + safe.expo + '</td></tr>' +
-                    '<tr><th>개최 장소·주소</th><td>' + _esc(c.location || c.venue || '-') + '</td></tr>' +
+                    '<tr><th>개최 장소·주소</th><td>' + _esc(CT.locationToEn(c.location || c.venue) || '-') + '</td></tr>' +
                     '<tr><th>서비스 기간</th><td>' + safe.startDate + ' ~ ' + safe.endDate + ' (' + safe.days + '일간)</td></tr>' +
                     '<tr><th>일별 근무 시간</th><td>1일 8시간 기준 (휴게 시간 포함, 세부 시간은 별도 협의)</td></tr>' +
                     '<tr><th>휴게 시간</th><td>4시간 근무당 30분 (1일 8시간 기준 총 1시간)</td></tr>' +
@@ -7735,7 +7735,7 @@
     <!-- Supabase 인증 + 데이터 연동 -->
     <script src="supabase-config.js?v=20260701b"></script>
     <script src="review-filter.js?v=20260518c"></script>
-    <script src="shared-constants.js?v=20260703.2"></script>
+    <script src="shared-constants.js?v=20260706"></script>
     <script src="chat-data.js?v=20260701-perf"></script>
     <script src="interpreter-app.js?v=20260706"></script>
     <script src="script.js?v=20260701c"></script>
