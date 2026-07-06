@@ -5834,6 +5834,7 @@
                     id: d.id, dbId: d.id,
                     contractNo: d.contract_no,
                     expo: d.exhibition_name || '',
+                    venue: d.venue || '',
                     interpreter: { name: (d.interpreter_id && interpNameMap[d.interpreter_id]) || '미배정', id: d.interpreter_id },
                     client: { name: '', company: d.client_company },
                     status: uiStatus,

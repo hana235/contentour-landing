@@ -1077,6 +1077,7 @@ const InterpreterApp = {
             return {
                 id: c.id,
                 expo: c.exhibition_name || '',
+                venue: c.venue || '',
                 client: { name: c.client_company || '', company: c.client_company || '' },
                 interpreterName: myName,
                 status: c.status,
