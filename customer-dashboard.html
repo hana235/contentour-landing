@@ -189,10 +189,10 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="https://cdn.portone.io/v2/browser-sdk.js" async onerror="console.warn('PortOne SDK 로드 실패 - 데모 결제 모드')"></script>
-  <script src="supabase-config.js?v=20260701b"></script>
+  <script src="supabase-config.js?v=20260706"></script>
   <script src="review-filter.js?v=20260518c"></script>
   <script src="shared-constants.js?v=20260706"></script>
-  <script src="chat-data.js?v=20260701-perf"></script>
+  <script src="chat-data.js?v=20260706"></script>
   <script src="payment-data.js?v=20260701"></script>
 </head>
 <body>
@@ -1949,7 +1949,7 @@
         var sb = window.sbClient;
         if (!sb) return;
         try {
-            var { data: { user } } = await sb.auth.getUser();
+            var user = await window.sbGetUser();
             if (!user) return;
 
             // 계약 데이터 조회
@@ -2886,7 +2886,7 @@
       try {
         var user = window.ContentourAuth ? await ContentourAuth.getCurrentUser() : null;
         if (!user) {
-          var u = await window.sbClient.auth.getUser();
+          var u = { data: { user: await window.sbGetUser() } };
           user = u && u.data && u.data.user;
         }
         if (!user) return;
@@ -4250,7 +4250,7 @@
         if (!window.sbClient) return;
         if (_customerContractChannel) return; // 중복 구독 방지
         try {
-            const { data: { user } } = await window.sbClient.auth.getUser();
+            const user = await window.sbGetUser();
             if (!user) return;
             _customerContractChannel = window.sbClient
                 .channel('customer-contracts-' + user.id)
@@ -4278,7 +4278,7 @@
         if (!window.sbClient) return;
         if (_customerLoyaltyChannel) return;
         try {
-            const { data: { user } } = await window.sbClient.auth.getUser();
+            const user = await window.sbGetUser();
             if (!user) return;
             const onLoyaltyChange = async function(payload) {
                 console.log('[Realtime] 적립금 변경:', payload.table, payload.eventType);
@@ -4313,7 +4313,7 @@
         if (!window.sbClient) return;
         if (_customerNotifChannel) return;
         try {
-            const { data: { user } } = await window.sbClient.auth.getUser();
+            const user = await window.sbGetUser();
             if (!user) return;
             _customerNotifChannel = window.sbClient
                 .channel('customer-notif-' + user.id)
@@ -4337,7 +4337,7 @@
         if (!window.sbClient) return;
         if (_customerJournalChannel) return;
         try {
-            const { data: { user } } = await window.sbClient.auth.getUser();
+            const user = await window.sbGetUser();
             if (!user) return;
             _customerJournalChannel = window.sbClient
                 .channel('customer-journal-' + user.id)
@@ -4363,7 +4363,7 @@
         if (!window.sbClient) return;
         if (_customerReviewChannel) return;
         try {
-            const { data: { user } } = await window.sbClient.auth.getUser();
+            const user = await window.sbGetUser();
             if (!user) return;
             _customerReviewChannel = window.sbClient
                 .channel('customer-review-' + user.id)
@@ -5765,7 +5765,7 @@
         var sb = window.sbClient;
         if (!sb) return;
         try {
-            var { data: { user } } = await sb.auth.getUser();
+            var user = await window.sbGetUser();
             if (!user) return;
             var { data, error } = await sb
                 .from('42_통역계약')
@@ -7459,7 +7459,7 @@
     async function loyLoadFromDB() {
       if (!window.sbClient) { _loyDataCache = _loyEmptyData(); return _loyDataCache; }
       try {
-        var { data: { user } } = await window.sbClient.auth.getUser();
+        var user = await window.sbGetUser();
         if (!user) { _loyDataCache = _loyEmptyData(); return _loyDataCache; }
         var [{ data: row }, { data: ledger }] = await Promise.all([
           window.sbClient.from('30_적립금')
@@ -7504,7 +7504,7 @@
         var saved = localStorage.getItem(LOY_STORAGE_KEY);
         if (!saved) return;
         var local = JSON.parse(saved);
-        var { data: { user } } = await window.sbClient.auth.getUser();
+        var user = await window.sbGetUser();
         if (!user) return;
         var { data: existing } = await window.sbClient
           .from('30_적립금').select('user_id').eq('user_id', user.id).maybeSingle();
@@ -7731,7 +7731,7 @@
     async function loyEarnPoints(pts, desc, eventType, sourceId, expiresAt) {
       if (!window.sbClient || !pts || pts <= 0) return;
       try {
-        var { data: { user } } = await window.sbClient.auth.getUser();
+        var user = await window.sbGetUser();
         if (!user) return;
         var { data: newBalance, error } = await window.sbClient.rpc('earn_loyalty_points', {
           p_user_id: user.id,
@@ -7757,7 +7757,7 @@
     async function loyUsePoints(pts, desc, sourceId) {
       if (!window.sbClient || !pts || pts <= 0) return false;
       try {
-        var { data: { user } } = await window.sbClient.auth.getUser();
+        var user = await window.sbGetUser();
         if (!user) return false;
         var { data: newBalance, error } = await window.sbClient.rpc('use_loyalty_points', {
           p_user_id: user.id,
@@ -7783,7 +7783,7 @@
     async function loyOnContractPayment(contract) {
       if (!window.sbClient || !contract) return;
       try {
-        var { data: { user } } = await window.sbClient.auth.getUser();
+        var user = await window.sbGetUser();
         if (!user) return;
         // 캐시 미초기화 시 DB에서 먼저 로드 (첫계약 보너스 오발동 방지)
         if (!_loyDataCache) await loyLoadFromDB();

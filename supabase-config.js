@@ -129,14 +129,29 @@ window.showToast = window.showToast || function(message, type) {
     // 전역에 등록
     window.sbClient = sb;
 
+    // ── 캐시된 사용자 조회 ──
+    // auth.getUser()는 매 호출마다 auth 서버 왕복 + SDK 내부 잠금으로 동시 호출이 직렬화되어
+    // 대시보드 초기 로딩(모듈별 10회+ 호출)을 수 초씩 지연시킨다. 세션은 localStorage에서 읽고
+    // Promise를 캐시, 로그인/로그아웃/토큰갱신 시 무효화. 데이터 접근 권한은 RLS·서버 API가
+    // 토큰으로 재검증하므로 UI 조회 용도로는 getSession으로 충분하다.
+    var _userPromise = null;
+    window.sbGetUser = function () {
+        if (!sb) return Promise.resolve(null);
+        if (!_userPromise) {
+            _userPromise = sb.auth.getSession()
+                .then(function (r) { return (r && r.data && r.data.session) ? r.data.session.user : null; })
+                .catch(function () { return null; });
+        }
+        return _userPromise;
+    };
+    if (sb) sb.auth.onAuthStateChange(function () { _userPromise = null; });
+
     // ══════════════ 인증 유틸리티 ══════════════
     window.ContentourAuth = {
 
-        // 현재 로그인된 사용자 가져오기
+        // 현재 로그인된 사용자 가져오기 (캐시 경유)
         async getCurrentUser() {
-            if (!sb) return null;
-            const { data: { user } } = await sb.auth.getUser();
-            return user;
+            return window.sbGetUser();
         },
 
         // 사용자 프로필 (role 포함) 가져오기

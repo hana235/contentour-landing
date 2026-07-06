@@ -7680,7 +7680,7 @@
                 var ch = chatmonChannels.find(function(c) { return c.id === chatmonActiveChannel; });
                 if (!ch) return;
                 try {
-                    var { data: { user } } = await window.sbClient.auth.getUser();
+                    var user = await window.sbGetUser();
                     if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return; }
                     var adminName = (_adminProfile ? _adminProfile.name : null) || '관리자';
                     var msgData = {
@@ -7872,7 +7872,7 @@
 
         <!-- Supabase SDK + 공유 상수 + 데이터 레이어 -->
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-        <script src="supabase-config.js?v=20260701b"></script>
+        <script src="supabase-config.js?v=20260706"></script>
         <script>
         /* ══════════ 무통장 입금 확인 (계약·결제 탭) ══════════ */
         async function loadManualDeposits() {
@@ -8090,7 +8090,7 @@
                 if (!sb) return;
                 _notifInited = true;
                 try {
-                    var ures = await sb.auth.getUser();
+                    var ures = { data: { user: await window.sbGetUser() } };
                     _notifAdminId = ures && ures.data && ures.data.user && ures.data.user.id;
                 } catch (e) {}
 
@@ -8160,7 +8160,7 @@
         </script>
         <!-- service_role 클라이언트 제거됨 — 모든 관리자 작업은 서버사이드 API(/api/)를 통해 처리 -->
         <script src="admin-data.js?v=20260701"></script>
-        <script src="chat-data.js?v=20260701-perf"></script>
+        <script src="chat-data.js?v=20260706"></script>
         <script>
         // ── Supabase에서 문의 + 캘린더 데이터 로드 ──
         async function _reloadAllData() {
@@ -8435,7 +8435,7 @@
 
             try {
                 // 현재 비밀번호로 재인증
-                const { data: { user } } = await _sb.auth.getUser();
+                const user = await window.sbGetUser();
                 const { error: reAuthErr } = await _sb.auth.signInWithPassword({
                     email: user.email,
                     password: current
@@ -8726,7 +8726,7 @@
 
             try {
                 var userId = null;
-                try { var { data: { user } } = await supabase.auth.getUser(); userId = user?.id; } catch(e) {}
+                try { var user = await window.sbGetUser(); userId = user?.id; } catch(e) {}
 
                 // 기존 키 목록 조회
                 var { data: existingRows } = await supabase.from('90_시스템설정').select('key');
@@ -8797,7 +8797,7 @@
                 return;
             }
             try {
-                const { data: { user } } = await _sb.auth.getUser();
+                const user = await window.sbGetUser();
                 if (!user) return; // 비로그인 → 오버레이 유지
 
                 // ── DB role 검증 (localStorage 토큰만으로는 부족, 매 페이지 진입 시 재확인) ──

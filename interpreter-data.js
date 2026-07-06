@@ -8,7 +8,7 @@ const InterpreterData = {
     async getUserId() {
         if (this._userId) return this._userId;
         if (!supabase) return null;
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await window.sbGetUser();
         if (user) this._userId = user.id;
         return this._userId;
     },
@@ -74,7 +74,7 @@ const InterpreterData = {
         }
         // 폴백: 본인 정산만 변경 가능하도록 interpreter_id 검증 추가 (RPC 미적용 환경 권한 우회 방지)
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const user = await window.sbGetUser();
             if (!user) return false;
             const { error } = await supabase
                 .from('43_정산내역')

@@ -13,7 +13,7 @@ const ChatData = {
     async getUser() {
         if (this._userId) return { id: this._userId, role: this._userRole, name: this._userName };
         if (!window.sbClient) return null;
-        const { data: { user } } = await window.sbClient.auth.getUser();
+        const user = await window.sbGetUser();
         if (!user) return null;
         this._userId = user.id;
         // 회원 테이블에서 역할과 이름 가져오기
