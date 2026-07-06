@@ -689,7 +689,7 @@ function initExpoAutocomplete() {
 
     // ── 60_해외전시회DB에서 동적 로드 (localStorage 캐시 1시간) ──
     // anon 키로 직접 조회 (RLS public read 허용)
-    var CACHE_KEY = 'expoListCache_v4';
+    var CACHE_KEY = 'expoListCache_v5'; // v5: 2026-07-06 노션 동기화(690건) 즉시 반영
     var CACHE_TTL = 60 * 60 * 1000; // 1시간
     try {
         var cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
