@@ -8166,7 +8166,12 @@
         async function _reloadAllData() {
             if (!supabase) return;
 
+            // 1~6단계는 서로 독립적인 데이터 도메인(문의·캘린더·계약·양식권한·고객사·상담일지)이라
+            // 순차 await(단계당 0.3~2초 누적) 대신 병렬 실행 — 초기 로딩 시간 단축
+            var _tasks = [];
+
             // 1) 문의 데이터 로드
+            _tasks.push((async function() {
             if (typeof AdminData !== 'undefined') {
                 try {
                     const dbData = await AdminData.loadInquiries();
@@ -8179,8 +8184,10 @@
                 }
             }
             renderTable(inquiries); updateInquiryKPI();
+            })());
 
             // 2) 캘린더 일정 로드 (42_통역계약에서)
+            _tasks.push((async function() {
             try {
                 var { data: contractData, error: contractErr } = await supabase
                     .from('42_통역계약')
@@ -8244,25 +8251,29 @@
             } catch (e) {
                 console.warn('캘린더 DB 로드 실패:', e);
             }
+            })());
 
             // 3) 계약·결제 데이터 로드
+            _tasks.push((async function() {
             try {
                 await loadContractsFromDB();
             } catch (e) {
                 console.warn('계약 DB 로드 실패:', e);
             }
+            })());
 
             // 4) 양식 권한 고객사 로드
             if (typeof window._loadFpClients === 'function') {
-                await window._loadFpClients();
+                _tasks.push(Promise.resolve(window._loadFpClients()).catch(function(e) { console.warn('양식 권한 로드 실패:', e); }));
             }
 
             // 5) 고객사 관리 데이터 로드
             if (typeof window._loadCustData === 'function') {
-                await window._loadCustData();
+                _tasks.push(Promise.resolve(window._loadCustData()).catch(function(e) { console.warn('고객사 관리 로드 실패:', e); }));
             }
 
-            // 6) 상담일지 로드
+            // 6) 상담일지 로드 → localStorage 병합 → lang 보정 (내부 순서 의존이라 한 태스크로 묶음)
+            _tasks.push((async function() {
             if (typeof window._loadJournals === 'function') {
                 try {
                     window._supabaseRef = supabase;
@@ -8283,6 +8294,10 @@
                     if (journals.length > 0 && !activeJId) loadJournal(journals[0].id);
                 }
             }
+            })());
+
+            // 1~6 병렬 완료 대기 (실패는 각 태스크 내부에서 처리)
+            await Promise.allSettled(_tasks);
 
             // 7) admin 글로벌 realtime 구독 — 계약·문의·본인 알림 자동 갱신
             if (typeof window.subscribeAdminGlobalRealtime === 'function') {

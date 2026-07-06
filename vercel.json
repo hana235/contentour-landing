@@ -1,5 +1,6 @@
 {
   "cleanUrls": true,
+  "regions": ["icn1"],
   "rewrites": [
     { "source": "/api/submit-inquiry", "destination": "/api/submit?_route=submit-inquiry" },
     { "source": "/api/submit-application", "destination": "/api/submit?_route=submit-application" },
