@@ -3916,7 +3916,9 @@
                     } else if (c.status === 'in_progress') {
                         actionHtml = '<div class="contract-card__actions"><button class="contract-card__action approve" onclick="event.stopPropagation();ctAdminCompleteService(\''+c.id+'\')">\uC11C\uBE44\uC2A4 \uC644\uB8CC</button></div>';
                     } else {
-                        actionHtml = '<span class="contract-card__action label">\uC644\uB8CC</span>';
+                        // \uC561\uC158\uC774 \uC5C6\uB294 \uC0C1\uD0DC(\uC815\uC0B0\uC644\uB8CC/\uCDE8\uC18C/\uD658\uBD88/\uAC80\uD1A0\uC911/\uACC4\uC57D\uB300\uAE30 \uB4F1)\uB294 \uC0C1\uD0DC \uD14D\uC2A4\uD2B8\uB97C \uADF8\uB300\uB85C \uD45C\uC2DC
+                        // \u2014 \uC885\uC804\uC5D4 \uCDE8\uC18C\u00B7\uAC80\uD1A0\uC911 \uACC4\uC57D\uAE4C\uC9C0 '\uC644\uB8CC'\uB85C \uC798\uBABB \uB77C\uBCA8\uB9C1\uB410\uC74C.
+                        actionHtml = '<span class="contract-card__action label">' + (c.statusText || '\uC644\uB8CC') + '</span>';
                     }
                     return '<div class="contract-card" onclick="openCtDetail(\''+c.id+'\')">' +
                         '<div style="flex:1;min-width:0;">' +

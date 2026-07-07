@@ -1932,7 +1932,7 @@
       if (v === 'notifications') { renderAllNotifications(); }
       if (v === 'mypage') {
         (async function() {
-          await loyMigrateFromLocalStorage();
+          if (LOYALTY_UI_ENABLED) await loyMigrateFromLocalStorage();
           await loyLoadFromDB();
           loyRenderAll();
           // 이용 통계용 계약 데이터 로드 (계약 페이지 미방문 시 빈 상태 방지)
@@ -7845,7 +7845,7 @@
       subscribeReviewRealtime(); // 49_통역사리뷰 — 통역사 답글 시 자동 갱신
       // 적립금 캐시 hydrate (결제 모달의 동기 loyGetData() 대비) + realtime 구독
       (async function() {
-        await loyMigrateFromLocalStorage();
+        if (LOYALTY_UI_ENABLED) await loyMigrateFromLocalStorage();
         await loyLoadFromDB();
         subscribeLoyaltyRealtime();
       })();

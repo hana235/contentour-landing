@@ -957,7 +957,7 @@ const InterpreterApp = {
                         </div>
                         <div class="assign-card__tags">
                             ${c.language_pair ? `<span class="assign-tag tag-lang">${escHtml(c.language_pair)}</span>` : ''}
-                            ${c.service_type ? `<span class="assign-tag tag-type">${escHtml(c.service_type)}</span>` : ''}
+                            ${c.service_type ? `<span class="assign-tag tag-type">${escHtml({BOOTH:'부스 상주',MEETING:'미팅 동행',ONSITE_OPS:'현장 운영',OTHER:'기타'}[c.service_type] || c.service_type)}</span>` : ''}
                         </div>
                         <div class="assign-card__footer" style="margin-top:16px;">
                             <button class="btn-detail" onclick="openAssignModal('${escHtml(c.id)}')">상세 보기</button>
