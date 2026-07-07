@@ -5,6 +5,16 @@
 # 마이그레이션·롤백 SQL (전체 스키마·RLS·트리거 설계 노출 방지)
 *.sql
 
+# DB 스키마 덤프 (전체 테이블·컬럼·RPC·계좌 컬럼 노출 방지) — 프론트 런타임 미참조, 로컬 check-schema.js 전용
+schema.json
+supabase-spec.json
+
+# 로컬 빌드/점검 스크립트 (어떤 HTML 에서도 로드하지 않음)
+check-schema.js
+generate-favicon.js
+generate-og-image.js
+generate-pdfs.js
+
 # 내부 문서/메모 (마크다운)
 *.md
 
