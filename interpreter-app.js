@@ -513,10 +513,11 @@ const InterpreterApp = {
             if (numEl) numEl.textContent = assignments.length;
         }
 
-        // 이번 달 예정 일정
+        // 이번 달 예정 일정 — 홈 일정 목록(renderHomeSchedule)과 동일 기준:
+        // 수락된 계약이면 미결제(pending)여도 포함, 취소/환불만 제외
         const monthContracts = contracts.filter(c =>
             c.start_date && c.start_date.startsWith(thisMonth) &&
-            ['deposit_paid', 'in_progress'].includes(c.status)
+            c.interpreter_accepted === true && !['cancelled', 'refunded'].includes(c.status)
         );
         if (kpiCards[1]) {
             const numEl = kpiCards[1].querySelector('.kpi-num');

@@ -3808,7 +3808,7 @@
             var s_diffPrep = collectSurvey('diffPrep');
             var s_diffImprove = collectSurvey('diffImprove');
             var diffMemo = v('jnl-diff-memo');
-            var s_noteRequest = collectSurvey('noteRequest');
+            var s_noteRequest = collectSurvey('noteType');
             var s_noteUrgency = collectSurvey('noteUrgency');
             var noteMemo = v('jnl-note-memo');
 
@@ -5229,9 +5229,11 @@
         }
 
         function ctUpdateSummary() {
+            // ctRenderTabs 와 동일 기준 — 취소/환불/pending/settled 는 "진행중"·"예상 정산액"에서 제외
+            const ACTIVE_ST = ['deposit_paid', 'balance_paid', 'paid', 'in_progress', 'completed'];
             const total = interpreterContracts.length;
-            const active = interpreterContracts.filter(c => c.status !== 'settled').length;
-            const expectedNet = interpreterContracts.filter(c => c.status !== 'settled').reduce((s, c) => s + c.netAmount, 0);
+            const active = interpreterContracts.filter(c => ACTIVE_ST.includes(c.status)).length;
+            const expectedNet = interpreterContracts.filter(c => ACTIVE_ST.includes(c.status)).reduce((s, c) => s + c.netAmount, 0);
             const settledNet = interpreterContracts.filter(c => c.status === 'settled').reduce((s, c) => s + c.netAmount, 0);
 
             document.getElementById('ctSummary').innerHTML =

@@ -6092,11 +6092,16 @@
         if (error) throw error;
 
         c._reviewDone = true;
-        // 리뷰 작성 보너스 (5,000P) — RPC가 중복 적립 방지는 안 함, _reviewDone 플래그로 UI 차단
-        try { loyEarnPoints(5000, c.expo + ' 리뷰 작성 보너스', 'review', String(contractId)); } catch(e) {}
+        // 리뷰 작성 보너스 (5,000P) — 로열티 활성 시에만 적립·안내. LOYALTY_UI_ENABLED=false 면
+        // earn_loyalty_points EXECUTE 가 회수돼 실제 적립이 안 되므로 "적립" 문구도 표시하지 않는다.
+        if (LOYALTY_UI_ENABLED) {
+            try { loyEarnPoints(5000, c.expo + ' 리뷰 작성 보너스', 'review', String(contractId)); } catch(e) {}
+        }
         closeReviewModal();
         renderContracts();
-        showContractToast('리뷰가 접수되었습니다. 관리자 검토 후 공개됩니다. (5,000P 적립)');
+        showContractToast(LOYALTY_UI_ENABLED
+            ? '리뷰가 접수되었습니다. 관리자 검토 후 공개됩니다. (5,000P 적립)'
+            : '리뷰가 접수되었습니다. 관리자 검토 후 공개됩니다.');
       } catch (e) {
         console.error('리뷰 제출 실패:', e);
         showContractToast('리뷰 등록 중 오류가 발생했습니다: ' + (e.message || ''));
