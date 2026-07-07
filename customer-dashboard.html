@@ -5748,7 +5748,8 @@
     function getContractCounts() {
       const total = contracts.length;
       const active = contracts.filter(c => c.status === 'in_progress' || c.status === 'deposit_review' || c.status === 'balance_review' || c.status === 'contract_sign').length;
-      const pending = contracts.filter(c => c.status === 'deposit_pay' || c.status === 'balance_pay' || c.status === 'deposit_review' || c.status === 'balance_review' || c.status === 'contract_sign').length;
+      // 결제 대기 = 고객이 실제로 결제할 게 있는 상태만 (검토중/서명중은 '진행중' 탭에만 노출 → 탭 간 중복 제거)
+      const pending = contracts.filter(c => c.status === 'deposit_pay' || c.status === 'balance_pay').length;
       const paid = contracts.reduce((sum, c) => {
         let p = 0;
         if (c.depositPaid) p += c.deposit;
@@ -5906,7 +5907,7 @@
 
       // Filter contracts
       let filtered = contracts;
-      if (contractFilter === 'pending') filtered = contracts.filter(c => c.status === 'deposit_pay' || c.status === 'balance_pay' || c.status === 'deposit_review' || c.status === 'balance_review' || c.status === 'contract_sign');
+      if (contractFilter === 'pending') filtered = contracts.filter(c => c.status === 'deposit_pay' || c.status === 'balance_pay');
       else if (contractFilter === 'active') filtered = contracts.filter(c => c.status === 'in_progress' || c.status === 'deposit_review' || c.status === 'balance_review' || c.status === 'contract_sign');
       else if (contractFilter === 'done') filtered = contracts.filter(c => c.status === 'complete' || c.status === 'settled' || c.status === 'refunded');
 
