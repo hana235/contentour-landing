@@ -1817,12 +1817,8 @@
                 privacy_consent_at: new Date().toISOString()
             };
 
-            // Supabase에 저장
-            const now6 = new Date();
-            const applicationNumber = 'CT-' + now6.getFullYear().toString().slice(2) +
-                String(now6.getMonth() + 1).padStart(2, '0') +
-                String(now6.getDate()).padStart(2, '0') + '-' +
-                String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+            // 접수번호는 서버가 생성·저장하는 값을 표시한다 (48_통역사지원서.application_number)
+            let applicationNumber = '';
 
             try {
                 const resp = await fetch('/api/submit-application', {
@@ -1838,6 +1834,7 @@
                     submitBtn.textContent = '🚀 지원서 제출하기';
                     return;
                 }
+                applicationNumber = result.applicationNumber || '';
             } catch (e) {
                 console.error('지원서 전송 오류:', e);
                 showToast('⚠️ 네트워크 오류. 잠시 후 다시 시도해주세요.');

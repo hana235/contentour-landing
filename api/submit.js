@@ -249,7 +249,14 @@ async function handleApplication(req, res) {
 
         // 5) 48_통역사지원서 INSERT (status=pending, created_user_id 연결)
         payload.created_user_id = userId;
-        var { data, error } = await sb.from('48_통역사지원서').insert(payload).select('id').single();
+        // 접수번호는 서버가 생성·저장한다 (지원자 완료화면 + 관리자 검수 모달이 동일 번호를 조회)
+        var _d = new Date();
+        var applicationNumber = 'CT-' + String(_d.getFullYear()).slice(2) +
+            String(_d.getMonth() + 1).padStart(2, '0') +
+            String(_d.getDate()).padStart(2, '0') + '-' +
+            String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+        payload.application_number = applicationNumber;
+        var { data, error } = await sb.from('48_통역사지원서').insert(payload).select('id, application_number').single();
         if (error) {
             console.error('지원서 저장 실패:', error);
             return res.status(500).json({ error: '저장 실패. 잠시 후 다시 시도해주세요.' });
@@ -258,6 +265,7 @@ async function handleApplication(req, res) {
         return res.status(200).json({
             ok: true,
             applicationId: data.id,
+            applicationNumber: data.application_number || applicationNumber,
             userId: userId,
             reapplying: reapplying
         });

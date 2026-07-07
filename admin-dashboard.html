@@ -1053,7 +1053,7 @@
                         <div class="jkpi-card" onclick="kpiFilter('all')" style="cursor:pointer;" id="kpiCard-all">
                             <div class="jkpi-icon" style="background:#e3f0ff;">📝</div>
                             <div>
-                                <div class="jkpi-num" style="color:var(--blue);" id="kpi-total">5</div>
+                                <div class="jkpi-num" style="color:var(--blue);" id="jkpi-total">5</div>
                                 <div class="jkpi-lbl">전체 제출 일지</div>
                             </div>
                         </div>
@@ -2826,7 +2826,7 @@
                 var drc = journals.filter(function(x) { return x.status === 'draft'; }).length;
                 var kn = document.getElementById('kpi-new');
                 var kd = document.getElementById('kpi-done');
-                var kt = document.getElementById('kpi-total');
+                var kt = document.getElementById('jkpi-total');
                 var kdr = document.getElementById('kpi-draft');
                 var nb = document.getElementById('newBadge');
                 if (kn) kn.textContent = nc;

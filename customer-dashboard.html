@@ -5908,7 +5908,7 @@
       let filtered = contracts;
       if (contractFilter === 'pending') filtered = contracts.filter(c => c.status === 'deposit_pay' || c.status === 'balance_pay' || c.status === 'deposit_review' || c.status === 'balance_review' || c.status === 'contract_sign');
       else if (contractFilter === 'active') filtered = contracts.filter(c => c.status === 'in_progress' || c.status === 'deposit_review' || c.status === 'balance_review' || c.status === 'contract_sign');
-      else if (contractFilter === 'done') filtered = contracts.filter(c => c.status === 'complete' || c.status === 'settled');
+      else if (contractFilter === 'done') filtered = contracts.filter(c => c.status === 'complete' || c.status === 'settled' || c.status === 'refunded');
 
       // Render list
       const listEl = document.getElementById('contractList');
