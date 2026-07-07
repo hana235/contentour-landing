@@ -3,6 +3,12 @@
 -- 원본: yvtgfieoeoqhfbofzunk → 대상: jgeqbdrfpekzuumaklvx
 -- 생성일: 2026-04-03
 -- =====================================================
+-- ⚠️ 주의(2026-07-07): 아래 두 익명(anon) 정책은 폐기되었으며 운영에 적용하지 말 것.
+--   * "ITQ_비로그인_문의_접수"  (46_ITQ견적문의 anon INSERT WITH CHECK(true))
+--   * "anon_read_own_application" (48_통역사지원서 anon SELECT, x-forwarded-email 헤더 신뢰)
+--   공개 폼 제출/조회는 service_role API(api/submit.js 등)로 처리되므로 anon 정책 불필요.
+--   운영 DB 에는 이미 미적용 상태(하드닝됨). 재적용 시 PII 유출/무단 삽입 구멍이 열린다.
+-- =====================================================
 
 -- ══════════════ 1. ENUM 타입 생성 ══════════════
 DO $$ BEGIN
