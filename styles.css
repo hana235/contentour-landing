@@ -170,6 +170,23 @@ html {
     border: 0;
 }
 
+/* 접근성: 본문 바로가기 (키보드 포커스 시에만 노출) */
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 9999;
+    padding: 10px 16px;
+    background: var(--navy, #0a2a5e);
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+    border-radius: 0 0 8px 0;
+}
+.skip-link:focus {
+    left: 0;
+}
+
 body {
     font-family: 'Montserrat', 'Noto Sans KR', sans-serif;
     line-height: 1.6;

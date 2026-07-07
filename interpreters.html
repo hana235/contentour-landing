@@ -278,6 +278,7 @@
 </head>
 
 <body>
+    <a href="#main" class="skip-link">본문 바로가기</a>
     <!-- Password Protection -->
     <div id="pwGate" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0a1628,#1a2a4a);display:flex;align-items:center;justify-content:center;font-family:'Montserrat','Noto Sans KR',sans-serif;">
         <div style="background:#fff;border-radius:20px;padding:48px 40px;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
@@ -347,7 +348,7 @@
         </div>
     </header>
 
-    <main class="interp-page">
+    <main class="interp-page" id="main">
         <div class="interp-page__inner">
             <a href="index.html" class="interp-back">&larr; 서비스 페이지로 돌아가기</a>
 
@@ -787,7 +788,7 @@
                 var origIdx = interpreters.indexOf(p);
                 var modalCountry = p._countryCode || currentCountry;
                 var modalIdx = p._countryCode ? interpData[p._countryCode].interpreters.indexOf(interpData[p._countryCode].interpreters.filter(function(x){return x.name===p.name && x.role===p.role;})[0]) : origIdx;
-                var countryBadge = isAll && p._country ? '<span class="profile-card__country-badge"><img src="https://flagcdn.com/w20/' + p._flag + '.png" style="width:14px;height:auto;border-radius:2px;vertical-align:middle;margin-right:4px;">' + p._country + '</span>' : '';
+                var countryBadge = isAll && p._country ? '<span class="profile-card__country-badge"><img src="https://flagcdn.com/w20/' + p._flag + '.png" alt="" style="width:14px;height:auto;border-radius:2px;vertical-align:middle;margin-right:4px;">' + p._country + '</span>' : '';
 
                 // 별점
                 var ratingHtml = '';
@@ -1042,7 +1043,7 @@
             '<div class="diq">' +
               '<div class="diq__head">' +
                 '<div class="diq__interp">' +
-                  '<img src="' + escHtml(photo) + '" class="diq__photo">' +
+                  '<img src="' + escHtml(photo) + '" alt="' + escHtml(name) + ' 프로필 사진" class="diq__photo">' +
                   '<div><div class="diq__name">' + escHtml(name) + '</div><div class="diq__role">' + escHtml(role) + ' · ' + escHtml(lang) + '</div></div>' +
                 '</div>' +
                 '<div class="diq__title">직접 견적 의뢰</div>' +
