@@ -4524,9 +4524,26 @@
             icfbOpenWrite('📌 ' + icfbEsc(tpl.name) + ' — 상담일지 작성', tpl.sections);
         }
 
+        // 맞춤 상담일지에 연결할 계약 선택 UI — 선택 시 44_상담일지.contract_id 를 설정해
+        // 홈 "미제출" KPI·제출 현황이 해당 계약을 제출됨으로 인식하게 한다.
+        function icfbContractSelectHtml() {
+            var list = window._jnlContracts || [];
+            if (!list.length) return '';
+            var opts = '<option value="">— 연결할 계약 선택 (선택) —</option>';
+            list.forEach(function(c) {
+                var label = icfbEsc((c.name || '전시회') + (c.start ? ' · ' + c.start : '') + (c.client ? ' · ' + c.client : ''));
+                opts += '<option value="' + icfbEsc(String(c.contractId)) + '">' + label + '</option>';
+            });
+            return '<div style="margin-bottom:18px;">' +
+                '<label style="display:block;font-weight:700;font-size:0.85rem;margin-bottom:6px;">연결 계약 ' +
+                '<span style="color:var(--gray-400);font-weight:400;font-size:0.78rem;">(선택하면 홈 · 제출 현황에 반영됩니다)</span></label>' +
+                '<select id="icfbContractSelect" style="width:100%;padding:10px 12px;border:1.5px solid #e5eaf2;border-radius:8px;font-size:0.9rem;background:#fff;">' + opts + '</select>' +
+                '</div>';
+        }
+
         function icfbOpenWrite(title, sections) {
             document.getElementById('icfbWriteTitle').textContent = title;
-            document.getElementById('icfbWriteBody').innerHTML = icfbRenderForm(sections, true);
+            document.getElementById('icfbWriteBody').innerHTML = icfbContractSelectHtml() + icfbRenderForm(sections, true);
             icfbAttachExpoAC(sections);
             document.getElementById('icfb-mode-list').style.display = 'none';
             document.getElementById('icfb-mode-builder').style.display = 'none';
@@ -4538,7 +4555,7 @@
 
         function icfbClearWrite() {
             if (icfbWritingTpl) {
-                document.getElementById('icfbWriteBody').innerHTML = icfbRenderForm(icfbWritingTpl.sections, true);
+                document.getElementById('icfbWriteBody').innerHTML = icfbContractSelectHtml() + icfbRenderForm(icfbWritingTpl.sections, true);
                 icfbAttachExpoAC(icfbWritingTpl.sections);
             }
         }
@@ -4584,10 +4601,20 @@
             else { try { user = await ContentourAuth.getCurrentUser(); } catch(e) {} }
             if (!user || !user.id) { showToast('⚠️ 로그인이 필요합니다.'); return; }
 
+            // 연결 계약 선택값 → contract_id / customer_id (미선택 시 기존 동작 유지)
+            var _cSel = document.getElementById('icfbContractSelect');
+            var _selContractId = _cSel && _cSel.value ? _cSel.value : null;
+            var _selCustomerId = null;
+            if (_selContractId) {
+                var _m = (window._jnlContracts || []).find(function(c) { return String(c.contractId) === String(_selContractId); });
+                if (_m) _selCustomerId = _m.customerId || null;
+            }
+
             try {
                 var rec = {
                     interpreter_id: user.id,
-                    customer_id: icfbWritingCustomerId,
+                    customer_id: _selCustomerId || icfbWritingCustomerId,
+                    contract_id: _selContractId,
                     exhibition_name: exhibitionName,
                     consultation_date: consultDate,
                     status: type === 'submit' ? 'submitted' : 'draft',

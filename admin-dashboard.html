@@ -3906,10 +3906,7 @@
                 listEl.innerHTML = filtered.map(function(c) {
                     var actionHtml = '';
                     // deposit_review(\uC720\uB839 \uC120\uACB0\uC81C \uC2B9\uC778\uB300\uAE30)\uB294 \uC81C\uAC70\uB428 \u2014 \uC120\uACB0\uC81C\uB294 \uC11C\uBC84 \uAC80\uC99D\uC73C\uB85C \uBC14\uB85C in_progress \uC804\uC774.
-                    if (c.status === 'balance_review' && c.balance > 0) {
-                        // A안: balance가 0이면 액션 버튼 숨김 (옛 계약 호환)
-                        actionHtml = '<div class="contract-card__actions"><button class="contract-card__action approve" onclick="event.stopPropagation();ctAdminApproveBalance(\''+c.id+'\')">잔금 확인</button><button class="contract-card__action reject" onclick="event.stopPropagation();ctAdminRejectBalance(\''+c.id+'\')">반려</button></div>';
-                    } else if (c.status === 'deposit_pay') {
+                    if (c.status === 'deposit_pay') {
                         actionHtml = '<span class="contract-card__action label">\uACB0\uC81C \uB300\uAE30</span>';
                     } else if (c.status === 'balance_pay') {
                         actionHtml = '<span class="contract-card__action label">\uC794\uAE08 \uB300\uAE30</span>';
@@ -3987,16 +3984,7 @@
                         }).join('') +
                     '</div>';
                 // deposit_review \uC2B9\uC778\uBC15\uC2A4 \uC81C\uAC70\uB428 \u2014 \uC120\uACB0\uC81C\uB294 \uC11C\uBC84 \uAC80\uC99D\uC73C\uB85C \uBC14\uB85C \uC9C4\uD589\uB418\uC5B4 \uAD00\uB9AC\uC790 \uC2B9\uC778 \uB2E8\uACC4 \uC5C6\uC74C.
-                if (c.status === 'balance_review' && c.balance > 0) {
-                    bodyHtml += '<div class="cm-review-box">' +
-                        '<div class="cm-review-box__icon">\uD83D\uDCB0</div>' +
-                        '<div class="cm-review-box__title">잔금 결제 확인 필요</div>' +
-                        '<div class="cm-review-box__desc">고객사가 잔금 '+ctFmt(c.balance)+'을 결제했습니다.<br>확인하면 서비스가 완료 처리됩니다.</div>' +
-                        '<div class="cm-review-box__btns">' +
-                            '<button class="cm-review-box__btn approve" onclick="ctAdminApproveBalance(\''+c.id+'\');closeCtModal();">잔금 확인</button>' +
-                            '<button class="cm-review-box__btn reject" onclick="ctAdminRejectBalance(\''+c.id+'\');closeCtModal();">반려</button>' +
-                        '</div></div>';
-                }
+                // 잔금 확인(balance_review) 모달 박스: 100% 선결제 모델 미사용 — 제거됨
                 document.getElementById('ctModalBody').innerHTML = bodyHtml;
                 document.getElementById('ctModalOverlay').classList.add('open');
             }
@@ -4058,78 +4046,7 @@
                 }
             }
 
-            async function ctAdminApproveBalance(contractId) {
-                var c = ctAdminContracts.find(function(x){return x.id===contractId;});
-                if (!c || c.status !== 'balance_review') return;
-                var today = new Date().toISOString().split('T')[0];
-
-                // ═══ 서버(service role)에서 계약 status='completed' + 정산건 생성/중복방지 ═══
-                // 계약 status는 클라이언트 직접 UPDATE가 트리거로 차단되므로 admin-app 서버 액션으로 처리
-                var dbStl = null;
-                try {
-                    var result = await callAdminAction({ action: 'completeContract', contractId: contractId });
-                    dbStl = result.settlement || null;
-                } catch (err) {
-                    console.error('완료 처리 실패:', err);
-                    showToast('❌ 잔금 확인 처리 실패: ' + (err.message || '다시 시도해주세요.'));
-                    return;
-                }
-
-                // 서버 성공 후에만 로컬 UI 반영
-                c.status = 'complete';
-                c.statusText = '서비스 완료';
-                c.timeline.forEach(function(t) {
-                    if (t.step === '잔금 결제') { t.done = true; t.active = false; if (!t.date) t.date = today; }
-                    if (t.step === '완료') { t.done = true; t.active = false; t.date = today; }
-                });
-                ctAdminInit();
-
-                // 로컬 정산 목록 동기화
-                if (dbStl && !stlAdminData.find(function(d){return d.contractId === contractId;})) {
-                    stlAdminData.push({
-                        id: dbStl.id, dbId: dbStl.id, contractId: contractId,
-                        interpreter: c.interpreter.name, interpColor: c.interpreter.color || '#1565c0',
-                        expo: c.expo, client: c.client.company,
-                        start: c.dates.start, end: c.dates.end, lang: c.lang,
-                        days: c.days, rate: dbStl.daily_rate, amount: dbStl.gross_amount, tax: dbStl.tax_amount,
-                        status: 'request', statusText: '승인 대기', requestDate: today, journalSubmitted: true
-                    });
-                    stlAdminInit();
-                }
-                showToast('✅ ' + c.expo + ' 잔금 확인 완료! 통역사 정산 건이 생성되었습니다. [정산 승인] 탭에서 확인하세요.');
-
-                // 고객사에게 서비스 완료 알림
-                if (window.sbClient && c.customer_id) {
-                    (async function() {
-                        try {
-                            await window.sbClient.from('24_알림').insert({
-                                user_id: c.customer_id,
-                                notification_type: 'service',
-                                title: '✅ 서비스가 완료되었습니다',
-                                message: '"' + c.expo + '" 통역 서비스가 완료 처리되었습니다. 이용해주셔서 감사합니다.',
-                                is_read: false
-                            });
-                        } catch(e) { console.warn('고객사 완료 알림 실패:', e); }
-                    })();
-                }
-
-                // (잔금 확인·정산 생성은 서버 completeContract RPC가 정본 — 통역사는 정산 RPC의 24_알림 + 정산탭 DB로드로 확인. cross-tab broadcast 제거)
-            }
-
-            function ctAdminRejectBalance(contractId) {
-                var c = ctAdminContracts.find(function(x){return x.id===contractId;});
-                if (!c || c.status !== 'balance_review') return;
-                c.status = 'balance_pay';
-                c.statusText = '잔금 결제 대기';
-                c.balancePaid = false;
-                c.timeline.forEach(function(t) {
-                    if (t.step === '잔금 결제') { t.done = false; t.active = true; t.date = ''; }
-                    if (t.step === '완료') { t.active = false; t.date = ''; }
-                });
-                ctAdminInit();
-                showToast('❌ ' + c.expo + ' 잔금 결제가 반려되었습니다.');
-                // (cross-tab broadcast 제거 — 수신자 없음)
-            }
+            // 잔금 확인/반려 처리(balance approval): 100% 선결제 모델 미사용 — 제거됨
 
             // ═══ 취소 관리 시스템 ═══
             var cancelAdminData = [];
@@ -6065,11 +5982,9 @@
             function renderFabPanel() {
                 // deposit_review(유령 선결제 승인대기) 제거 — 선결제는 서버 검증으로 바로 진행, fab에 표시 안 함.
                 // A안: balance가 0인 계약은 잔금 확인 카드 자체를 만들지 않음
-                var balanceReview = ctAdminContracts.filter(function(c){return c.status==='balance_review' && c.balance > 0;});
                 var stlRequest = stlAdminData.filter(function(d){return d.status==='request';});
                 var all = [];
                 _overdueAssignments.forEach(function(o){ all.push({type:'overdue', id:o.id, title:o.expo, sub:'⏰ 통역사 미응답 (응답 기한 초과)', client:o.interpreterName, interpreterId:o.interpreterId}); });
-                balanceReview.forEach(function(c){ all.push({type:'balance', id:c.id, title:c.expo, sub:'잔금 '+ctFmt(c.balance)+' 결제 확인', client:c.client.company}); });
                 stlRequest.forEach(function(d){ all.push({type:'settlement', id:d.id, title:d.expo, sub:'정산 ₩'+d.amount.toLocaleString()+' 승인 대기', client:d.interpreter||'통역사'}); });
 
                 var body = document.getElementById('adminPanelBody');
@@ -6086,10 +6001,6 @@
                     if (item.type === 'overdue') {
                         btns = '<div style="display:flex;gap:6px;margin-top:8px;">' +
                             '<button class="contract-card__action approve" onclick="event.stopPropagation();sendAssignReminder(\''+item.id+'\',\''+item.interpreterId+'\',this);">⏰ 리마인더 보내기</button></div>';
-                    } else if (item.type === 'balance') {
-                        btns = '<div style="display:flex;gap:6px;margin-top:8px;">' +
-                            '<button class="contract-card__action approve" onclick="event.stopPropagation();ctAdminApproveBalance(\''+item.id+'\');renderFabPanel();">잔금 확인</button>' +
-                            '<button class="contract-card__action reject" onclick="event.stopPropagation();ctAdminRejectBalance(\''+item.id+'\');renderFabPanel();">반려</button></div>';
                     } else if (item.type === 'settlement') {
                         btns = '<div style="display:flex;gap:6px;margin-top:8px;">' +
                             '<button class="contract-card__action approve" onclick="event.stopPropagation();openStlApproval('+item.id+');document.getElementById(\'adminPanel\').classList.remove(\'open\');">상세/승인</button></div>';
