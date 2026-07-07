@@ -3,33 +3,11 @@
 
 window.CT = window.CT || {};
 
-// ── 상태 매핑 ──
-CT.SETTLEMENT_STATUS = {
-    request: '승인 대기',
-    approved: '승인 완료',
-    paid: '입금 완료',
-    rejected: '반려'
-};
-
-CT.CONTRACT_STATUS = {
-    pending: '대기',
-    confirmed: '확정',
-    in_progress: '진행중',
-    completed: '완료',
-    cancelled: '취소'
-};
-
 CT.USER_ROLES = {
     admin: '관리자',
     customer: '고객사',
     interpreter: '통역사',
     member: '회원'
-};
-
-// ── 언어 매핑 ──
-CT.LANG_MAP = {
-    en: '영어', jp: '일본어', zh: '중국어', de: '독일어',
-    fr: '프랑스어', es: '스페인어', ru: '러시아어', ar: '아랍어'
 };
 
 // ── Supabase 클라이언트 통합 접근 ──
