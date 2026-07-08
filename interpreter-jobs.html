@@ -1124,9 +1124,9 @@
 
                 <div class="ij-counter">
                     <div class="ij-counter__row">
-                        현재 <span class="ij-counter__big" id="counterCompanies">–</span>개 기업
+                        현재 모집 중인 전시 통역 의뢰 <span class="ij-counter__big" id="counterCompanies">–</span>건
                         <span style="color:var(--gray-200);margin:0 8px;">·</span>
-                        통역사 <span class="ij-counter__mid" id="counterNeeded">–</span>명 모집 중
+                        등록 통역사 <span class="ij-counter__mid" id="counterNeeded">0</span>명
                     </div>
                 </div>
 
@@ -1557,7 +1557,7 @@
                 grid.innerHTML = '<tr><td class="ij-empty-cell" colspan="8"><div class="ij-empty">불러오는 중...</div></td></tr>';
                 moreWrap.style.display = 'none';
                 counterCo.textContent = '–';
-                counterNo.textContent = '–';
+                counterNo.textContent = '0';
                 return;
             }
             if (loadError) {
@@ -1617,7 +1617,7 @@
 
             var recruiting = list.filter(function (r) { return r.status === 'recruiting'; });
             counterCo.textContent = recruiting.length;
-            counterNo.textContent = recruiting.reduce(function (sum, r) { return sum + (r.needed || 0); }, 0);
+            counterNo.textContent = '0'; // 등록 통역사: 일단 0 고정 (추후 실제 등록 수 연동)
         }
 
         // 페이지네이션 렌더링 — 5개 이하면 숨김, 6개 이상이면 페이지 버튼 표시
