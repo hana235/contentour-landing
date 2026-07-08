@@ -65,6 +65,7 @@ module.exports = async function handler(req, res) {
     const interpreterName_ = _t(interpreterName, 100);
     const interpreterLang_ = _t(interpreterLang, 100);
     const interpreterField_ = _t(interpreterField, 100);
+    const serviceType_ = _t(serviceType, 100);
 
     if (!company_ || !contactName_ || !email_ || !phone_ || !exhibitionName_ || !message_) {
         return res.status(400).json({ error: '필수 항목이 누락되었습니다.' });
@@ -105,7 +106,7 @@ module.exports = async function handler(req, res) {
                 start_date: startDate,
                 end_date: endDate,
                 language_pair: interpreterLang_ || null,
-                service_type: serviceType || null,
+                service_type: serviceType_ || null,
                 message: message_,
                 consent: true,
                 status: '접수',
