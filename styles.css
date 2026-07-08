@@ -2362,15 +2362,15 @@ section {
 }
 
 .stat-number {
-    font-size: 2.8rem;
+    font-size: 2rem;
     font-weight: 800;
     color: #fff;
-    line-height: 1;
-    letter-spacing: -1px;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
 }
 
 .stat-plus {
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     color: #4fc3f7;
 }
 
@@ -2551,7 +2551,7 @@ section {
     }
 
     .stat-number {
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
 
     .stat-divider {
