@@ -110,7 +110,7 @@ async function handleInquiry(req, res) {
 //      + 48_통역사지원서.status='pending'. 승인 전엔 검수 대기 페이지만 접근 가능.
 async function handleApplication(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-    if (!await checkRateLimit(sb, 'apply:' + clientIp(req), 5, 60)) {
+    if (!await checkRateLimit(sb, 'apply:' + clientIp(req), 5, 60, { failClosed: true })) {
         return res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
     }
 
@@ -297,7 +297,7 @@ const EXT_TO_MIME = {
 
 async function handleUploadFile(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-    if (!await checkRateLimit(sb, 'upload:' + clientIp(req), 30, 60)) {
+    if (!await checkRateLimit(sb, 'upload:' + clientIp(req), 30, 60, { failClosed: true })) {
         return res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
     }
 

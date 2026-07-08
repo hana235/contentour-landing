@@ -44,7 +44,7 @@ async function handleVerifyPayment(req, res, rawBody) {
     const { data: { user }, error: authErr } = await sbAuth.auth.getUser(token);
     if (authErr || !user) return res.status(401).json({ success: false, error: '인증 실패' });
 
-    if (!await checkRateLimit(sb, 'verify-payment:' + user.id, 20, 60)) {
+    if (!await checkRateLimit(sb, 'verify-payment:' + user.id, 20, 60, { failClosed: true })) {
         return res.status(429).json({ success: false, error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
     }
 
@@ -459,7 +459,7 @@ async function handleManualTransferRequest(req, res, rawBody) {
     const { data: { user }, error: authErr } = await sbAuth.auth.getUser(token);
     if (authErr || !user) return res.status(401).json({ success: false, error: '인증 실패' });
 
-    if (!await checkRateLimit(sb, 'manual-transfer:' + user.id, 10, 60)) {
+    if (!await checkRateLimit(sb, 'manual-transfer:' + user.id, 10, 60, { failClosed: true })) {
         return res.status(429).json({ success: false, error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
     }
 

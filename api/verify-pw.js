@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
     }
 
     // 무차별 대입 방지 — IP당 분당 15회
-    if (!await checkRateLimit(sb, 'pwgate:' + clientIp(req), 15, 60)) {
+    if (!await checkRateLimit(sb, 'pwgate:' + clientIp(req), 15, 60, { failClosed: true })) {
         return res.status(429).json({ ok: false, error: '시도가 너무 많습니다. 잠시 후 다시 시도하세요.' });
     }
 
