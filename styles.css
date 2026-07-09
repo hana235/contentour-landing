@@ -2876,21 +2876,24 @@ section {
 .footer-home {
     display: flex;
     align-items: center;
-    gap: 10px;
-    background: #232323;
-    border: 1px solid #333;
+    gap: 11px;
+    background: linear-gradient(135deg, #1976d2, #0d47a1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 10px;
-    padding: 9px 16px 9px 10px;
+    padding: 11px 14px 11px 11px;
     text-decoration: none;
-    color: #dcdcdc;
-    font-size: 0.82rem;
+    color: #ffffff;
+    font-size: 0.84rem;
     font-weight: 700;
     letter-spacing: -0.01em;
-    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+    box-shadow: 0 4px 14px rgba(21, 101, 192, 0.38);
+    margin-bottom: 6px;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 .footer-home:hover {
-    border-color: #3a5a8a;
-    background: #262b33;
+    filter: brightness(1.09);
+    box-shadow: 0 6px 20px rgba(21, 101, 192, 0.5);
+    transform: translateY(-1px);
     color: #ffffff;
 }
 .footer-home__icon {
@@ -2900,11 +2903,19 @@ section {
     width: 34px;
     height: 34px;
     border-radius: 8px;
-    background: rgba(96, 165, 250, 0.14);
-    color: #7cb0ee;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
     flex-shrink: 0;
 }
 .footer-home__icon svg { width: 19px; height: 19px; display: block; }
+.footer-home__label { flex: 1; }
+.footer-home__arrow {
+    display: inline-flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.85);
+    flex-shrink: 0;
+}
+.footer-home__arrow svg { width: 15px; height: 15px; display: block; }
 
 /* ── 푸터 인증 배지 (오른쪽 세로 정렬) ── */
 .footer-creds {
