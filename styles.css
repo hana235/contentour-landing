@@ -2852,6 +2852,69 @@ section {
     text-align: left;
 }
 
+/* ── 푸터 2단 레이아웃 (좌: 정보 / 우: 인증 배지) ── */
+.footer-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 48px;
+    flex-wrap: wrap;
+}
+.footer-left {
+    flex: 1 1 480px;
+    min-width: 0;
+}
+
+/* ── 푸터 인증 배지 (오른쪽 세로 정렬) ── */
+.footer-creds {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.footer-cred {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #232323;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 9px 16px 9px 10px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+.footer-cred:hover {
+    border-color: #3a5a8a;
+    background: #262b33;
+}
+.footer-cred__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(96, 165, 250, 0.14);
+    color: #7cb0ee;
+    flex-shrink: 0;
+}
+.footer-cred__icon svg {
+    width: 19px;
+    height: 19px;
+    display: block;
+}
+.footer-cred__text {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #dcdcdc;
+    letter-spacing: -0.01em;
+}
+@media (max-width: 768px) {
+    .footer-main { gap: 28px; }
+    .footer-creds { width: 100%; gap: 8px; margin-top: 4px; }
+    .footer-cred { padding: 8px 14px 8px 8px; }
+    .footer-cred__text { font-size: 0.78rem; }
+}
+
 /* ══════════════ 국가별 통역사 프로필 패널 ══════════════ */
 .country-card.active {
     border-color: #1565c0;
