@@ -2865,6 +2865,47 @@ section {
     min-width: 0;
 }
 
+/* ── 푸터 우측 컬럼 (홈페이지 링크 + 인증 배지) ── */
+.footer-right {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+    align-items: stretch;
+}
+.footer-home {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #232323;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 9px 16px 9px 10px;
+    text-decoration: none;
+    color: #dcdcdc;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.footer-home:hover {
+    border-color: #3a5a8a;
+    background: #262b33;
+    color: #ffffff;
+}
+.footer-home__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(96, 165, 250, 0.14);
+    color: #7cb0ee;
+    flex-shrink: 0;
+}
+.footer-home__icon svg { width: 19px; height: 19px; display: block; }
+
 /* ── 푸터 인증 배지 (오른쪽 세로 정렬) ── */
 .footer-creds {
     display: flex;
@@ -2910,6 +2951,7 @@ section {
 }
 @media (max-width: 768px) {
     .footer-main { gap: 28px; }
+    .footer-right { width: 100%; }
     .footer-creds { width: 100%; gap: 8px; margin-top: 4px; }
     .footer-cred { padding: 8px 14px 8px 8px; }
     .footer-cred__text { font-size: 0.78rem; }
