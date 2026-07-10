@@ -2215,7 +2215,7 @@
                     '<div style="background:#f5f7fa;padding:12px 14px;border-radius:10px;margin-bottom:14px;">' +
                         '<div style="font-size:0.82rem;color:#888;margin-bottom:8px;">고객 연락처</div>' +
                         '<div style="display:flex;flex-direction:column;gap:6px;">' +
-                            '<div>👤 <strong>' + (d.contact || '-') + '</strong>' + (d.company ? ' (' + d.company + ')' : '') + '</div>' +
+                            '<div>👤 <strong>' + escapeHtml(d.contact || '-') + '</strong>' + (d.company ? ' (' + escapeHtml(d.company) + ')' : '') + '</div>' +
                             '<div>📧 <a href="mailto:' + (d.email || '') + '" style="color:#1565c0;">' + (d.email || '-') + '</a></div>' +
                             '<div>📞 <a href="tel:' + (d.phone || '') + '" style="color:#1565c0;">' + (d.phone || '-') + '</a></div>' +
                         '</div>' +
@@ -3150,17 +3150,17 @@
                     starsHtml = '<div class="section-title">통역사 현장 평가</div>' +
                         '<table class="tbl"><tr><th>전문 용어 대응력</th><td>' + starText(j.stars.term) + '</td><th>비즈니스 매너</th><td>' + starText(j.stars.manner) + '</td></tr>' +
                         '<tr><th>의사소통 정확도</th><td>' + starText(j.stars.comm) + '</td><th>전반적 만족도</th><td>' + starText(j.stars.overall) + '</td></tr></table>' +
-                        (j.eval ? '<p class="text-block">' + j.eval + '</p>' : '');
+                        (j.eval ? '<p class="text-block">' + escapeHtml(j.eval) + '</p>' : '');
                 }
 
                 var interpExtra = '';
                 if (isInterp) {
                     interpExtra += (j.interpType ? '<div class="section-title">통역 상세</div><table class="tbl"><tr><th>통역 유형</th><td>' + j.interpType + '</td><th>난이도</th><td>' + (j.difficulty||'-') + '</td></tr></table>' : '');
-                    interpExtra += (j.terminology ? '<div class="section-title">전문 용어 메모</div><p class="text-block">' + j.terminology + '</p>' : '');
-                    interpExtra += (j.clientNote ? '<div class="section-title">고객사 전달 사항</div><p class="text-block">' + j.clientNote + '</p>' : '');
+                    interpExtra += (j.terminology ? '<div class="section-title">전문 용어 메모</div><p class="text-block">' + escapeHtml(j.terminology) + '</p>' : '');
+                    interpExtra += (j.clientNote ? '<div class="section-title">고객사 전달 사항</div><p class="text-block">' + escapeHtml(j.clientNote) + '</p>' : '');
                 }
 
-                var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>상담일지 - ' + j.expo + '</title>' +
+                var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>상담일지 - ' + escapeHtml(j.expo) + '</title>' +
                 '<style>' +
                 '*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }' +
                 'body { font-family:"Montserrat","Noto Sans KR",sans-serif; color:#1a1a1a; padding:40px 50px; line-height:1.7; background:#fff; }' +
@@ -3420,9 +3420,9 @@
                     }
 
                     return '<tr onclick="openStlApproval(\'' + d.id + '\')">' +
-                        '<td><div class="t-interp"><div class="t-interp-avatar" style="background:' + d.interpColor + ';">' + initial + '</div><div><div style="font-weight:700;">' + d.interpreter + '</div></div></div></td>' +
-                        '<td><div class="t-expo">' + d.expo + '</div><div class="t-sub">' + d.lang + '</div><div class="t-sub" style="font-size:0.7rem;color:#9aa3b2;letter-spacing:0.2px;">' + stlContractNo(d) + '</div></td>' +
-                        '<td>' + d.client + '</td>' +
+                        '<td><div class="t-interp"><div class="t-interp-avatar" style="background:' + d.interpColor + ';">' + initial + '</div><div><div style="font-weight:700;">' + escapeHtml(d.interpreter) + '</div></div></div></td>' +
+                        '<td><div class="t-expo">' + escapeHtml(d.expo) + '</div><div class="t-sub">' + escapeHtml(d.lang) + '</div><div class="t-sub" style="font-size:0.7rem;color:#9aa3b2;letter-spacing:0.2px;">' + stlContractNo(d) + '</div></td>' +
+                        '<td>' + escapeHtml(d.client) + '</td>' +
                         '<td><div class="t-sub">' + d.start.slice(5).replace('-', '.') + ' ~ ' + d.end.slice(5).replace('-', '.') + '</div></td>' +
                         '<td style="text-align:center;font-weight:700;">' + d.days + '일</td>' +
                         '<td><div class="t-amount">₩' + d.amount.toLocaleString() + '</div></td>' +
@@ -3854,6 +3854,16 @@
 
             function escapeHtml(s) {
                 return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            }
+
+            // Returns a CSS-url()-safe image URL, or '' if the value is not an allowed URL scheme.
+            // Prevents breaking out of background-image:url('...') / the style attribute.
+            function safeBgImageUrl(u) {
+                if (u == null) return '';
+                var s = String(u).trim();
+                if (!/^(https:\/\/|http:\/\/|\/|data:image\/)/i.test(s)) return '';
+                // Neutralize characters that could terminate the url('...') or the style attribute.
+                return s.replace(/['"()\\]/g, '').replace(/</g, '%3C').replace(/>/g, '%3E');
             }
 
             function ctAdminUpdateSummary() {
@@ -4953,10 +4963,10 @@
                 }
                 listEl.innerHTML = caseAdminData.map(function(c) {
                     return '<div style="background:#fff;border:1.5px solid #e5eaf2;border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;" onclick="editCaseForm(\'' + c.id + '\')">' +
-                        '<div style="width:80px;height:55px;border-radius:8px;background-size:cover;background-position:center;flex-shrink:0;' + (c.image_url ? 'background-image:url(' + c.image_url + ')' : 'background:#e3f0ff;') + '"></div>' +
+                        '<div style="width:80px;height:55px;border-radius:8px;background-size:cover;background-position:center;flex-shrink:0;' + (safeBgImageUrl(c.image_url) ? 'background-image:url(\'' + safeBgImageUrl(c.image_url) + '\')' : 'background:#e3f0ff;') + '"></div>' +
                         '<div style="flex:1;min-width:0;">' +
-                            '<div style="font-weight:700;font-size:0.9rem;">[' + c.client_company + '] ' + c.exhibition_name + '</div>' +
-                            '<div style="font-size:0.78rem;color:#666;margin-top:2px;">' + c.country_flag + ' ' + c.country + ' · ' + c.exhibition_date + ' · ' + c.case_type + (c.interpreter_name ? ' · 통역사: ' + c.interpreter_name : '') + '</div>' +
+                            '<div style="font-weight:700;font-size:0.9rem;">[' + escapeHtml(c.client_company) + '] ' + escapeHtml(c.exhibition_name) + '</div>' +
+                            '<div style="font-size:0.78rem;color:#666;margin-top:2px;">' + c.country_flag + ' ' + c.country + ' · ' + c.exhibition_date + ' · ' + c.case_type + (c.interpreter_name ? ' · 통역사: ' + escapeHtml(c.interpreter_name) : '') + '</div>' +
                             '<div style="font-size:0.75rem;color:#999;margin-top:2px;">' + (c.metric1_label||'') + ' ' + (c.metric1_value||'') + ' | ' + (c.metric2_label||'') + ' ' + (c.metric2_value||'') + '</div>' +
                         '</div>' +
                         '<div style="display:flex;gap:6px;flex-shrink:0;">' +
@@ -5336,7 +5346,7 @@
                 if (allInterpretersFromDB.length > 0) {
                     interpSelect.innerHTML = '<option value="">통역사 선택</option>' +
                         allInterpretersFromDB.map(function(p) {
-                            return '<option value="' + p.name + '">' + p.name + ' (' + p.langs.join(', ') + ')' + (p.available ? '' : ' [불가]') + '</option>';
+                            return '<option value="' + escapeHtml(p.name) + '">' + escapeHtml(p.name) + ' (' + escapeHtml(p.langs.join(', ')) + ')' + (p.available ? '' : ' [불가]') + '</option>';
                         }).join('');
                 }
                 // 배정된 통역사가 있으면 자동 선택
@@ -6876,8 +6886,8 @@
                 tbody.innerHTML = fpClients.map(function(c, i) {
                     return '<tr>' +
                         '<td style="text-align:center;font-weight:700;color:var(--gray-400);">' + (i + 1) + '</td>' +
-                        '<td><div style="font-weight:700;">' + c.name + '</div></td>' +
-                        '<td style="font-size:0.82rem;color:var(--gray-600);">' + c.manager + '</td>' +
+                        '<td><div style="font-weight:700;">' + escapeHtml(c.name) + '</div></td>' +
+                        '<td style="font-size:0.82rem;color:var(--gray-600);">' + escapeHtml(c.manager) + '</td>' +
                         '<td style="text-align:center;"><span style="padding:4px 12px;background:#e8f5e9;color:#2e7d32;border-radius:6px;font-size:0.75rem;font-weight:700;">항상 활성</span></td>' +
                         '<td style="text-align:center;">' +
                             '<label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">' +

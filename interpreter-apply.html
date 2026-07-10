@@ -1696,6 +1696,9 @@
         }
 
         // ── Supabase 클라이언트 ──
+        // ⚠️ anon 키를 여기 인라인으로 둔 이유: 이 공개 지원 폼은 supabase-config.js(ContentourAuth
+        //    자동 리다이렉트 등 부수효과 포함)를 로드하지 않고 최소 구성으로 동작함.
+        //    키를 로테이션할 때는 supabase-config.js 와 이 파일 두 곳을 반드시 함께 교체할 것.
         const SUPABASE_URL = 'https://jgeqbdrfpekzuumaklvx.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpnZXFiZHJmcGVrenV1bWFrbHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzgwMzQsImV4cCI6MjA5MDQxNDAzNH0.C2y3UiPtHIF2s4nPvbGycN927HOG4YpO86FfgZAelUw';
         const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
