@@ -1,0 +1,13 @@
+/*
+ * Pretendard Variable — self-hosted (jsdelivr 대체)
+ * 기존 jsdelivr dynamic-subset CSS를 대체. font-family는 사이트 전역에서 쓰는 'Pretendard' 유지.
+ * CDN(jsdelivr) 차단 지역(중국 등)에서도 본문 폰트가 정상 렌더된다.
+ * 파일: assets/PretendardVariable.woff2 (v1.3.9, 가변 폰트 100~900).
+ */
+@font-face {
+    font-family: 'Pretendard';
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+    src: url('/assets/PretendardVariable.woff2') format('woff2');
+}
