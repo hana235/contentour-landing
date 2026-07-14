@@ -116,11 +116,16 @@ async function handleApplication(req, res) {
 
     var b = req.body || {};
     var name_ko = s(b.name_ko, 100);
+    var name_en = s(b.name_en, 100);
     var email = s(b.email, 200);
     var phone = s(b.phone, 50);
     var password = b.password ? String(b.password) : '';
 
-    if (!name_ko || !email || !phone) return res.status(400).json({ error: '필수 항목이 누락되었습니다.' });
+    // 한글 이름이 없는 해외 통역사 대비: 표시 이름은 한글 이름 우선, 없으면 영문 이름 사용
+    var displayName = name_ko || name_en;
+
+    // 이름은 한글/영문 중 최소 하나는 있어야 함 (해외 지원자는 영문만 입력 가능)
+    if (!displayName || !email || !phone) return res.status(400).json({ error: '필수 항목이 누락되었습니다.' });
     if (!isEmail(email)) return res.status(400).json({ error: '이메일 형식이 올바르지 않습니다.' });
     if (b.privacy_consent !== true) return res.status(400).json({ error: '개인정보 수집·이용 동의가 필요합니다.' });
 
@@ -131,7 +136,7 @@ async function handleApplication(req, res) {
     }
 
     var payload = {
-        name_ko, name_en: s(b.name_en, 100), email, phone,
+        name_ko, name_en, email, phone,
         nationality: s(b.nationality, 100),
         birth_date: s(b.birth_date, 20),
         gender: s(b.gender, 20),
@@ -185,7 +190,7 @@ async function handleApplication(req, res) {
                 email: email,
                 password: password,
                 email_confirm: true,
-                user_metadata: { name: name_ko, role: 'interpreter' }
+                user_metadata: { name: displayName, role: 'interpreter' }
             });
             if (authErr || !authData || !authData.user) {
                 console.error('Auth 계정 생성 실패:', authErr);
@@ -199,7 +204,7 @@ async function handleApplication(req, res) {
             // 3) 01_회원 row UPDATE (Auth 트리거가 생성한 row를 통역사용으로 갱신)
             await sb.from('01_회원').update({
                 role: 'interpreter',
-                name: name_ko,
+                name: displayName,
                 phone: phone
             }).eq('id', userId);
 
@@ -227,7 +232,7 @@ async function handleApplication(req, res) {
             try {
                 await sb.from('40_통역사프로필').insert({
                     user_id: userId,
-                    display_name: name_ko,
+                    display_name: displayName,
                     phone: phone,
                     languages: langList.length > 0 ? langList : ['기타'],
                     specialties: (payload.specialties || []).map(function(sp) { return String(sp).replace(/^[^\s]+\s/, ''); }),
