@@ -267,6 +267,29 @@ async function handleApplication(req, res) {
             return res.status(500).json({ error: '저장 실패. 잠시 후 다시 시도해주세요.' });
         }
 
+        // 6) 새 통역사 지원 → 관리자 전원에게 앱 내 알림(24_알림).
+        //    best-effort: 알림 실패해도 지원 접수 자체는 성공 처리 (응답 영향 없음).
+        //    (리뷰 승인대기 알림 trigger와 동일한 24_알림 형태 사용)
+        try {
+            var { data: notifyAdmins } = await sb.from('01_회원').select('id').eq('role', 'admin');
+            if (notifyAdmins && notifyAdmins.length > 0) {
+                var reapplyTag = reapplying ? ' (재지원)' : '';
+                var notifRows = notifyAdmins.map(function(a) {
+                    return {
+                        user_id: a.id,
+                        notification_type: 'service',
+                        title: '🙋 새 통역사 지원' + reapplyTag,
+                        message: (displayName || '통역사') + '님이 통역사 지원서를 제출했습니다. (' + applicationNumber + ') 검수 대기 중입니다.',
+                        link: '/admin-dashboard.html#applications',
+                        is_read: false
+                    };
+                });
+                await sb.from('24_알림').insert(notifRows);
+            }
+        } catch (notifErr) {
+            console.error('관리자 지원 알림 INSERT 실패 (계속 진행):', notifErr);
+        }
+
         return res.status(200).json({
             ok: true,
             applicationId: data.id,
