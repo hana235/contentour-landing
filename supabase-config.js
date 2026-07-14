@@ -201,6 +201,9 @@ window.showToast = window.showToast || function(message, type) {
         },
 
         // 회원가입 (고객사)
+        // ⚠️ DEPRECATED (2026-07-14): 고객사 가입은 서버 API /api/register-customer 로 이전됨
+        //   (client-auth.html에서 더 이상 호출하지 않음). 클라이언트 signUp의 CDN 의존·부분실패
+        //   문제를 없애기 위해 서버 admin.createUser로 대체. 이 함수는 참조 없음 — 제거 예정.
         async registerCustomer({ email, password, name, phone, company, brn, position, brnFile }) {
             if (!sb) return { error: { message: 'Supabase가 초기화되지 않았습니다.' } };
 

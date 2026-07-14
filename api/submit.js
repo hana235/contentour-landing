@@ -346,6 +346,90 @@ const EXT_TO_MIME = {
     'webp': ['image/webp']
 };
 
+// ────────────────────────── register-customer ──────────────────────────
+// 고객사 신규가입을 서버(service_role)에서 처리 — 클라이언트 supabase-js(CDN) 의존 제거.
+//   계정 생성은 admin.createUser(email_confirm:true)로 즉시 완료(이메일 확인 설정과 무관).
+//   사업자등록증 파일 업로드는 가입 성공 후 클라이언트가 로그인해 별도 처리(선택 항목).
+async function handleRegisterCustomer(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    var b = req.body || {};
+    var email = s(b.email, 200);
+    var password = b.password ? String(b.password) : '';
+    var name = s(b.name, 100);
+    var phone = s(b.phone, 50);
+    var company = s(b.company, 200);
+    var brn = s(b.brn, 50);
+
+    // 필수값 (국내 고객사: 회사명·담당자·연락처·이메일·사업자등록번호)
+    if (!email || !name || !phone || !company || !brn) {
+        return res.status(400).json({ error: '필수 항목이 누락되었습니다.' });
+    }
+    if (!isEmail(email)) return res.status(400).json({ error: '이메일 형식이 올바르지 않습니다.' });
+    if (b.privacy_consent !== true) return res.status(400).json({ error: '개인정보 수집·이용 동의가 필요합니다.' });
+    // 비밀번호 정책: 8자 이상 + 대·소문자·숫자
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+        return res.status(400).json({ error: '비밀번호는 8자 이상이며 대문자·소문자·숫자를 모두 포함해야 합니다.' });
+    }
+    // 사업자등록번호 형식(국내): 000-00-00000
+    if (!/^\d{3}-\d{2}-\d{5}$/.test(brn)) {
+        return res.status(400).json({ error: '사업자등록번호 형식을 확인해주세요. (예: 000-00-00000)' });
+    }
+
+    // 남용 방지 (fail-open): 이메일 3/분 + IP 20/분
+    var ip = clientIp(req);
+    if (!await checkRateLimit(sb, 'register:email:' + email.toLowerCase(), 3, 60) ||
+        !await checkRateLimit(sb, 'register:ip:' + ip, 20, 60)) {
+        return res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    }
+
+    try {
+        // 이메일 중복 체크
+        var { data: existing } = await sb.from('01_회원').select('id').eq('email', email).maybeSingle();
+        if (existing && existing.id) {
+            return res.status(409).json({ error: '이미 가입된 이메일입니다. 로그인해주세요.' });
+        }
+
+        // Auth 계정 생성 (즉시 확인)
+        var { data: authData, error: authErr } = await sb.auth.admin.createUser({
+            email: email,
+            password: password,
+            email_confirm: true,
+            user_metadata: { name: name, role: 'customer', phone: phone }
+        });
+        if (authErr || !authData || !authData.user) {
+            console.error('고객사 Auth 계정 생성 실패:', authErr);
+            if (authErr && /already/i.test(authErr.message || '')) {
+                return res.status(409).json({ error: '이미 가입된 이메일입니다. 로그인해주세요.' });
+            }
+            return res.status(500).json({ error: '계정 생성 실패. 잠시 후 다시 시도해주세요.' });
+        }
+        var userId = authData.user.id;
+
+        // 01_회원에 회사 정보 저장 (role/name/phone은 handle_new_user 트리거가 이미 세팅)
+        //   등록증 파일은 가입 후 로그인해 별도 업로드 → 여기선 status='none'(미제출)
+        var { error: updErr } = await sb.from('01_회원').update({
+            role: 'customer',
+            name: name,
+            phone: phone,
+            company_name: company,
+            business_number: brn,
+            business_registration_status: 'none'
+        }).eq('id', userId);
+        if (updErr) {
+            // 회사정보 저장 실패는 비치명적(마이페이지에서 보완 가능) — 계정은 유지, 경고만 반환
+            console.error('고객사 회사정보 저장 실패(계속 진행):', updErr);
+            return res.status(200).json({ ok: true, userId: userId, email: email,
+                warning: '가입은 완료되었으나 기업 정보 저장에 실패했습니다. 로그인 후 마이페이지에서 입력해주세요.' });
+        }
+
+        return res.status(200).json({ ok: true, userId: userId, email: email });
+    } catch (e) {
+        console.error('register-customer error:', e);
+        return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+    }
+}
+
 async function handleUploadFile(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     if (!await checkRateLimit(sb, 'upload:' + clientIp(req), 30, 60, { failClosed: true })) {
@@ -1041,6 +1125,7 @@ module.exports = async function handler(req, res) {
     switch (route) {
         case 'submit-inquiry': return handleInquiry(req, res);
         case 'submit-application': return handleApplication(req, res);
+        case 'register-customer': return handleRegisterCustomer(req, res);
         case 'submit-showcase-posting': return handleShowcasePosting(req, res);
         case 'submit-showcase-apply': return handleShowcaseApply(req, res);
         case 'update-showcase-posting': return handleUpdateShowcasePosting(req, res);
