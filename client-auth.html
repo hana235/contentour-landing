@@ -929,13 +929,14 @@
                 return;
             }
 
-            // ── 데모 모드 ──
-            setTimeout(() => {
-                btn.classList.remove('loading');
-                btn.textContent = '가입 신청 완료';
-                showAlert('고객사 가입 신청이 접수되었습니다! 승인 후 로그인이 가능합니다.', 'success');
-                setTimeout(() => switchTab('login'), 2500);
-            }, 1400);
+            // ── sbClient 미초기화(예: supabase-js CDN 로드 실패) ──
+            //   과거엔 여기서 '데모 모드'로 가짜 성공 토스트를 띄웠으나, 실제 가입이
+            //   안 됐는데 성공처럼 보여 사용자가 재시도하지 않는 침묵형 실패를 유발했다.
+            //   → 명확한 오류로 전환하고 중단한다. (가짜 성공 금지)
+            btn.classList.remove('loading');
+            btn.textContent = '고객사 가입 신청';
+            showAlert('네트워크 문제로 가입을 완료할 수 없습니다. 잠시 후 새로고침하여 다시 시도해주세요. (문제가 계속되면 info@contentour.co.kr 로 문의)', 'error');
+            return;
         });
         // ── 이미 로그인된 상태 확인 ──
         (async function() {

@@ -1448,7 +1448,17 @@
             zone.addEventListener('drop', e => {
                 e.preventDefault(); zone.classList.remove('dragover');
                 const file = e.dataTransfer.files[0];
-                if (file) handleFileObj(file);
+                if (!file) return;
+                // 드롭한 파일을 실제 input.files에 주입 (안 하면 제출 시 resumeFile.files가 비어
+                //  이력서가 조용히 미전송되던 버그). DataTransfer 미지원 브라우저는 전역 폴백 사용.
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    document.getElementById('resumeFile').files = dt.files;
+                } catch (err) {
+                    window.__droppedResume = file;
+                }
+                handleFileObj(file);
             });
         };
 
@@ -1517,6 +1527,9 @@
         }
 
         // ── 자격증 추가 ──
+        // 선택한 자격증 File을 id별로 보관 (라벨 innerHTML 재작성으로 file input이 파괴돼
+        //  실제 파일이 조용히 소실되던 버그 방지 — 상태 텍스트는 별도 span으로만 갱신)
+        const certFiles = {};
         function addCert() {
             const id = Date.now();
             certs.push(id);
@@ -1527,27 +1540,30 @@
     <input type="text" id="cy-${id}" aria-label="취득연도" placeholder="취득연도">
     <label class="cert-file-label" id="cfl-${id}">
         <input type="file" id="cf-${id}" accept=".pdf,.jpg,.jpeg,.png" onchange="handleCertFile(${id}, this)">
-        📎 증빙파일
+        <span class="cert-file-text" id="cft-${id}">📎 증빙파일</span>
     </label>
     <button class="lang-del" type="button" onclick="removeCert(${id})">✕</button>`;
             document.getElementById('certList').appendChild(div);
         }
         function removeCert(id) {
             certs = certs.filter(x => x !== id);
+            delete certFiles[id];
             document.getElementById('cert-' + id).remove();
         }
         function handleCertFile(id, input) {
             const file = input.files[0];
             if (!file) return;
-            if (file.size > 5 * 1024 * 1024) { showToast('⚠️ 자격증 파일은 5MB 이하여야 합니다.'); input.value = ''; return; }
+            if (file.size > 5 * 1024 * 1024) { showToast('⚠️ 자격증 파일은 5MB 이하여야 합니다.'); input.value = ''; delete certFiles[id]; return; }
+            certFiles[id] = file; // File 보관 (DOM 파괴 없이)
             const label = document.getElementById('cfl-' + id);
             label.classList.add('attached');
-            label.innerHTML = '<input type="file" id="cf-' + id + '" accept=".pdf,.jpg,.jpeg,.png" onchange="handleCertFile(' + id + ', this)">✅ ' + file.name;
+            const txt = document.getElementById('cft-' + id);
+            if (txt) txt.textContent = '✅ ' + file.name;
         }
         async function uploadCertFile(id) {
-            const input = document.getElementById('cf-' + id);
-            if (!input || !input.files[0] || !sbClient) return null;
-            const file = input.files[0];
+            // 맵에 보관한 File 우선, 없으면 DOM input 폴백
+            const file = certFiles[id] || (document.getElementById('cf-' + id) || {}).files?.[0];
+            if (!file || !sbClient) return null;
             try {
                 const resp = await fetch('/api/upload-application-file', {
                     method: 'POST',
@@ -1577,6 +1593,7 @@
         }
         function removeFile() {
             document.getElementById('resumeFile').value = '';
+            window.__droppedResume = null;
             document.getElementById('uploadPreview').classList.remove('show');
             document.getElementById('uploadZone').style.opacity = '1';
         }
@@ -1767,9 +1784,9 @@
                 });
             }
 
-            // 이력서 파일 업로드
+            // 이력서 파일 업로드 (input.files 우선, 드롭 폴백 __droppedResume)
             let resumeInfo = null;
-            const resumeFile = document.getElementById('resumeFile').files[0];
+            const resumeFile = document.getElementById('resumeFile').files[0] || window.__droppedResume;
             if (resumeFile) {
                 resumeInfo = await uploadResume(resumeFile);
             }

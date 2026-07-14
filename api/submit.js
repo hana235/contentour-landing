@@ -186,6 +186,8 @@ async function handleApplication(req, res) {
         }
 
         // 2) 신규 가입자: Supabase Auth 계정 생성
+        //    createdNewUser: 이번 요청에서 새 계정을 만들었는지 추적 → 이후 단계 실패 시 롤백 판단용
+        var createdNewUser = false;
         if (!userId) {
             var { data: authData, error: authErr } = await sb.auth.admin.createUser({
                 email: email,
@@ -201,6 +203,7 @@ async function handleApplication(req, res) {
                 return res.status(500).json({ error: '계정 생성 실패. 잠시 후 다시 시도해주세요.' });
             }
             userId = authData.user.id;
+            createdNewUser = true;
 
             // 3) 01_회원 row UPDATE (Auth 트리거가 생성한 row를 통역사용으로 갱신)
             await sb.from('01_회원').update({
@@ -265,6 +268,18 @@ async function handleApplication(req, res) {
         var { data, error } = await sb.from('48_통역사지원서').insert(payload).select('id, application_number').single();
         if (error) {
             console.error('지원서 저장 실패:', error);
+            // 보상(롤백): 이번 요청에서 새로 만든 Auth 계정이면 삭제해 '이메일 영구 잠김'을 방지한다.
+            //   (계정만 남고 48 저장이 실패하면, 같은 이메일 재시도가 409로 막혀 자가복구 불가였음.)
+            //   재지원(reapplying=기존 계정)은 절대 삭제하지 않는다. 롤백이 실패해도 원 500 응답은 유지.
+            if (createdNewUser && userId) {
+                try {
+                    await sb.from('40_통역사프로필').delete().eq('user_id', userId);
+                    await sb.auth.admin.deleteUser(userId);           // → 01_회원 cascade 삭제
+                    await sb.from('01_회원').delete().eq('id', userId); // cascade 미설정 대비 best-effort
+                } catch (rbErr) {
+                    console.error('보상 롤백 실패(수동 정리 필요) userId=' + userId + ':', rbErr);
+                }
+            }
             return res.status(500).json({ error: '저장 실패. 잠시 후 다시 시도해주세요.' });
         }
 
