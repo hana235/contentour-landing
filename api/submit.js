@@ -110,9 +110,6 @@ async function handleInquiry(req, res) {
 //      + 48_통역사지원서.status='pending'. 승인 전엔 검수 대기 페이지만 접근 가능.
 async function handleApplication(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-    if (!await checkRateLimit(sb, 'apply:' + clientIp(req), 5, 60, { failClosed: true })) {
-        return res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
-    }
 
     var b = req.body || {};
     var name_ko = s(b.name_ko, 100);
@@ -133,6 +130,16 @@ async function handleApplication(req, res) {
     if (!password || password.length < 8) return res.status(400).json({ error: '비밀번호는 8자 이상이어야 합니다.' });
     if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
         return res.status(400).json({ error: '비밀번호는 대문자·소문자·숫자를 모두 포함해야 합니다.' });
+    }
+
+    // 남용 방지 — 필드 검증을 통과한 요청만 집계(입력 오류 반복은 카운트 안 함).
+    //  · 같은 이메일 3회/분: 한 사람의 연타·중복 제출 방지
+    //  · 같은 IP 20회/분: 대량 스팸 방지(단, 채용설명회장 등 공유 IP 코호트는 통과하도록 넉넉히)
+    //  fail-open(기본): 일시적 DB 오류로 정상 지원을 막지 않는다. 계정 중복은 createUser가 별도 차단.
+    var ip = clientIp(req);
+    if (!await checkRateLimit(sb, 'apply:email:' + email.toLowerCase(), 3, 60) ||
+        !await checkRateLimit(sb, 'apply:ip:' + ip, 20, 60)) {
+        return res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
     }
 
     var payload = {
