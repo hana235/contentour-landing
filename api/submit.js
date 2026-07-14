@@ -136,7 +136,8 @@ async function handleApplication(req, res) {
     }
 
     var payload = {
-        name_ko, name_en, email, phone,
+        // name_ko 컬럼은 NOT NULL — 한글 이름 없는 해외 통역사는 영문 이름으로 채운다(displayName)
+        name_ko: displayName, name_en, email, phone,
         nationality: s(b.nationality, 100),
         birth_date: s(b.birth_date, 20),
         gender: s(b.gender, 20),
