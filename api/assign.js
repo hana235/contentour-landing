@@ -87,7 +87,41 @@ module.exports = async function handler(req, res) {
         // 4~6. 견적문의 상태·메모 갱신 + 계약 생성/갱신 + contract_id 연결을 원자적으로 처리
         //  1순위: RPC(assign_inquiry_atomic) — 단일 트랜잭션, 부분 실패 시 전체 롤백
         //  2순위: RPC 미적용/실패 시 단계별 fallback (트랜잭션 보호 없음 — 기존 동작과 동일)
-        const adminNote = { interpreter: interpreterName, interpreterId: interpreterId, memo: memo || '' };
+
+        // F (2026-07-15 수정): admin_note 는 sendQuote(admin-dashboard)가 저장한 견적 금액
+        //  (dailyRate/days/subtotal/platformFee/total/deposit/balance/quoteId)의 유일한
+        //  저장소인데, 여기서 3개 키짜리 객체로 통째 덮어쓰고 있었다.
+        //  my.js 의 handleAcceptQuote 는 금액을 오직 admin_note 에서만 산출하므로
+        //  (quoted_amount 를 쓰지 않는다), 견적 발송 → 같은 건에 배정 확정 순서로 진행하면
+        //  고객의 '견적 수락'이 subtotal=0 → HTTP 400('견적 금액이 유효하지 않습니다')로
+        //  영구히 실패했다. 관리자 화면엔 아무 징후도 뜨지 않고 복구 경로도 없었다.
+        //  status 는 '견적발송'/'계약진행'이 되고 quoted_amount 도 그대로라 고객 대시보드엔
+        //  견적 카드가 계속 보이는 상태였다.
+        //  아래 E 분기(결제완료 보존)는 계약이 이미 있을 때만 타므로 견적 단계는 무방비였다.
+        //  → 기존 note 를 읽어 배정 관련 필드만 병합한다. RPC·fallback 양쪽이 이 값을 쓴다.
+        let prevNote = {};
+        try {
+            const { data: prevInq } = await sb.from('46_ITQ견적문의')
+                .select('admin_note').eq('id', inquiryId).maybeSingle();
+            if (prevInq && prevInq.admin_note) {
+                prevNote = typeof prevInq.admin_note === 'string'
+                    ? JSON.parse(prevInq.admin_note)
+                    : prevInq.admin_note;
+            }
+        } catch (e) {
+            // 레거시 평문 메모 등 JSON 이 아닌 경우 — 병합 없이 기존 동작으로 진행
+            console.warn('[assign] 기존 admin_note 파싱 실패, 병합 생략:', (e && e.message) || e);
+            prevNote = {};
+        }
+        // 문자열/배열이 들어오면 Object.assign 이 문자를 인덱스로 펼치므로 방어
+        if (!prevNote || typeof prevNote !== 'object' || Array.isArray(prevNote)) prevNote = {};
+
+        const adminNote = Object.assign({}, prevNote, {
+            interpreter: interpreterName,
+            interpreterId: interpreterId,
+            // 배정 시 메모가 비어 있으면 견적 단계 메모를 지우지 않고 보존
+            memo: memo || prevNote.memo || ''
+        });
         const contractPayload = {
             customer_id: customerId,
             interpreter_id: interpreterId,
