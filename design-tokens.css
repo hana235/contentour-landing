@@ -3,13 +3,25 @@
    모든 페이지에서 이 파일을 먼저 로드하세요.
    ══════════════════════════════════════════════ */
 
-/* ── 전역 폰트 (Inter + Pretendard) ── */
-/* 폰트는 각 HTML <head>의 <link>로 로드 (render-blocking @import 체인 제거).
-   페이지에 폰트 <link>가 없으면 시스템 폰트로 폴백되니 head에 반드시 포함할 것. */
+/* ── 전역 폰트 (Pretendard 단일) ── */
+/* 폰트는 각 HTML <head>의 <link rel="stylesheet" href="/assets/pretendard-1309a.css">
+   로 로드 (render-blocking @import 체인 제거).
+   페이지에 폰트 <link>가 없으면 시스템 폰트로 폴백되니 head에 반드시 포함할 것.
+
+   ※ 2026-07-15: 스택에서 'Inter' 를 제거했다.
+     Pretendard 의 라틴 글리프가 곧 Inter 이기 때문이다 — 폰트 name 테이블에
+     "Base glyphs from Inter by Rasmus Andersson" 이라고 명시돼 있다.
+     그런데 Inter 를 1순위로 두고 Google Fonts 에서 또 받고 있었다:
+       · 글리프가 중복이라 시각적 이득이 0
+       · fonts.googleapis.com 은 중국에서 차단됨 + render-blocking stylesheet 라
+         중국 접속자는 이 요청이 타임아웃될 때까지 페이지가 렌더되지 않았다
+         (커밋 d359e6b 가 Pretendard self-host 로 노렸던 목표의 미완성분)
+       · 웨이트 9종을 요청해 불필요한 왕복까지 발생
+     → Pretendard 단일 스택으로 정리. 라틴/숫자 렌더 결과는 사실상 동일하다. */
 
 :root {
     /* ── 폰트 패밀리 ── */
-    --font-sans: 'Inter', 'Pretendard', 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Pretendard', 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     /* ── 브랜드 색상 ── */
     --navy: #0a2a5e;
     --navy-deep: #061a3e;

@@ -24,14 +24,12 @@
     <meta name="twitter:title" content="성과사례 - 콘텐츄어">
     <meta name="twitter:description" content="검증된 통역사 네트워크 · 전 산업 분야 대응 · 24시간 견적 회신.">
     <!-- Preconnect: 폰트 핸드셰이크 사전 수행 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preload" as="image" href="assets/hero-bg.webp" type="image/webp">
-    <!-- Web Fonts (design-tokens @import에서 이전 — 렌더 비차단) -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
-    <link rel="stylesheet" href="/assets/pretendard.css">
-    <link rel="stylesheet" href="design-tokens.css?v=20260526b">
+    <!-- Web Fonts: Pretendard 단일 self-host (Inter/Google Fonts 제거 — 라틴 글리프가 Inter 와 동일) -->
+    <link rel="preload" as="font" type="font/woff2" href="/assets/pretendard-common-1309a.woff2" crossorigin>
+    <link rel="stylesheet" href="/assets/pretendard-1309a.css">
+    <link rel="stylesheet" href="design-tokens.css?v=20260715a">
     <link rel="stylesheet" href="styles.css?v=20260709c">
     <style>img.emoji{height:1em;width:1em;margin:0 .05em 0 .1em;vertical-align:-0.1em;display:inline-block;}</style>
     <script defer src="https://cdn.jsdelivr.net/npm/@twemoji/api@17.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
