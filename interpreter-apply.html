@@ -1437,6 +1437,22 @@
         let careers = [];
         let certs = [];
 
+        // ── 동적 행 id 생성기 (2026-07-15 신설) ──
+        //   기존에는 addLang/addCareer/addCert 가 각각 `const id = Date.now()` 로 id 를
+        //   만들었는데, 초안 복원 루프(restoreDraft)는 동기 for 문이라 연속 호출이 같은
+        //   밀리초를 반환 → 같은 id 가 배열에 중복 push 되고 DOM 에도 중복 id 가 생김.
+        //   getElementById 는 첫 번째만 반환하므로:
+        //     · 복원 시 2행 이후 값이 전부 1행에 덮어써지고 2행은 빈칸으로 남음
+        //     · 제출 시 langs/careers/certs.map 이 같은 행을 N번 읽어 마지막 값이 N개 전송
+        //       (자격증 2개 → [자격증2, 자격증2], 자격증1 완전 소실)
+        //     · certFiles[id] 도 키가 겹쳐 첨부파일까지 뒤바뀜
+        //   `(getElementById(...) || {}).value = ...` 패턴이라 콘솔 에러조차 없었음.
+        //   → 단조 증가 카운터로 교체. 숫자를 유지해야 onclick="removeLang(${id})" 가
+        //     그대로 동작한다. id 는 DOM/메모리 전용이고 초안(dyn)에는 저장되지 않으므로
+        //     체계를 바꿔도 기존 초안 호환성에 영향 없음.
+        let _rowSeq = 0;
+        function nextRowId() { return ++_rowSeq; }
+
         // ── 초기 데이터 ──
         window.onload = () => {
             addLang();
@@ -1464,7 +1480,7 @@
 
         // ── 언어 추가 ──
         function addLang() {
-            const id = Date.now();
+            const id = nextRowId();
             langs.push(id);
             const div = document.createElement('div');
             div.className = 'lang-row'; div.id = `lang-${id}`;
@@ -1492,7 +1508,7 @@
 
         // ── 경력 추가 ──
         function addCareer() {
-            const id = Date.now();
+            const id = nextRowId();
             careers.push(id);
             const div = document.createElement('div');
             div.className = 'career-item'; div.id = `career-${id}`;
@@ -1531,7 +1547,7 @@
         //  실제 파일이 조용히 소실되던 버그 방지 — 상태 텍스트는 별도 span으로만 갱신)
         const certFiles = {};
         function addCert() {
-            const id = Date.now();
+            const id = nextRowId();
             certs.push(id);
             const div = document.createElement('div');
             div.className = 'cert-row has-file'; div.id = `cert-${id}`;
