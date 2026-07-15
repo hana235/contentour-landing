@@ -128,6 +128,13 @@ async function handleMyShowcasePostings(req, res) {
             .select('id, exhibition_name, location, venue, start_date, end_date, language_pair, headcount, message, showcase_label, showcase_industry, showcase_country_code, company_name_disclosure, review_status, review_note, reviewed_at, contract_id, created_at')
             .eq('source_type', 'direct_posting')
             .eq('posted_by_user_id', auth.user.id)
+            // ※ 2026-07-15 추가: 취소한 공고를 걸러낸다.
+            //   cancel-showcase-posting 은 review_status='cancelled' 로 표시만 하고(감사용 보존),
+            //   여기서 필터가 없어 취소된 공고가 계속 반환됐다. 고객 대시보드 렌더러엔
+            //   'cancelled' 분기가 없어 else 폴백인 amber '처리 중' 배지로 표시됐고,
+            //   결과적으로 "공고가 삭제되었습니다"(복구 불가 안내까지 함) 토스트 직후에도
+            //   목록에 처리 중인 것처럼 남아 있었다.
+            .neq('review_status', 'cancelled')
             .order('created_at', { ascending: false });
         if (error) throw error;
 

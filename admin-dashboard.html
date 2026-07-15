@@ -1970,7 +1970,12 @@
                     else if (d.status === '매칭완료') matched++;
                     else if (d.status === '파견확정') confirm++;
                     else if (d.status === '완료') done++;
-                    if (d.date && d.date.slice(0, 7) === thisMonth) monthCount++;
+                    // ※ 2026-07-15 수정: d.date 는 존재하지 않는 키다.
+                    //   admin-data.js:43 이 접수일을 received: created_at.split('T')[0] 로 만든다
+                    //   (date 키는 상담일지 매퍼(:372)의 것 — 문의 객체엔 없음).
+                    //   그래서 monthCount 가 영구 0 이었고 '▲ 이번달 +N' 트렌드가 한 번도
+                    //   표시되지 않았다.
+                    if (d.received && d.received.slice(0, 7) === thisMonth) monthCount++;
                 });
                 var el;
                 el = document.getElementById('kpi-total'); if (el) el.textContent = total;
@@ -2102,9 +2107,12 @@
                 if (tab === 'exhibitions') { title = '해외전시회 DB 관리'; exLoad(); }
                 if (tab === 'bizverify') { title = '사업자등록증 검수'; bizVerifyLoad(); }
                 if (tab === 'audit-log') { title = '감사 로그'; loadAuditLog(1); }
+                // ※ 2026-07-15 수정: 이 줄(통역사 관리)이 pageTitle 대입 "뒤"에 있어
+                //   title 을 바꿔도 DOM 에 반영되지 않았다 — 통역사 탭만 제목이 기본값으로 남았음.
+                //   또 loadInterpVerifyList() 가 여기와 아래(:2138)에서 이중 호출되고 있었다.
+                //   → 다른 탭들과 같은 위치·형태로 옮기고, 아래 중복 호출은 제거.
+                if (tab === 'interpreters') title = '통역사 관리';
                 document.getElementById('pageTitle').textContent = title;
-
-                if (tab === 'interpreters') { title = '통역사 관리'; loadInterpVerifyList(); }
 
                 // Sidebar highlighting
                 ['sb-inquiries', 'sb-contracts', 'sb-cancellations', 'sb-calendar', 'sb-journal', 'sb-settlement', 'sb-chatmon', 'sb-applications', 'sb-customers', 'sb-bizverify', 'sb-loyalty', 'sb-reviews', 'sb-cases', 'sb-exhibitions', 'sb-system-settings', 'sb-audit-log', 'sb-interp-verify'].forEach(id => {
@@ -2258,10 +2266,19 @@
                 var interpList = allInterpretersFromDB.length > 0 ? allInterpretersFromDB : interpreters;
 
                 // 매칭 정렬: ① 의뢰 언어 일치 ② 일정 충돌 없음 ③ 평점 높은 순 (원본 배열 보존)
+                // ※ 2026-07-15 수정: 기존엔 (a.langs||[]).indexOf(reqLang) 로 비교해 영구히 -1 이었다.
+                //   reqLang(d.lang)은 '한국어 ↔ 영어' 형태의 "언어쌍 문자열"이고
+                //   (script.js:375 가 sourceLang + ' ↔ ' + targetLang 로 저장, langPairToKo 의
+                //    map 에 없어 그대로 통과), interp.langs 는 ['영어'] 처럼 도착 언어만 담은
+                //   "배열"이다(api/submit.js:223 이 language_pairs.map(l => l.to)).
+                //   형태가 달라 indexOf 가 성립할 수 없었고, ✓언어일치 배지와 정렬 1순위가
+                //   완전히 무효였다 — 관리자가 언어도 안 맞는 통역사를 상단에서 보고 있었음.
+                //   → 언어쌍을 토큰으로 쪼개 기준 언어(한국어)를 뺀 외국어로 매칭한다.
                 var reqLang = (d.lang || '').trim();
+                var reqLangTokens = _assignLangTokens(reqLang);
                 interpList = interpList.slice().sort(function(a, b) {
-                    var am = reqLang && (a.langs || []).indexOf(reqLang) >= 0 ? 1 : 0;
-                    var bm = reqLang && (b.langs || []).indexOf(reqLang) >= 0 ? 1 : 0;
+                    var am = _assignLangMatch(reqLangTokens, a.langs) ? 1 : 0;
+                    var bm = _assignLangMatch(reqLangTokens, b.langs) ? 1 : 0;
                     if (am !== bm) return bm - am;
                     var ac = (_assignConflictMap[a.id] || []).length ? 1 : 0;
                     var bc = (_assignConflictMap[b.id] || []).length ? 1 : 0;
@@ -2283,8 +2300,9 @@
                         : (conflicts.length
                             ? '<span style="color:#e65100;font-weight:700;" title="' + escapeHtml(conflicts.map(function(c){ return c.expo + ' (' + c.start + '~' + c.end + ')'; }).join(', ')) + '">⚠️ 일정 충돌</span>'
                             : '<span style="color:#2e7d32;">가용</span>');
-                    var matchesLang = reqLang && (interp.langs || []).indexOf(reqLang) >= 0;
-                    var langBadge = matchesLang ? ' <span style="font-size:0.62rem;background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:6px;font-weight:700;">✓ ' + escapeHtml(reqLang) + '</span>' : '';
+                    // 배지엔 실제로 일치한 언어를 보여준다 (기존엔 '한국어 ↔ 영어' 전체를 찍었음)
+                    var matchedLang = _assignLangMatch(reqLangTokens, interp.langs);
+                    var langBadge = matchedLang ? ' <span style="font-size:0.62rem;background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:6px;font-weight:700;">✓ ' + escapeHtml(matchedLang) + '</span>' : '';
                     var ratingHtml = interp.rating ? ' · ⭐ ' + Number(interp.rating).toFixed(1) : '';
                     return '<div class="interp-option" data-id="' + escapeHtml(interp.id) + '" data-name="' + escapeHtml(interp.name) + '" data-langs="' + escapeHtml((interp.langs || []).join(',')) + '" onclick="selectInterpreter(this, ' + escapedId + ')" style="display:flex;align-items:center;gap:12px;padding:12px;border:2px solid #e5eaf2;border-radius:10px;cursor:pointer;transition:all 0.2s;">' +
                         '<div style="width:40px;height:40px;border-radius:50%;background:' + interp.color + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;">' + interp.initials + '</div>' +
@@ -3773,6 +3791,40 @@
                 } catch (e) {
                     console.error('계약 로드 예외:', e);
                 }
+            }
+
+
+            // ══ 배정 모달 언어 매칭 헬퍼 (2026-07-15 신설) ══
+            //   문의의 언어쌍과 통역사의 언어 배열은 형태가 다르다:
+            //     · 문의  d.lang  : '한국어 ↔ 영어'  (script.js:375)
+            //                       레거시 코드값은 langPairToKo 가 '한↔영' 으로 축약
+            //     · 통역사 langs   : ['영어']        (api/submit.js:223, l.to 만 수집)
+            //   그래서 언어쌍을 토큰으로 쪼갠 뒤 기준 언어(한국어)를 제외한 외국어로 비교한다.
+            //   한국어를 빼는 이유: 어떤 통역사는 language_pairs 에 영어→한국어 쌍이 있어
+            //   langs 에 '한국어'가 들어간다. 이를 매칭에 쓰면 모든 한국어 의뢰가
+            //   모든 통역사와 일치해버린다(오탐).
+            var _ASSIGN_LANG_SHORT = {
+                '한': '한국어', '영': '영어', '일': '일본어', '중': '중국어', '독': '독일어',
+                '베': '베트남어', '불': '프랑스어', '프': '프랑스어', '스': '스페인어',
+                '아': '아랍어', '태': '태국어'
+            };
+            function _assignLangTokens(reqLang) {
+                var s = String(reqLang || '').trim();
+                if (!s) return [];
+                return s.split(/[↔~,\/]|<->|->|\u2194/)
+                    .map(function (t) { return t.trim(); })
+                    .filter(Boolean)
+                    .map(function (t) { return _ASSIGN_LANG_SHORT[t] || t; })
+                    .filter(function (t) { return t && t !== '한국어'; });
+            }
+            // 일치하면 "일치한 언어명"을, 아니면 null 을 반환 (배지에 그대로 쓴다)
+            function _assignLangMatch(tokens, langs) {
+                if (!tokens || !tokens.length) return null;
+                var have = (langs || []).map(function (x) { return String(x || '').trim(); });
+                for (var i = 0; i < tokens.length; i++) {
+                    if (have.indexOf(tokens[i]) >= 0) return tokens[i];
+                }
+                return null;
             }
 
             let ctAdminFilter = 'all';

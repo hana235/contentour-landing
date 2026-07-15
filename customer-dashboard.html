@@ -3782,11 +3782,18 @@
       }
 
       // 답변 수집 + 전시회명/날짜 추출
+      // ※ 2026-07-15 수정: 여기서 getElementById(id) 를 쓰면 같은 이름 필드가 2개 이상일 때
+      //   항상 첫 요소만 반환해, 2번째 이후 필드의 답변이 1번째 값으로 덮여 소실됐다.
+      //   바로 위 필수검사(:3755)는 idSeen 카운터 + querySelectorAll[nth] 로 등장 순서를
+      //   정확히 매칭하고 있었다 — 수집부만 누락돼 있어 같은 방식으로 통일한다.
       var answers = [], exhibitionName = '', consultDate = '';
+      var idSeenCollect = {};
       tpl.sections.forEach(function(sec) {
         sec.fields.forEach(function(f) {
           var id = 'cfb-f-' + f.name.replace(/[^a-zA-Z0-9가-힣]/g, '_');
-          var el = document.getElementById(id);
+          var nth = idSeenCollect[id] || 0; idSeenCollect[id] = nth + 1;
+          var allEls = document.querySelectorAll('[id="' + id + '"]');
+          var el = allEls[nth] || allEls[0] || null;
           var v = el ? el.value : '';
           answers.push({ section: sec.name, field: f.name, type: f.type, value: v });
           if (!exhibitionName && f.type === 'text' && v && /전시|행사|박람/.test(f.name)) exhibitionName = v;
@@ -4095,8 +4102,14 @@
     }
 
     function exportCustomPDF() {
-      if (cfbWritingTplIdx < 0) { showJToast('⚠️ 양식을 먼저 선택해주세요.'); return; }
-      var tpl = cfbTemplates[cfbWritingTplIdx];
+      // ※ 2026-07-15 수정: cfbWritingTplIdx 는 "나만의 양식" 배열(cfbTemplates)의 인덱스라
+      //   콘텐츄어 배정 양식에는 존재하지 않는다. cfbUseAssigned(:3721)가 의도적으로 -1 을
+      //   넣고 대신 cfbWritingTpl 에 양식 객체를 담는데, 여기서 인덱스로 가드·조회를 하는 바람에
+      //   배정 양식으로 작성 중 📥 PDF 를 누르면 항상 "양식을 먼저 선택해주세요"만 떴다.
+      //   cfbWritingTpl(:3285)이 '현재 작성 중인 양식(배정 or 나만의)'의 정본이고
+      //   cfbSaveWrite(:3747)도 그것을 쓴다 — 같은 기준으로 통일한다.
+      var tpl = cfbWritingTpl;
+      if (!tpl) { showJToast('⚠️ 양식을 먼저 선택해주세요.'); return; }
       var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>상담일지 - ' + tpl.name + '</title>' +
         '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:"Malgun Gothic","맑은고딕",sans-serif;padding:40px;color:#222;max-width:800px;margin:0 auto}' +
         'h1{font-size:1.4rem;text-align:center;margin-bottom:8px;color:#333}' +
@@ -5944,8 +5957,12 @@
       const badgeCount = counts.pending;
       const navBadge = document.getElementById('contractNavBadge');
       const tabBadge = document.getElementById('contractTabBadge');
-      if (navBadge) navBadge.textContent = badgeCount;
-      if (tabBadge) tabBadge.textContent = badgeCount;
+      // ※ 2026-07-15 수정: 배지 요소는 마크업(:215)에 인라인 style="display:none;" 으로
+      //   숨겨져 있는데 여기서 textContent 만 설정하고 style.display 를 건드리지 않아,
+      //   미결제 계약이 있어도 배지가 절대 뜨지 않았음.
+      //   inquiryNavBadge(:5279)·chatNavBadge(:5029)는 display 를 함께 토글한다 — 그 패턴에 통일.
+      if (navBadge) { navBadge.textContent = badgeCount; navBadge.style.display = badgeCount > 0 ? '' : 'none'; }
+      if (tabBadge) { tabBadge.textContent = badgeCount; tabBadge.style.display = badgeCount > 0 ? '' : 'none'; }
 
       // Filter contracts
       let filtered = contracts;
@@ -7983,6 +8000,10 @@
         else if (r.review_status === 'pending') statusBadge = '<span class="sc-status sc-status--pending">검토 대기</span>';
         else if (r.review_status === 'approved') statusBadge = '<span class="sc-status sc-status--approved">게재 중</span>';
         else if (r.review_status === 'rejected') statusBadge = '<span class="sc-status sc-status--rejected">거부됨</span>';
+        // ※ 2026-07-15 추가: cancelled 분기가 없어 아래 else 폴백인 amber '처리 중' 으로
+        //   표시되고 있었음. 이제 api/my.js 가 cancelled 를 걸러내므로 여기까지 오지 않지만,
+        //   상태를 '처리 중'으로 오표시하는 것보다 명시하는 편이 안전하다.
+        else if (r.review_status === 'cancelled') statusBadge = '<span class="sc-status sc-status--rejected">취소됨</span>';
         else statusBadge = '<span class="sc-status sc-status--pending">처리 중</span>';
 
         var rejBlock = (r.review_status === 'rejected' && r.review_note)
