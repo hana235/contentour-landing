@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="/assets/pretendard.css">
     <link rel="stylesheet" href="design-tokens.css?v=20260526b">
     <link rel="stylesheet" href="styles.css?v=20260709c">
-    <link rel="stylesheet" href="client-auth.css?v=20260715a">
+    <link rel="stylesheet" href="client-auth.css?v=20260715b">
     <style>/* 인라인 스타일 → client-auth.css로 분리됨 */
     </style>
 </head>
@@ -323,10 +323,10 @@
                                 <p class="field-error">담당자명을 입력해주세요.</p>
                             </div>
                             <div class="field-group">
-                                <label for="reg-pos">직함 <span class="req">*</span></label>
+                                <label for="reg-pos">직함 <span class="optional">(선택)</span></label>
                                 <div class="input-wrap">
                                     <span class="input-icon">🏷️</span>
-                                    <input type="text" id="reg-pos" placeholder="팀장/과장 등" required>
+                                    <input type="text" id="reg-pos" placeholder="팀장/과장 등 (계약서에 표기됩니다)">
                                 </div>
                                 <p class="field-error">직함을 입력해주세요.</p>
                             </div>
@@ -798,10 +798,14 @@
             const privacy = document.getElementById('consent-privacy');
             let valid = true;
 
-            [company, name, pos].forEach(f => {
+            // ※ 2026-07-15: 직함(pos)은 필수 → 선택으로 변경. 가입 시점에 아무 기능도 하지
+            //   않고 마이페이지·계약 직전에 언제든 받을 수 있어 마찰만 됐음.
+            //   (게다가 서버가 저장조차 안 하고 있었음 — api/submit.js 참조)
+            [company, name].forEach(f => {
                 if (!f.value.trim()) { f.classList.add('error'); valid = false; }
                 else f.classList.remove('error');
             });
+            pos.classList.remove('error');
 
             // 사업자번호 검증 (000-00-00000)
             var brnVal = brn.value.replace(/[^0-9]/g, '');

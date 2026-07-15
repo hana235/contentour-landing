@@ -360,6 +360,13 @@ async function handleRegisterCustomer(req, res) {
     var phone = s(b.phone, 50);
     var company = s(b.company, 200);
     var brn = s(b.brn, 50);
+    // ※ 2026-07-15 추가: 클라이언트(client-auth.html:883)가 position 을 보내고
+    //   01_회원.position 컬럼도 실존하는데 서버가 읽지도 저장하지도 않아,
+    //   가입 때 받은 직함이 매번 버려지고 있었음. 직함은 마이페이지 표시뿐 아니라
+    //   계약서 서명란("담당자 홍길동 팀장")에도 쓰인다
+    //   (customer-dashboard.html:6522/6690) → 저장해야 재입력 없이 계약이 채워진다.
+    //   2026-07-15 부로 가입 시 선택 항목이므로 빈 값이면 컬럼을 건드리지 않는다.
+    var position = s(b.position, 100);
 
     // 필수값 (국내 고객사: 회사명·담당자·연락처·이메일·사업자등록번호)
     if (!email || !name || !phone || !company || !brn) {
@@ -408,14 +415,17 @@ async function handleRegisterCustomer(req, res) {
 
         // 01_회원에 회사 정보 저장 (role/name/phone은 handle_new_user 트리거가 이미 세팅)
         //   등록증 파일은 가입 후 로그인해 별도 업로드 → 여기선 status='none'(미제출)
-        var { error: updErr } = await sb.from('01_회원').update({
+        var customerFields = {
             role: 'customer',
             name: name,
             phone: phone,
             company_name: company,
             business_number: brn,
             business_registration_status: 'none'
-        }).eq('id', userId);
+        };
+        if (position) customerFields.position = position;   // 선택 항목 — 입력했을 때만 저장
+
+        var { error: updErr } = await sb.from('01_회원').update(customerFields).eq('id', userId);
         if (updErr) {
             // 회사정보 저장 실패는 비치명적(마이페이지에서 보완 가능) — 계정은 유지, 경고만 반환
             console.error('고객사 회사정보 저장 실패(계속 진행):', updErr);

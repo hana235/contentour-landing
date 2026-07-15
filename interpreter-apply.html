@@ -1602,7 +1602,17 @@
         // ── 파일 핸들 ──
         function handleFile(input) { if (input.files[0]) handleFileObj(input.files[0]); }
         function handleFileObj(file) {
-            if (file.size > 10 * 1024 * 1024) { showToast('⚠️ 파일 크기는 10MB 이하여야 합니다.'); return; }
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('⚠️ 파일 크기는 10MB 이하여야 합니다.');
+                // ※ 2026-07-15 수정: 토스트로 거부만 하고 input.value / __droppedResume 를
+                //   비우지 않아, 제출부(1819: resumeFile.files[0] || window.__droppedResume)가
+                //   거부한 파일을 그대로 읽어 실제로 업로드하고 48_통역사지원서에 기록했음.
+                //   드롭 경로는 크기 검사 전에 input.files 에 주입하므로 더 확실히 남았음.
+                //   자격증 경로(1572)는 input.value='' 를 제대로 하는데 여기만 누락.
+                //   removeFile() 이 input.value·__droppedResume·미리보기를 모두 정리한다.
+                removeFile();
+                return;
+            }
             document.getElementById('uploadFileName').textContent = file.name + " (" + (file.size / 1024).toFixed(0) + "KB)";
             document.getElementById('uploadPreview').classList.add('show');
             document.getElementById('uploadZone').style.opacity = '0.5';

@@ -261,6 +261,13 @@
             margin-left: 2px;
         }
 
+        /* 선택 항목 표기 — interpreter-apply.html 의 (선택) 표기와 톤 통일 */
+        .field-group .optional {
+            color: var(--gray-400);
+            font-weight: 500;
+            margin-left: 2px;
+        }
+
         .input-wrap {
             position: relative;
         }

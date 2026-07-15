@@ -4041,11 +4041,17 @@
                     stlAdminInit();
                 }
                 showToast('✅ ' + c.expo + ' 서비스 완료! 통역사 정산 건이 생성되었습니다. [정산 승인] 탭에서 확인하세요.');
-                if (window.sbClient && c.customer_id) {
+                // ※ 2026-07-15 수정: ctAdminContracts 객체엔 최상위 customer_id 키가 없다
+                //   (3739~3770 참조 — 고객 정보는 client{} 로 가공되고 원본은 _raw 에만 있음).
+                //   c.customer_id 가 항상 undefined 라 이 블록 전체가 조용히 건너뛰어져
+                //   고객사에게 '서비스 완료' 알림이 한 번도 발송되지 않았음.
+                //   관리자는 완료 토스트만 보고 알림이 나간 줄 알았다.
+                var _customerId = (c._raw && c._raw.customer_id) || c.customer_id || null;
+                if (window.sbClient && _customerId) {
                     (async function() {
                         try {
                             await window.sbClient.from('24_알림').insert({
-                                user_id: c.customer_id,
+                                user_id: _customerId,
                                 notification_type: 'service',
                                 title: '✅ 서비스가 완료되었습니다',
                                 message: '"' + c.expo + '" 통역 서비스가 완료 처리되었습니다. 이용해주셔서 감사합니다.',
@@ -5748,6 +5754,15 @@
                             quoted_amount: total,
                             quoted_at: new Date().toISOString(),
                             admin_note: JSON.stringify({
+                                // ※ 2026-07-15 추가: admin-data.js:60 이 note.quote_sent 를 읽어
+                                //   quoteSent 를 만드는데 여기서 저장하지 않아 항상 false 였음.
+                                //   (5780 의 currentQuoteInquiry.quoteSent = true 는 메모리 전용)
+                                //   itqStatusToAdmin 이 DB '견적발송' → UI '매칭완료' 로 매핑하고
+                                //   견적 버튼 조건이 (검토중||매칭완료) && !quoteSent 이므로,
+                                //   버튼을 막는 유일한 값이 quoteSent 였음. 미저장 탓에
+                                //   _reloadAllData(realtime 이벤트마다 호출) 1회면 '견적발송'
+                                //   배지가 사라지고 견적 버튼이 되살아나 중복 발송이 가능했다.
+                                quote_sent: true,
                                 interpreter: interpreter,
                                 interpreterId: qmInterpreterId,
                                 country: country,
@@ -6013,7 +6028,12 @@
                             '<button class="contract-card__action approve" onclick="event.stopPropagation();sendAssignReminder(\''+item.id+'\',\''+item.interpreterId+'\',this);">⏰ 리마인더 보내기</button></div>';
                     } else if (item.type === 'settlement') {
                         btns = '<div style="display:flex;gap:6px;margin-top:8px;">' +
-                            '<button class="contract-card__action approve" onclick="event.stopPropagation();openStlApproval('+item.id+');document.getElementById(\'adminPanel\').classList.remove(\'open\');">상세/승인</button></div>';
+                            // ※ 2026-07-15 수정: item.id(UUID)를 따옴표 없이 보간해
+                            //   onclick="openStlApproval(a1b2c3d4-e5f6-...)" 가 되어 JS 에러 →
+                            //   FAB 패널의 '상세/승인' 버튼이 완전 무동작이었음.
+                            //   바로 위 overdue 분기와 다른 호출부 4곳(3413/3414/3419/3422)은
+                            //   모두 따옴표가 있음 — 여기만 누락된 오타.
+                            '<button class="contract-card__action approve" onclick="event.stopPropagation();openStlApproval(\''+item.id+'\');document.getElementById(\'adminPanel\').classList.remove(\'open\');">상세/승인</button></div>';
                     }
                     return '<div class="ap-card">' +
                         '<div class="ap-card__title">'+escapeHtml(item.title)+'</div>' +
@@ -8157,7 +8177,17 @@
                         }
                     });
 
-                    // 기존 하드코딩 데이터에 DB 데이터 추가
+                    // ※ 2026-07-15 수정: schedules 를 초기화하지 않고 push 만 해서
+                    //   _reloadAllData() 가 불릴 때마다 같은 파견이 2배·3배로 누적됐음.
+                    //   _reloadAllData 는 realtime 이벤트(계약/결제/문의 변경)마다 호출되므로
+                    //   고객 결제 1건마다 캘린더 파견이 늘어나고 '이달 파견 현황' 수치도 뻥튀기됨.
+                    //   inquiries(8102)·journals(2477)는 length=0 으로 초기화하는데 여기만 누락.
+                    //   (위 주석 "기존 하드코딩 데이터에 추가"는 데모 시드가 제거된 뒤 남은 잔재 —
+                    //    schedules 는 2431 에서 빈 배열로 선언되고 DB 가 유일한 출처다.)
+                    //   ※ confirmAddSchedule(2679)로 수동 등록한 일정은 DB 에 저장되지 않는
+                    //     메모리 전용이라 여기서 함께 사라진다. 다만 새로고침해도 사라지는
+                    //     값이라 동작상 변화는 없다(그 미저장 문제는 별건).
+                    schedules.length = 0;
                     dbSchedules.forEach(function(s) { schedules.push(s); });
 
                     // 통역사 컬러 맵에 새 통역사 추가
