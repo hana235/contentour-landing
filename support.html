@@ -28,11 +28,21 @@
 <!-- Web Fonts: Pretendard 단일 self-host (Inter/Google Fonts 제거 — 라틴 글리프가 Inter 와 동일) -->
     <link rel="preload" as="font" type="font/woff2" href="/assets/pretendard-common-1309a.woff2" crossorigin>
     <link rel="stylesheet" href="/assets/pretendard-1309a.css">
-    <link rel="stylesheet" href="design-tokens.css?v=20260715a">
-    <link rel="stylesheet" href="styles.css?v=20260709c">
+    <link rel="stylesheet" href="design-tokens.css?v=20260715b">
+    <link rel="stylesheet" href="styles.css?v=20260715a">
 </head>
 
 <body>
+    <!-- 플로팅 CTA (2026-07-15 이식)
+         styles.css:522 가 모바일(860px 이하)에서 .nav-cta 를 숨기는데, floating-cta 는
+         index.html 에만 있었다. 그 결과 모바일에서 이 페이지들을 보는 사용자는 화면에
+         CTA 가 하나도 없는 상태로 페이지 끝까지 스크롤해야 문의할 수 있었다.
+         href 는 index.html#contact — script.js 의 해시 핸들러가 견적 모달을 자동으로 연다. -->
+    <a href="index.html#contact" class="floating-cta" id="floatingCta">
+        <span class="floating-cta__icon" aria-hidden="true">📋</span>
+        <span class="floating-cta__text">견적 문의</span>
+    </a>
+
     <a href="#main" class="skip-link">본문 바로가기</a>
     <!-- Password Protection -->
 
@@ -47,14 +57,14 @@
             <nav class="nav__menu" id="navMenu" aria-label="메인 메뉴">
                 <a class="is-active" href="support.html">
                     <div class="nav__menu-text">
-                        <span class="nav__menu-title">통역사정보</span>
-                        <span class="nav__menu-desc">통역 서비스 이용 안내</span>
+                        <span class="nav__menu-title">전시통역 서비스</span>
+                        <span class="nav__menu-desc">고객사를 위한 서비스 안내</span>
                     </div>
                 </a>
                 <a href="interpreter-jobs.html">
                     <div class="nav__menu-text">
-                        <span class="nav__menu-title">통역사모집</span>
-                        <span class="nav__menu-desc">실시간 수요 현황판</span>
+                        <span class="nav__menu-title">통역사 지원</span>
+                        <span class="nav__menu-desc">일감 확인 및 지원하기</span>
                     </div>
                 </a>
                 <a href="service.html">
@@ -63,16 +73,16 @@
                         <span class="nav__menu-desc">솔루션 및 프로세스 안내</span>
                     </div>
                 </a>
-                <a href="performance.html">
-                    <div class="nav__menu-text">
-                        <span class="nav__menu-title">성과사례</span>
-                        <span class="nav__menu-desc">실적 및 고객사례</span>
-                    </div>
-                </a>
                 <a href="client-auth.html" class="nav-client">
                     <div class="nav__menu-text">
                         <span class="nav__menu-title">Login</span>
                         <span class="nav__menu-desc">Client Portal</span>
+                    </div>
+                </a>
+                <a href="client-auth.html?tab=register" class="nav-client">
+                    <div class="nav__menu-text">
+                        <span class="nav__menu-title">회원가입</span>
+                        <span class="nav__menu-desc">고객사 신규 등록</span>
                     </div>
                 </a>
             </nav>
@@ -481,6 +491,26 @@
                 card.click();
             }
         });
+    </script>
+
+    <script>
+        // 플로팅 CTA: 스크롤 300px 이후 표시.
+        // index.html 판과 달리 이 페이지엔 #contact 폼이 없으므로 '폼 근처에서 숨김'
+        // 로직은 두지 않는다(있으면 요소가 없어 early return 되어 CTA 가 영영 안 뜸).
+        (function () {
+            var cta = document.getElementById('floatingCta');
+            if (!cta) return;
+            var ticking = false;
+            function update() {
+                ticking = false;
+                var scrollY = window.pageYOffset || document.documentElement.scrollTop;
+                cta.classList.toggle('show', scrollY > 300);
+            }
+            window.addEventListener('scroll', function () {
+                if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
+            }, { passive: true });
+            update();
+        })();
     </script>
 </body>
 
