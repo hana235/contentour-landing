@@ -2425,6 +2425,16 @@
       var contracts = window._journalContracts || [];
       var match = contracts.find(function(c) { return c.name === j.expo; });
       document.getElementById('j-expo-data').value = match ? match.dataVal : '';
+      // ※ 2026-07-15 수정: j-expo-data 만 채우고 updateExpoInfo() 를 부르지 않아
+      //   j-contract-id / j-interpreter-id 가 clearJournal 이 비운 채로 남았음.
+      //   그 결과 초안을 다시 열어 별점을 주고 제출하면
+      //     ① 49_통역사리뷰 upsert 가 스킵되어 별점이 조용히 소실(토스트는 성공 표시)
+      //     ② interpreter_id 자리에 고객 본인 id 가 기록(jInterpId || user.id 폴백)
+      //     ③ 이후 source 판정이 'customer' 로 영구 전환돼 통역사 작성 패널이 사라짐
+      //   pickJournalExpo() 는 updateExpoInfo() 를 부르는데 이 경로만 누락됐었음.
+      //   ※ 호출 위치 주의 — updateExpoInfo 는 location/period/interp/lang 도 계약값으로
+      //     덮으므로, 아래 j.* 복원보다 반드시 "먼저" 불러야 저장된 값이 최종적으로 남는다.
+      updateExpoInfo();
       document.getElementById('j-date').value = j.date;
       document.getElementById('j-location').value = j.location;
       document.getElementById('j-period').value = j.period;
@@ -2667,9 +2677,24 @@
                     // 전체 승인제: 신규 리뷰는 비공개로 저장 → 관리자 검토 후 공개 (리뷰 모달 경로와 동일 정책)
                     is_public: false
                   }, { onConflict: 'contract_id,customer_id' });
-                  if (revErr) console.warn('통역사 평가 저장 실패:', revErr);
+                  if (revErr) {
+                    console.warn('통역사 평가 저장 실패:', revErr);
+                    showJToast('&#9888;&#65039; 상담일지는 저장됐지만 통역사 평가 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                  }
                   // 통역사 알림은 49_통역사리뷰 INSERT trigger가 자동 발송
-                } catch(revE) { console.warn('통역사 평가 저장 예외:', revE); }
+                } catch(revE) {
+                  console.warn('통역사 평가 저장 예외:', revE);
+                  showJToast('&#9888;&#65039; 상담일지는 저장됐지만 통역사 평가 저장 중 오류가 발생했습니다.');
+                }
+              } else {
+                // ※ 2026-07-15: 계약 연결이 없으면 별점이 조용히 버려지고 있었음
+                //   (그래도 토스트는 "제출되었습니다" 성공 표시).
+                //   loadJournal 의 updateExpoInfo() 누락이 주원인이었고 그건 고쳤지만,
+                //   저널의 전시회명이 현재 계약과 매칭되지 않는 경우는 여전히 남으므로
+                //   최소한 소실 사실을 사용자에게 알린다.
+                console.warn('통역사 평가 미저장 — 계약 연결 없음',
+                             { contractId: jContractId, interpreterId: jInterpreterId, expo: expoName });
+                showJToast('&#9888;&#65039; 별점은 저장되지 않았습니다. 상단에서 "내 계약에서 전시회 선택"으로 계약을 연결한 뒤 다시 제출해주세요.');
               }
             }
 
