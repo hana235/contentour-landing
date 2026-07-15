@@ -8096,9 +8096,15 @@
                     (biz.data || []).forEach(function (r) { addNotif({ key: 'biz-' + r.id, icon: '📑', title: '사업자등록증 검수 대기', sub: r.company_name || r.name || '', ts: tsOf(r), tab: 'bizverify' }); });
                 } catch (e) {}
                 try {
-                    var app = await sb.from('48_통역사지원서').select('id,name_ko,name,status,created_at').eq('status', 'pending').order('created_at', { ascending: false }).limit(20);
-                    (app.data || []).forEach(function (r) { addNotif({ key: 'app-' + r.id, icon: '📋', title: '통역사 지원서 검수 대기', sub: r.name_ko || r.name || '', ts: tsOf(r), tab: 'applications' }); });
-                } catch (e) {}
+                    // ※ 2026-07-15 수정: 48_통역사지원서 에는 name 컬럼이 없다(name_ko / name_en 뿐).
+                    //   없는 컬럼을 select 하면 PostgREST 가 400 을 반환해 app.data 가 null 이 되고,
+                    //   (app.data || []) 폴백 탓에 조용히 0건이 되어 '통역사 지원서 검수 대기' 알림이
+                    //   알림 센터에 한 번도 뜨지 않았다 — 관리자가 신규 통역사 지원을 여기서 알 수 없었음.
+                    //   supabase-js 는 throw 하지 않고 {data:null,error}를 주므로 catch 에도 안 걸렸다.
+                    var app = await sb.from('48_통역사지원서').select('id,name_ko,name_en,status,created_at').eq('status', 'pending').order('created_at', { ascending: false }).limit(20);
+                    if (app.error) console.warn('[알림센터] 통역사 지원서 조회 실패:', app.error.message);
+                    (app.data || []).forEach(function (r) { addNotif({ key: 'app-' + r.id, icon: '📋', title: '통역사 지원서 검수 대기', sub: r.name_ko || r.name_en || '', ts: tsOf(r), tab: 'applications' }); });
+                } catch (e) { console.warn('[알림센터] 통역사 지원서 조회 예외:', e); }
                 if (_notifAdminId) {
                     try {
                         var nt = await sb.from('24_알림').select('id,title,message,created_at').eq('user_id', _notifAdminId).order('created_at', { ascending: false }).limit(15);
