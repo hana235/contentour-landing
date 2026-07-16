@@ -1698,7 +1698,19 @@
 
     // 결제수단: 무통장입금만 노출 (카드/실시간이체/가상계좌 = PortOne 경유는 일시 OFF).
     // true: 무통장입금만 (관리자 확인 방식). false: PortOne 3종 + 무통장입금 전체 복원.
-    // PortOne 코드·키·서버 검증은 그대로 유지 → 한 줄만 false로 바꾸면 즉시 복원. (2026-07-02)
+    //
+    // ⚠️ "한 줄만 false로 바꾸면 즉시 복원"이 아니다. (2026-07-16 점검에서 정정)
+    // false로 바꾸기 전에 아래를 먼저 해결할 것 — 상세는 LAUNCH-CHECKLIST.md "9. PortOne 활성화 전":
+    //   1) 가상계좌 발급 흐름이 서버에 없음 — verify-payment는 status='PAID'만 통과시키는데
+    //      (api/payment.js) 가상계좌는 발급 시점 status가 VIRTUAL_ACCOUNT_ISSUED라 즉시 400.
+    //      웹훅에도 VirtualAccountIssued 핸들러가 없다.
+    //   2) pmRenderVirtualResult()가 계좌번호를 Math.random()으로 지어낸다 — PortOne 성공
+    //      경로에서도 가짜다. 실제 발급 계좌정보를 넘겨받도록 배선해야 한다.
+    //   3) PORTONE_STORE_ID/CHANNEL_KEY(payment-data.js)가 테스트 채널인지 실서비스 채널인지
+    //      미확인. 테스트 채널이면 결제가 성공해 보여도 실제 돈이 잡히지 않는다.
+    //   4) PG 결제창이 CSP에 막히는지 미검증 — frame-src는 *.portone.io만, form-action은 'self'.
+    //      국내 PG가 자기 도메인으로 창을 띄우면 차단될 수 있다.
+    // PortOne 결제는 프로덕션에서 성사된 적이 한 번도 없다 (47_결제기록의 유일한 건은 manual).
     const MANUAL_ONLY_PAYMENT = true;
     (function applyLoyaltyFlag(){
         if (!LOYALTY_UI_ENABLED) {

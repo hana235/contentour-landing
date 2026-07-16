@@ -13,8 +13,9 @@
 | 0. PW 게이트 해제 | ✅ 완료 (2026-07-14) — 사이트 공개 접근 가능 |
 | 1. noindex 해제 | ⏸️ **의도적 보류** — 아래 ⚠️ 참고 |
 | 3. robots.txt 복구 | ⏸️ **의도적 보류** — 아래 ⚠️ 참고 |
-| 7. 출시 후 검증 | 🔶 일부 완료 (스키마 404 / HSTS / CSP 확인됨) |
+| 7. 출시 후 검증 | 🔶 일부 완료 (스키마 404 / HSTS / CSP / 결제 확인됨) |
 | 8. 검색엔진 등록 | ⏸️ 보류 (1·3 이 선행) |
+| 9. PortOne 활성화 전 선행작업 | 📌 결제수단 확대 시에만 — 지금 급하지 않음 |
 
 > ### ⚠️ 색인은 "빠뜨린 것"이 아니라 "일부러 막아둔 것"
 > 전 페이지 `noindex` 와 robots.txt 전면 차단은 **콘텐츠를 채운 뒤로 미룬 의도된 결정**입니다.
@@ -102,7 +103,9 @@
 ## 7. ⚠️ 출시 후 즉시 검증 (배포 확인)
 
 - [x] `https://www.ctconfex.com/schema.json` , `/supabase-spec.json` → **404** 확인 — 둘 다 404 (2026-07-15 확인)
-- [ ] **결제 흐름(PortOne)** 실제 동작 — CSP enforce 로 결제창/스크립트가 안 막히는지 ← **미검증**
+- [x] **결제 흐름** — 현재 운영은 **무통장입금 단독**(`MANUAL_ONLY_PAYMENT = true`)이고, 이 경로는
+      2026-07-01 실제 1건 성사됨(`47_결제기록`). **PortOne 경유 결제는 UI 자체가 렌더링되지 않아
+      지금 검증 대상이 아님.** 켤 때 필요한 선행 작업은 아래 **9번** 참고. (2026-07-16 확인)
 - [ ] **대시보드 3종** 로딩·이미지(통역사 프로필, flagcdn 국기)·차트 정상 ← **미검증**
 - [ ] 브라우저 콘솔에 `Content-Security-Policy` 위반 에러 없는지 ← **미검증** (응답 헤더에 CSP 가
       enforce 로 실려있는 것은 2026-07-15 확인. 다만 실제 브라우저 콘솔 위반 여부는 별개이며 미확인)
@@ -115,6 +118,33 @@
 - [ ] Google Search Console 에 사이트 등록 + `sitemap.xml` 제출
 - [ ] 네이버 서치어드바이저 등록 + sitemap 제출
 - [ ] Google Rich Results Test 로 JSON-LD 구조화 데이터 검증
+
+---
+
+## 9. ⚠️ PortOne 활성화 전 해결할 것 (결제수단 확대 시)
+
+> 현재 `customer-dashboard.html` 의 `MANUAL_ONLY_PAYMENT = true` 가 카드/실시간이체/가상계좌를
+> 전부 꺼두고 있습니다. **"한 줄만 false 로 바꾸면 복원"이 아닙니다.** 아래를 먼저 해결해야 합니다.
+> (2026-07-16 점검. 결제수단 확대는 "나중에" 로 결정됨 — 지금 급한 항목 아님.)
+
+- [ ] **가상계좌 발급 흐름이 서버에 없음** — `api/payment.js` 의 verify-payment 는 `status === 'PAID'`
+      만 통과시킴. 가상계좌는 발급 시점 status 가 `VIRTUAL_ACCOUNT_ISSUED` 라 **발급 즉시 400 으로 튕김.**
+      웹훅도 `Transaction.Paid` / `Transaction.Cancelled` 만 처리하고 `VirtualAccountIssued` 핸들러가 없음.
+      → 발급 시점 분기 + 발급 대기 상태 기록 + 웹훅 처리까지 **신규 구현 필요** (배선 수준 아님).
+- [ ] **`pmRenderVirtualResult()` 가 계좌번호를 지어냄** — `customer-dashboard.html` 에서
+      `Math.random()` 으로 만든 번호를 "이 계좌로 입금해주세요"로 표시. PortOne 이 성공한 경우에도
+      가짜 번호가 뜸(함수가 발급정보를 인자로 받지 않음). 실제 발급 계좌정보 배선 필요.
+      (SDK 미로드 시의 데모 폴백은 2026-07-16 제거됨.)
+- [ ] **채널이 테스트인지 실서비스인지 미확인** — `payment-data.js` 의 `PORTONE_STORE_ID` /
+      `PORTONE_CHANNEL_KEY` 하드코딩. 원 주석이 "테스트 채널 생성 후 입력"이라 **테스트 채널일 가능성**.
+      테스트 채널이면 결제가 성공해 보여도 실제 돈이 안 잡힘. → admin.portone.io 에서 확인 (콘솔 접근 필요).
+- [ ] **PG 결제창 CSP 검증** — `frame-src` 는 `*.portone.io` 만, `form-action` 은 `'self'`.
+      국내 PG(이니시스 등)가 자기 도메인으로 창을 띄우거나 폼을 전송하면 차단될 수 있음. 실제 결제창을
+      띄워봐야 확인 가능.
+
+> 참고: `PORTONE_V2_API_SECRET` / `PORTONE_WEBHOOK_SECRET` 는 프로덕션 런타임에 **정상 설정됨**
+> (2026-07-16 확인). `vercel env pull` 로는 빈 값으로 내려오는데 이는 Vercel Sensitive 플래그 때문이며
+> 누락이 아님. 서버 검증 로직(금액 재계산·중복결제 차단·customData 대조) 자체는 견고함.
 
 ---
 
