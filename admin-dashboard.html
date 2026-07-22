@@ -13,6 +13,15 @@
     <link rel="stylesheet" href="design-tokens.css?v=20260715b">
     <link rel="stylesheet" href="admin-dashboard.css?v=20260526c">
     <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@17.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+    <script>
+      // Windows는 국기(regional indicator) 이모지만 렌더링 못 함 → 국기만 Twemoji 이미지로 변환.
+      // 나머지 이모지는 네이티브 렌더링(모든 OS 정상)해서 CDN 폭주요청(jsdelivr rate-limit 503) 방지.
+      window.twFlagOnly = function (id, opts) {
+        return /^1f1[ef][0-9a-f]-1f1[ef][0-9a-f]$/.test(id)
+          ? opts.base + opts.size + '/' + id + opts.ext
+          : false;
+      };
+    </script>
 </head>
 
 <body>
@@ -4777,7 +4786,7 @@
                 var flagEl = document.getElementById('cfFlag');
                 if (!preview || !flagEl) return;
                 preview.textContent = flagEl.value || '🌐';
-                if (window.twemoji) twemoji.parse(preview);
+                if (window.twemoji) twemoji.parse(preview, { callback: window.twFlagOnly });
             }
 
             window.autoFillCountryFlag = autoFillCountryFlag;
@@ -5031,7 +5040,7 @@
                         '</div>' +
                     '</div>';
                 }).join('');
-                if (window.twemoji) twemoji.parse(listEl);
+                if (window.twemoji) twemoji.parse(listEl, { callback: window.twFlagOnly });
             }
 
             // 이미지 미리보기
@@ -9841,9 +9850,9 @@
         </script>
         <script>
             // 전역 Twemoji 적용 (Windows에서 국기 이모지를 이미지로 렌더링)
-            if (window.twemoji) twemoji.parse(document.body);
+            if (window.twemoji) twemoji.parse(document.body, { callback: window.twFlagOnly });
             document.addEventListener('DOMContentLoaded', function() {
-                if (window.twemoji) twemoji.parse(document.body);
+                if (window.twemoji) twemoji.parse(document.body, { callback: window.twFlagOnly });
             });
         </script>
 

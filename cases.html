@@ -37,6 +37,15 @@
     <link rel="stylesheet" href="styles.css?v=20260715a">
     <style>img.emoji{height:1em;width:1em;margin:0 .05em 0 .1em;vertical-align:-0.1em;display:inline-block;}</style>
     <script defer src="https://cdn.jsdelivr.net/npm/@twemoji/api@17.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+    <script>
+      // Windows는 국기(regional indicator) 이모지만 렌더링 못 함 → 국기만 Twemoji 이미지로 변환.
+      // 나머지 이모지는 네이티브 렌더링(모든 OS 정상)해서 CDN 폭주요청(jsdelivr rate-limit 503) 방지.
+      window.twFlagOnly = function (id, opts) {
+        return /^1f1[ef][0-9a-f]-1f1[ef][0-9a-f]$/.test(id)
+          ? opts.base + opts.size + '/' + id + opts.ext
+          : false;
+      };
+    </script>
 </head>
 
 <body>
@@ -242,7 +251,7 @@
                         '</div>' +
                     '</a>';
                 }).join('');
-                if (window.twemoji) twemoji.parse(grid);
+                if (window.twemoji) twemoji.parse(grid, { callback: window.twFlagOnly });
             } catch(e) {
                 console.error('성과사례 로드 실패:', e);
                 // API 에러 시에도 초기 안내 그대로 유지 (사용자에겐 "준비 중"으로 보임 — 에러 노출 안 함)

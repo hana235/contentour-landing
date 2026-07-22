@@ -58,6 +58,15 @@
 
     <!-- Twemoji: Windows의 Segoe UI Emoji가 국기 이모지 미지원 → 모든 이모지를 SVG 이미지로 변환 -->
     <script defer src="https://cdn.jsdelivr.net/npm/@twemoji/api@17.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+    <script>
+      // Windows는 국기(regional indicator) 이모지만 렌더링 못 함 → 국기만 Twemoji 이미지로 변환.
+      // 나머지 이모지는 네이티브 렌더링(모든 OS 정상)해서 CDN 폭주요청(jsdelivr rate-limit 503) 방지.
+      window.twFlagOnly = function (id, opts) {
+        return /^1f1[ef][0-9a-f]-1f1[ef][0-9a-f]$/.test(id)
+          ? opts.base + opts.size + '/' + id + opts.ext
+          : false;
+      };
+    </script>
     <style>
         /* twemoji가 변환한 이모지 img 크기 조정 (텍스트 라인과 정렬) */
         img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; display: inline-block; }
@@ -1621,7 +1630,7 @@
             var visible = list.slice(startIdx, startIdx + PAGE_SIZE);
             grid.innerHTML = visible.map(buildRow).join('');
             // 국기 이모지 SVG 변환 (Windows에서 컬러 국기 보이게)
-            if (window.twemoji) try { twemoji.parse(grid); } catch(e) {}
+            if (window.twemoji) try { twemoji.parse(grid, { callback: window.twFlagOnly }); } catch(e) {}
 
             renderPagination(list.length, totalPages, moreWrap);
 
@@ -2212,10 +2221,10 @@
 
         // 페이지 초기 로드 시 국기 이모지 변환 (필터 칩 + 정적 콘텐츠)
         if (window.twemoji) {
-            try { twemoji.parse(document.body); } catch(e) {}
+            try { twemoji.parse(document.body, { callback: window.twFlagOnly }); } catch(e) {}
         } else {
             window.addEventListener('load', function() {
-                if (window.twemoji) try { twemoji.parse(document.body); } catch(e) {}
+                if (window.twemoji) try { twemoji.parse(document.body, { callback: window.twFlagOnly }); } catch(e) {}
             });
         }
     </script>
