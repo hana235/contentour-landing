@@ -842,6 +842,19 @@ module.exports = async function handler(req, res) {
                 if (upErr) return res.status(500).json({ error: '계약 완료 처리 실패' });
                 await recordAudit(req, admin, { action: 'complete_contract', target_table: '42_통역계약', target_id: contractId, after: { status: 'completed' } });
             }
+
+            // 연결된 문의도 '완료'로 전이 (2026-07-24 수정).
+            //  기존엔 어떤 경로로도 46_ITQ견적문의.status='완료'를 세팅하지 않아, 작업·정산이 끝나도
+            //  고객 문의 목록이 영구히 '파견확정'(계약진행)으로 남고 '완료' 필터가 도달 불가였다.
+            //  계약 order_id → 46_ITQ견적문의.id 로 연결. best-effort·멱등(이미 완료면 미갱신):
+            //  실패해도 계약 완료 자체는 성공 반환하고, 재호출 시 뒤늦게 복구된다.
+            if (ct.order_id) {
+                const { data: inqUpd, error: inqErr } = await supabase
+                    .from('46_ITQ견적문의').update({ status: '완료' })
+                    .eq('id', ct.order_id).neq('status', '완료').select('id');
+                if (inqErr) console.error('[completeContract] 문의 완료 전이 실패(무시):', inqErr.message);
+                else if (inqUpd && inqUpd.length) await recordAudit(req, admin, { action: 'complete_inquiry', target_table: '46_ITQ견적문의', target_id: ct.order_id, after: { status: '완료' } });
+            }
             return res.status(200).json({ ok: true, settlement });
 
         } else if (action === 'settleContract') {
