@@ -210,24 +210,29 @@ function downloadManual(event) {
 }
 
 // Counter animation for stats — 접미사(+, %, H 등)를 애니메이션에 직접 녹여 레이스 컨디션 방지
-function animateCounter(element, target, suffix = '', duration = 2000) {
-    const increment = target / (duration / 16);
-    let current = 0;
-
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-            clearInterval(timer);
-            // '+'는 디자인 의도(작은 파란색)대로 span 복원, 그 외 접미사는 그대로 부착
-            if (suffix === '+') {
-                element.innerHTML = target + '<span class="stat-plus">+</span>';
-            } else {
-                element.textContent = target + suffix;
-            }
+// requestAnimationFrame 기반: setInterval 스로틀링으로 인한 느린/불규칙 카운트 방지, ease-out으로 최종값에 빠르게 수렴
+function animateCounter(element, target, suffix = '', duration = 1000) {
+    // '+'는 디자인 의도(작은 파란색)대로 span 복원, 그 외 접미사는 그대로 부착
+    const setValue = (value, done) => {
+        if (suffix === '+' && done) {
+            element.innerHTML = target + '<span class="stat-plus">+</span>';
         } else {
-            element.textContent = Math.floor(current) + suffix;
+            element.textContent = value + suffix;
         }
-    }, 16);
+    };
+
+    const start = performance.now();
+    const step = (now) => {
+        const t = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic — 초반에 빠르게 올라가 틀린 숫자 노출 최소화
+        if (t >= 1) {
+            setValue(target, true);
+        } else {
+            setValue(Math.floor(eased * target), false);
+            requestAnimationFrame(step);
+        }
+    };
+    requestAnimationFrame(step);
 }
 
 // Observe stats section and trigger counter animation
