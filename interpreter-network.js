@@ -394,7 +394,9 @@ _dbLoadPromise = (async function loadDbInterpreters() {
             if (!p.country_code || !interpData[p.country_code]) return;
             var langs = Array.isArray(p.languages) ? p.languages : [];
             var specs = Array.isArray(p.specialties) ? p.specialties : [];
-            var tags = langs.concat(specs).slice(0, 3);
+            var fieldTag = p.field_tag || (specs[0] || '');
+            // fieldTag(대표 분야 강조 칩)로 쓰인 전문분야는 일반 태그에서 제외해 중복 방지
+            var tags = langs.concat(specs.filter(function (s) { return s !== fieldTag; })).slice(0, 3);
             var rates = p.rate_by_type || {};
             var boothRate = rates.booth || rates['부스 상주'] || 250000;
             var meetingRate = rates.meeting || rates['미팅 동행'] || 300000;
@@ -404,7 +406,7 @@ _dbLoadPromise = (async function loadDbInterpreters() {
             var newInterp = {
                 name: p.display_name || '통역사', photo: p.profile_image_url || '',
                 role: langs.join('·') + ' 전문 통역사', intro: p.intro || '', tags: tags,
-                fieldTag: p.field_tag || (specs[0] || ''), cases: p.cases_count || 0,
+                fieldTag: fieldTag, cases: p.cases_count || 0,
                 rating: p.rating || 0, years: p.experience_years || 0, satisfaction: p.satisfaction || 0,
                 prices: { booth: [boothRate, boothRate + 50000], meeting: [meetingRate, meetingRate + 50000], conference: [confRate, confRate + 50000], operation: [opRate, opRate + 50000] },
                 bio: p.intro || '', history: [], _dbId: p.user_id, _fromDb: true
